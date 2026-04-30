@@ -1,31 +1,28 @@
-const acervoPadrao = [
-    { 
-        titulo: "Solo Leveling", 
-        titulosAlternativos: "Na Honjaman Rebeleop, Only I Level Up",
-        generos: "Ação, Fantasia, Sistema, Shounen",
-        tipo: "Manhwa", capa: "https://placehold.co/300x450/333333/FFFFFF/png?text=Solo+Leveling",
-        status: "Finalizado", capitulo: "179", nota: 4.9, 
-        linksLeitura: ["https://google.com/search?q=ler+solo+leveling"], 
-        sinopse: "Dez anos atrás, o 'Portal' surgiu, conectando o mundo real com o reino da magia e dos monstros."
-    },
-    { 
-        titulo: "Berserk", 
-        titulosAlternativos: "Bereseruku",
-        generos: "Ação, Fantasia Sombria, Seinen, Tragédia",
-        tipo: "Mangá", capa: "https://placehold.co/300x450/333333/FFFFFF/png?text=Berserk",
-        status: "Em Andamento", capitulo: "375", nota: 4.8, 
-        linksLeitura: [], 
-        sinopse: "Guts, conhecido como o Espadachim Negro, busca santuário de forças demoníacas..."
-    }
-];
+// === IMPORTAÇÕES DO FIREBASE ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-let acervo = JSON.parse(localStorage.getItem('meuAcervoMangas')) || acervoPadrao;
-function salvarNoNavegador() { localStorage.setItem('meuAcervoMangas', JSON.stringify(acervo)); }
+// ⚠️ COLE AS SUAS CONFIGURAÇÕES DO FIREBASE AQUI ⚠️
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI",
+    authDomain: "seu-projeto.firebaseapp.com",
+    projectId: "seu-projeto",
+    storageBucket: "seu-projeto.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID"
+};
 
+// Inicializa o Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Nossa lista na memória agora começa vazia e será preenchida pela nuvem
+let acervo = [];
+
+// Elementos da Tela
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
 const contadorTotal = document.getElementById("contador-total"); 
-
 const modalFundo = document.getElementById("modal-fundo");
 const modalCapa = document.getElementById("modal-capa");
 const modalTitulo = document.getElementById("modal-titulo");
@@ -36,12 +33,35 @@ const modalStatus = document.getElementById("modal-status");
 const modalCapituloEditavel = document.getElementById("modal-capitulo-editavel"); 
 const modalSinopse = document.getElementById("modal-texto-sinopse");
 const containerLinksLeitura = document.getElementById("container-links-leitura"); 
-
 const modalFormFundo = document.getElementById("modal-form-fundo");
 const formulario = document.getElementById("form-nova-obra");
 
 let tituloAbertoNoModal = "";
+let idAbertoNoModal = ""; // Agora precisamos saber o ID real no banco
 let resultadosAPI = [];
+
+// === FUNÇÃO PARA CARREGAR OS DADOS DO FIREBASE ===
+async function carregarAcervo() {
+    conteinerMangas.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>Conectando à nuvem e carregando seu acervo...</p>";
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "mangas"));
+        acervo = []; // Limpa a lista local
+        querySnapshot.forEach((doc) => {
+            // Guarda o ID que o Firebase gerou junto com os dados da obra
+            let obra = doc.data();
+            obra.idFirebase = doc.id; 
+            acervo.push(obra);
+        });
+        renderizarMangas(acervo);
+    } catch (erro) {
+        console.error("Erro ao carregar do Firebase:", erro);
+        conteinerMangas.innerHTML = "<p style='color:#e74c3c;'>Erro ao carregar dados. Verifique o console.</p>";
+    }
+}
+
+// Carrega os dados assim que o site abre
+carregarAcervo();
 
 function criarCartaoPoster(obra) {
     let classeStatus = (obra.status === 'Em Andamento') ? 'status-andamento' : 'status-finalizado';
@@ -50,8 +70,9 @@ function criarCartaoPoster(obra) {
     else if (obra.tipo === 'Mangá') classeTipo = 'tipo-manga';
     else classeTipo = 'tipo-novel';
 
+    // Os aspas simples no abrirModal agora passam o ID do Firebase em vez do título
     return `
-        <div class="cartao cartao-poster" onclick="abrirModal('${obra.titulo}')">
+        <div class="cartao cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
             <div class="moldura-imagem">
                 <img src="${obra.capa}" alt="Capa de ${obra.titulo}" class="capa-imagem-poster">
                 <span class="tag-status ${classeStatus}">${obra.status}</span>
@@ -72,8 +93,6 @@ function renderizarMangas(lista) {
     lista.forEach(obra => { conteinerMangas.innerHTML += criarCartaoPoster(obra); });
 }
 
-renderizarMangas(acervo);
-
 barraPesquisa.addEventListener("input", (evento) => {
     const textoDigitado = evento.target.value.toLowerCase();
     const listaFiltrada = acervo.filter(obra => {
@@ -84,15 +103,13 @@ barraPesquisa.addEventListener("input", (evento) => {
     renderizarMangas(listaFiltrada);
 });
 
-function filtrarPorTipo(tipoSelecionado) {
-    if (tipoSelecionado === 'Todos') { renderizarMangas(acervo); } 
-    else { const listaFiltrada = acervo.filter(obra => obra.tipo === tipoSelecionado); renderizarMangas(listaFiltrada); }
-}
-
-function abrirModal(tituloSelecionado) {
-    const obra = acervo.find(item => item.titulo === tituloSelecionado);
+// Modificada para buscar pelo ID do Firebase em vez do Título
+window.abrirModal = function(idSelecionado) {
+    const obra = acervo.find(item => item.idFirebase === idSelecionado);
     if (obra) {
         tituloAbertoNoModal = obra.titulo; 
+        idAbertoNoModal = obra.idFirebase; // Guarda o ID
+
         modalCapa.src = obra.capa;
         modalTitulo.innerText = obra.titulo;
         modalTipo.innerText = obra.tipo;
@@ -125,37 +142,40 @@ function abrirModal(tituloSelecionado) {
     }
 }
 
-function fecharModal() { modalFundo.style.display = "none"; }
-function fecharModalPeloFundo(evento) { if (evento.target === modalFundo) fecharModal(); }
-
-function alterarCapitulo(mudanca) {
+window.alterarCapitulo = function(mudanca) {
     let novoValor = (parseInt(modalCapituloEditavel.value) || 0) + mudanca;
     if (novoValor < 0) novoValor = 0; 
     modalCapituloEditavel.value = novoValor;
     salvarCapituloNoAcervo(novoValor);
 }
-function atualizarCapituloDigitado() {
+
+window.atualizarCapituloDigitado = function() {
     let novoValor = parseInt(modalCapituloEditavel.value) || 0;
     if (novoValor < 0) novoValor = 0;
     modalCapituloEditavel.value = novoValor;
     salvarCapituloNoAcervo(novoValor);
 }
-function salvarCapituloNoAcervo(novoValor) {
-    const index = acervo.findIndex(item => item.titulo === tituloAbertoNoModal);
+
+async function salvarCapituloNoAcervo(novoValor) {
+    const index = acervo.findIndex(item => item.idFirebase === idAbertoNoModal);
     if (index !== -1) {
-        acervo[index].capitulo = novoValor.toString();
-        salvarNoNavegador();
-        barraPesquisa.dispatchEvent(new Event('input'));
+        acervo[index].capitulo = novoValor.toString(); // Atualiza na tela
+        barraPesquisa.dispatchEvent(new Event('input')); // Recarrega os posters
+        
+        // Atualiza no Firebase sem travar a tela (roda no fundo)
+        try {
+            const obraRef = doc(db, "mangas", idAbertoNoModal);
+            await updateDoc(obraRef, { capitulo: novoValor.toString() });
+        } catch (e) {
+            console.error("Erro ao atualizar capítulo no banco:", e);
+        }
     }
 }
 
-function abrirModalForm() { modalFormFundo.style.display = "flex"; }
-function fecharModalForm() { modalFormFundo.style.display = "none"; }
-function fecharModalFormPeloFundo(evento) { if (evento.target === modalFormFundo) fecharModalForm(); }
-
-function prepararAdicao() {
+window.prepararAdicao = function() {
     formulario.reset(); 
     document.getElementById("input-titulo-original").value = ""; 
+    document.getElementById("input-id-firebase").value = ""; 
     document.getElementById("titulo-form").innerText = "Adicionar Nova Obra"; 
     
     document.getElementById("input-busca-api").value = "";
@@ -166,8 +186,8 @@ function prepararAdicao() {
     abrirModalForm();
 }
 
-function prepararEdicao() {
-    const obra = acervo.find(item => item.titulo === tituloAbertoNoModal);
+window.prepararEdicao = function() {
+    const obra = acervo.find(item => item.idFirebase === idAbertoNoModal);
     if (obra) {
         document.getElementById("input-titulo").value = obra.titulo;
         document.getElementById("input-titulos-alt").value = obra.titulosAlternativos || "";
@@ -181,6 +201,7 @@ function prepararEdicao() {
         document.getElementById("input-sinopse").value = obra.sinopse;
 
         document.getElementById("input-titulo-original").value = obra.titulo;
+        document.getElementById("input-id-firebase").value = obra.idFirebase; // Guarda o ID pro update
         document.getElementById("titulo-form").innerText = "Editar Obra";
 
         document.getElementById("area-busca-api").style.display = "none";
@@ -191,25 +212,110 @@ function prepararEdicao() {
     }
 }
 
-function excluirObra() {
+window.excluirObra = async function() {
     if (confirm(`Tem certeza que deseja excluir "${tituloAbertoNoModal}" do seu acervo?`)) {
-        const index = acervo.findIndex(item => item.titulo === tituloAbertoNoModal);
-        if (index !== -1) {
-            acervo.splice(index, 1);
-            salvarNoNavegador();
+        const idParaDeletar = idAbertoNoModal;
+        fecharModal();
+        
+        try {
+            // Remove do banco
+            await deleteDoc(doc(db, "mangas", idParaDeletar));
+            
+            // Remove da tela
+            const index = acervo.findIndex(item => item.idFirebase === idParaDeletar);
+            if (index !== -1) acervo.splice(index, 1);
             renderizarMangas(acervo);
-            fecharModal();
+        } catch (e) {
+            alert("Erro ao excluir do banco de dados.");
+            console.error(e);
         }
     }
 }
 
-async function buscarNaAPI() {
+// FORMULÁRIO (SALVAR E ATUALIZAR)
+formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const btnSalvar = formulario.querySelector('.btn-salvar');
+    btnSalvar.innerText = "Salvando...";
+    btnSalvar.disabled = true;
+
+    const idFirebase = document.getElementById("input-id-firebase").value;
+    const titulo = document.getElementById("input-titulo").value.trim();
+    const tituloOriginal = document.getElementById("input-titulo-original").value;
+    
+    // Trava de duplicatas
+    if (tituloOriginal === "") {
+        if (acervo.some(item => item.titulo.toLowerCase() === titulo.toLowerCase())) {
+            alert(`Atenção: A obra "${titulo}" já está adicionada ao seu acervo!`);
+            btnSalvar.innerText = "Salvar Obra";
+            btnSalvar.disabled = false;
+            return;
+        }
+    } else {
+        if (titulo.toLowerCase() !== tituloOriginal.toLowerCase()) {
+            if (acervo.some(item => item.titulo.toLowerCase() === titulo.toLowerCase())) {
+                alert(`Atenção: Já existe outra obra chamada "${titulo}" no seu acervo!`);
+                btnSalvar.innerText = "Salvar Obra";
+                btnSalvar.disabled = false;
+                return;
+            }
+        }
+    }
+
+    const textoLinks = document.getElementById("input-link-leitura").value;
+    const arrayLinks = textoLinks.split('\n').map(link => link.trim()).filter(link => link !== "");
+
+    // Monta o objeto que vai pro banco
+    const obraParaSalvar = {
+        titulo: titulo, 
+        titulosAlternativos: document.getElementById("input-titulos-alt").value, 
+        generos: document.getElementById("input-generos").value, 
+        tipo: document.getElementById("input-tipo").value, 
+        status: document.getElementById("input-status").value, 
+        capitulo: document.getElementById("input-capitulo").value,
+        nota: parseFloat(document.getElementById("input-nota").value), 
+        capa: document.getElementById("input-capa").value, 
+        linksLeitura: arrayLinks, 
+        sinopse: document.getElementById("input-sinopse").value
+    };
+
+    try {
+        if (idFirebase === "") {
+            // ADICIONANDO NOVO (Cria no Firestore)
+            const docRef = await addDoc(collection(db, "mangas"), obraParaSalvar);
+            obraParaSalvar.idFirebase = docRef.id; // Pega o ID gerado e põe na obra
+            acervo.unshift(obraParaSalvar);
+        } else {
+            // ATUALIZANDO EXISTENTE (Atualiza no Firestore)
+            const obraRef = doc(db, "mangas", idFirebase);
+            await updateDoc(obraRef, obraParaSalvar);
+            
+            const index = acervo.findIndex(item => item.idFirebase === idFirebase);
+            if (index !== -1) {
+                obraParaSalvar.idFirebase = idFirebase;
+                acervo[index] = obraParaSalvar;
+            }
+        }
+
+        renderizarMangas(acervo); 
+        fecharModalForm(); 
+    } catch (e) {
+        alert("Erro ao salvar no banco de dados.");
+        console.error(e);
+    } finally {
+        btnSalvar.innerText = "Salvar Obra";
+        btnSalvar.disabled = false;
+    }
+});
+
+
+// === FUNÇÕES DA API (Jikan) ===
+window.buscarNaAPI = async function() {
     const textoBusca = document.getElementById("input-busca-api").value;
     const divResultados = document.getElementById("resultado-busca-api");
     const botaoBusca = document.getElementById("btn-buscar-api");
 
     if(textoBusca.trim() === "") return;
-
     botaoBusca.innerText = "⏳ Buscando...";
     botaoBusca.disabled = true;
 
@@ -226,11 +332,9 @@ async function buscarNaAPI() {
             resultadosAPI.forEach((manga, index) => {
                 let tipo = manga.type || "Mangá";
                 let ano = manga.published?.prop?.from?.year || "N/A";
-                
                 let tituloIngles = manga.title_english ? manga.title_english : "";
                 let tituloJapones = manga.title_japanese ? manga.title_japanese : "";
                 let sinonimoPrincipal = manga.title_synonyms && manga.title_synonyms.length > 0 ? manga.title_synonyms[0] : "";
-                
                 let listaAlternativos = [tituloIngles, tituloJapones, sinonimoPrincipal].filter(t => t !== "").join(" / ");
                 let htmlAlternativos = listaAlternativos ? `<p style="color: #0984e3; font-size: 11px; margin-bottom: 3px;">${listaAlternativos}</p>` : "";
                 
@@ -247,7 +351,6 @@ async function buscarNaAPI() {
             });
         }
         divResultados.style.display = "block";
-
     } catch (erro) {
         divResultados.innerHTML = "<p style='padding:10px; color:#e74c3c; font-size:13px;'>Erro ao buscar. Tente novamente.</p>";
         divResultados.style.display = "block";
@@ -257,9 +360,8 @@ async function buscarNaAPI() {
     }
 }
 
-function preencherComAPI(index) {
+window.preencherComAPI = function(index) {
     const manga = resultadosAPI[index];
-
     document.getElementById("input-titulo").value = manga.title || "";
     
     let arrayAlt = [];
@@ -284,10 +386,7 @@ function preencherComAPI(index) {
     document.getElementById("input-status").value = statusFormatado;
 
     document.getElementById("input-capitulo").value = manga.chapters || 0;
-    
-    let nota = manga.score ? (manga.score / 2).toFixed(1) : 0;
-    document.getElementById("input-nota").value = nota;
-
+    document.getElementById("input-nota").value = manga.score ? (manga.score / 2).toFixed(1) : 0;
     document.getElementById("input-capa").value = manga.images.jpg.large_image_url || manga.images.jpg.image_url || "";
     
     let sinopse = manga.synopsis || "";
@@ -298,65 +397,13 @@ function preencherComAPI(index) {
     document.getElementById("input-busca-api").value = "";
 }
 
-formulario.addEventListener("submit", (evento) => {
-    evento.preventDefault();
-
-    // Removemos os espaços extras do início e do fim do título digitado
-    const titulo = document.getElementById("input-titulo").value.trim();
-    const tituloOriginal = document.getElementById("input-titulo-original").value;
-    
-    // --- NOVO: TRAVA DE SEGURANÇA CONTRA DUPLICATAS ---
-    if (tituloOriginal === "") {
-        // Se for uma obra nova, verificamos se o nome já existe no acervo
-        const obraJaExiste = acervo.some(item => item.titulo.toLowerCase() === titulo.toLowerCase());
-        
-        if (obraJaExiste) {
-            alert(`Atenção: A obra "${titulo}" já está adicionada ao seu acervo!`);
-            return; // O 'return' para a função aqui, impedindo que ela seja salva
-        }
-    } else {
-        // Se for uma edição e o usuário mudou o título, verificamos se o novo nome não pertence a outra obra
-        if (titulo.toLowerCase() !== tituloOriginal.toLowerCase()) {
-            const obraJaExiste = acervo.some(item => item.titulo.toLowerCase() === titulo.toLowerCase());
-            if (obraJaExiste) {
-                alert(`Atenção: Já existe outra obra chamada "${titulo}" no seu acervo!`);
-                return;
-            }
-        }
-    }
-    // ----------------------------------------------------
-
-    const titulosAlt = document.getElementById("input-titulos-alt").value;
-    const generos = document.getElementById("input-generos").value;
-    const tipo = document.getElementById("input-tipo").value;
-    const status = document.getElementById("input-status").value;
-    const capitulo = document.getElementById("input-capitulo").value;
-    const nota = document.getElementById("input-nota").value;
-    const capa = document.getElementById("input-capa").value;
-    const sinopse = document.getElementById("input-sinopse").value;
-
-    const textoLinks = document.getElementById("input-link-leitura").value;
-    const arrayLinks = textoLinks.split('\n').map(link => link.trim()).filter(link => link !== "");
-
-    if (tituloOriginal === "") {
-        const novaObra = {
-            titulo: titulo, titulosAlternativos: titulosAlt, generos: generos, 
-            tipo: tipo, status: status, capitulo: capitulo,
-            nota: parseFloat(nota), capa: capa, linksLeitura: arrayLinks, sinopse: sinopse
-        };
-        acervo.unshift(novaObra);
-    } else {
-        const index = acervo.findIndex(item => item.titulo === tituloOriginal);
-        if (index !== -1) {
-            acervo[index] = {
-                titulo: titulo, titulosAlternativos: titulosAlt, generos: generos, 
-                tipo: tipo, status: status, capitulo: capitulo,
-                nota: parseFloat(nota), capa: capa, linksLeitura: arrayLinks, sinopse: sinopse
-            };
-        }
-    }
-
-    salvarNoNavegador(); 
-    renderizarMangas(acervo); 
-    fecharModalForm(); 
-});
+// Funções globais menores para o HTML enxergar
+window.abrirModalForm = function() { modalFormFundo.style.display = "flex"; }
+window.fecharModalForm = function() { modalFormFundo.style.display = "none"; }
+window.fecharModalFormPeloFundo = function(evento) { if (evento.target === modalFormFundo) window.fecharModalForm(); }
+window.fecharModal = function() { modalFundo.style.display = "none"; }
+window.fecharModalPeloFundo = function(evento) { if (evento.target === modalFundo) window.fecharModal(); }
+window.filtrarPorTipo = function(tipoSelecionado) {
+    if (tipoSelecionado === 'Todos') { renderizarMangas(acervo); } 
+    else { const listaFiltrada = acervo.filter(obra => obra.tipo === tipoSelecionado); renderizarMangas(listaFiltrada); }
+}

@@ -9,7 +9,7 @@
 <body>
 
     <header>
-        <h1>Acervo Romário</h1>
+        <h1>Meu Acervo</h1>
         
         <div class="controles-topo">
             <input type="text" id="barra-pesquisa" placeholder="Buscar mangá, manhwa ou novel...">
@@ -80,14 +80,12 @@
             
             <h2 id="titulo-form">Adicionar Nova Obra</h2>
             
-            <!-- NOVO: Área de busca na API -->
             <div class="busca-api-container" id="area-busca-api">
                 <label>Preenchimento Automático (Pesquise na internet):</label>
                 <div class="busca-api-controles">
                     <input type="text" id="input-busca-api" placeholder="Digite o nome da obra...">
                     <button type="button" id="btn-buscar-api" onclick="buscarNaAPI()">🔍 Buscar</button>
                 </div>
-                <!-- Aqui vão aparecer os resultados da API -->
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
@@ -95,6 +93,9 @@
 
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
+                
+                <!-- AQUI ESTÁ A ALTERAÇÃO 1: Campo escondido para o ID do Firebase -->
+                <input type="hidden" id="input-id-firebase" value="">
 
                 <div class="grupo-input">
                     <label>Título Principal:</label>
@@ -161,6 +162,7 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- AQUI ESTÁ A ALTERAÇÃO 2: A chamada do script com o type="module" -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
