@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Acervo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Meu Acervo</h1>
+        
+        <div class="controles-topo">
+            <input type="text" id="barra-pesquisa" placeholder="Buscar mangá, manhwa ou novel...">
+            <button id="btn-abrir-form" onclick="prepararAdicao()">+ Adicionar Obra</button>
+        </div>
+        
+        <div class="filtros">
+            <button class="btn-filtro" onclick="filtrarPorTipo('Todos')">Todos</button>
+            <button class="btn-filtro" onclick="filtrarPorTipo('Mangá')">Mangás</button>
+            <button class="btn-filtro" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
+            <button class="btn-filtro" onclick="filtrarPorTipo('Novel')">Novels</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="barra-resultados">
+            <span id="contador-total">0 obras</span>
+        </div>
+
+        <div class="grid-mangas" id="lista-mangas">
+            <!-- O JavaScript vai injetar os cartões aqui -->
+        </div>
+    </main>
+
+    <!-- === MODAL DA FICHA TÉCNICA (DETALHES) === -->
+    <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
+        <div class="modal-conteudo">
+            <span class="botao-fechar" onclick="fecharModal()">&times;</span>
+            <div class="modal-corpo">
+                <img id="modal-capa" src="" alt="Capa da Obra">
+                <div class="modal-info">
+                    <h2 id="modal-titulo">Título da Obra</h2>
+                    <span id="modal-tipo" class="tag-tipo">Tipo</span>
+                    
+                    <p class="titulos-alt"><strong>Títulos Alternativos:</strong> <span id="modal-titulos-alt">...</span></p>
+                    <div id="modal-generos" class="modal-generos"></div>
+
+                    <p><strong>Status:</strong> <span id="modal-status">...</span></p>
+                    
+                    <div class="controle-leitura">
+                        <strong>Capítulo Atual:</strong>
+                        <div class="contador">
+                            <button class="btn-contador" onclick="alterarCapitulo(-1)">-</button>
+                            <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
+                            <button class="btn-contador" onclick="alterarCapitulo(1)">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-sinopse">
+                        <h3>Sinopse:</h3>
+                        <p id="modal-texto-sinopse">...</p>
+                    </div>
+                    
+                    <div class="acoes-modal">
+                        <div id="container-links-leitura" class="container-links"></div>
+                        <button id="btn-editar-obra" onclick="prepararEdicao()">✏️ Editar</button>
+                        <button id="btn-excluir-obra" onclick="excluirObra()">🗑️ Excluir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === MODAL DO FORMULÁRIO DE CADASTRO/EDIÇÃO === -->
+    <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
+        <div class="modal-conteudo modal-form-conteudo">
+            <span class="botao-fechar" onclick="fecharModalForm()">&times;</span>
+            
+            <h2 id="titulo-form">Adicionar Nova Obra</h2>
+            
+            <!-- NOVO: Área de busca na API -->
+            <div class="busca-api-container" id="area-busca-api">
+                <label>Preenchimento Automático (Pesquise na internet):</label>
+                <div class="busca-api-controles">
+                    <input type="text" id="input-busca-api" placeholder="Digite o nome da obra...">
+                    <button type="button" id="btn-buscar-api" onclick="buscarNaAPI()">🔍 Buscar</button>
+                </div>
+                <!-- Aqui vão aparecer os resultados da API -->
+                <div id="resultado-busca-api" class="resultado-busca-api"></div>
+            </div>
+
+            <hr class="divisor-form" id="divisor-api">
+
+            <form id="form-nova-obra">
+                <input type="hidden" id="input-titulo-original" value="">
+
+                <div class="grupo-input">
+                    <label>Título Principal:</label>
+                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
+                </div>
+
+                <div class="grupo-input">
+                    <label>Títulos Alternativos (Opcional):</label>
+                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
+                </div>
+
+                <div class="grupo-input">
+                    <label>Gêneros (Separe por vírgula):</label>
+                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia, Sistema">
+                </div>
+
+                <div class="linha-inputs">
+                    <div class="grupo-input">
+                        <label>Tipo:</label>
+                        <select id="input-tipo">
+                            <option value="Mangá">Mangá</option>
+                            <option value="Manhwa">Manhwa</option>
+                            <option value="Novel">Novel</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label>Status:</label>
+                        <select id="input-status">
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Hiato">Hiato</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="linha-inputs">
+                    <div class="grupo-input">
+                        <label>Capítulo Atual:</label>
+                        <input type="number" id="input-capitulo" required placeholder="Ex: 250">
+                    </div>
+                    <div class="grupo-input">
+                        <label>Nota (1 a 5):</label>
+                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required placeholder="Ex: 4.5">
+                    </div>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Link da Capa (URL da Imagem):</label>
+                    <input type="text" id="input-capa" required placeholder="Cole o link da imagem aqui">
+                </div>
+
+                <div class="grupo-input">
+                    <label>Links de Leitura (Um por linha - Opcional):</label>
+                    <textarea id="input-link-leitura" rows="3" placeholder="https://site1.com/manga&#10;https://site2.com/manga"></textarea>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Sinopse:</label>
+                    <textarea id="input-sinopse" rows="3" required placeholder="Digite um resumo da obra..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-salvar">Salvar Obra</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
