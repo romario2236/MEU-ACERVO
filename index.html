@@ -64,37 +64,50 @@
     <!-- 3. MODAIS (Janelas Sobrepostas)            -->
     <!-- ========================================== -->
     
-    <!-- 3.1 Modal: Detalhes da Obra -->
+    <!-- 3.1 Modal: Detalhes da Obra (DESIGN MELHORADO) -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
             <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
             <div class="modal-corpo">
                 <img id="modal-capa" src="" alt="Capa da Obra">
+                
                 <div class="modal-info">
                     <h2 id="modal-titulo">Título</h2>
-                    <span id="modal-tipo" class="tag-tipo">Tipo</span>
+                    
+                    <!-- Nova área de Badges (Etiquetas) -->
+                    <div class="meta-badges">
+                        <span id="modal-tipo" class="badge badge-tipo">Tipo</span>
+                        <span id="modal-status" class="badge badge-status">Status</span>
+                        <span class="badge badge-nota"><i class="ph-fill ph-star"></i> <span id="modal-nota-texto">5.0</span></span>
+                    </div>
+                    
                     <p class="titulos-alt"><strong>Alts:</strong> <span id="modal-titulos-alt">...</span></p>
                     <div id="modal-generos" class="modal-generos"></div>
-                    <p><strong>Status:</strong> <span id="modal-status">...</span></p>
                     
+                    <!-- Novo Contador de Capítulos Elegante -->
                     <div class="controle-leitura">
-                        <strong>Capítulo:</strong>
+                        <div class="leitura-label">
+                            <i class="ph ph-bookmark-simple"></i>
+                            <strong>Progresso de Leitura</strong>
+                        </div>
                         <div class="contador">
-                            <button class="btn-contador" onclick="alterarCapitulo(-1)">-</button>
+                            <button class="btn-contador" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
                             <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
-                            <button class="btn-contador" onclick="alterarCapitulo(1)">+</button>
+                            <button class="btn-contador" onclick="alterarCapitulo(1)"><i class="ph ph-plus"></i></button>
                         </div>
                     </div>
                     
                     <div class="modal-sinopse">
-                        <h3>Sinopse:</h3>
+                        <h3>Sinopse</h3>
                         <p id="modal-texto-sinopse">...</p>
                     </div>
                     
                     <div class="acoes-modal">
                         <div id="container-links-leitura" class="container-links"></div>
-                        <button id="btn-editar-obra" onclick="prepararEdicao()"><i class="ph ph-pencil-simple"></i> Editar</button>
-                        <button id="btn-excluir-obra" onclick="excluirObra()"><i class="ph ph-trash"></i> Excluir</button>
+                        <div class="acoes-secundarias">
+                            <button id="btn-editar-obra" onclick="prepararEdicao()"><i class="ph ph-pencil-simple"></i> Editar</button>
+                            <button id="btn-excluir-obra" onclick="excluirObra()"><i class="ph ph-trash"></i> Excluir</button>
+                        </div>
                     </div>
                 </div>
             </div>

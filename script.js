@@ -17,7 +17,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Ativa o cache para o site funcionar offline ou mais rápido
 enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativado."));
 
 // ============================================================================
@@ -153,10 +152,22 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo;
         document.getElementById("modal-status").innerText = obra.status || "Em Andamento";
         
+        // Formata a nota na tela de detalhes
+        document.getElementById("modal-nota-texto").innerText = (obra.nota || 5).toFixed(1);
+        
+        // Limpa e recria as tags de gênero usando a nova classe
+        const areaGeneros = document.getElementById("modal-generos");
+        areaGeneros.innerHTML = "";
+        if (obra.generos) {
+            obra.generos.split(',').forEach(g => {
+                if(g.trim()) areaGeneros.innerHTML += `<span class="tag-genero">${g.trim()}</span>`;
+            });
+        }
+        
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         (obra.linksLeitura || []).forEach(l => {
-            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${l}" target="_blank"><i class="ph ph-book-open"></i> Ler Opção</a>`;
+            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${l}" target="_blank"><i class="ph ph-book-open"></i> Ler</a>`;
         });
         modalFundo.style.display = "flex";
     }
@@ -245,32 +256,27 @@ window.preencherComAPI = function(i) {
     
     document.getElementById("input-titulo").value = m.title || "";
     
-    // Títulos Alternativos (Inglês, Japonês, Sinônimos)
     let arrayAlt = [];
     if (m.title_english) arrayAlt.push(m.title_english);
     if (m.title_japanese) arrayAlt.push(m.title_japanese);
     if (m.title_synonyms) arrayAlt = arrayAlt.concat(m.title_synonyms);
     document.getElementById("input-titulos-alt").value = arrayAlt.join(", ");
     
-    // Gêneros
     let listaGeneros = [];
     if(m.genres) m.genres.forEach(g => listaGeneros.push(g.name));
     if(m.themes) m.themes.forEach(t => listaGeneros.push(t.name));
     document.getElementById("input-generos").value = listaGeneros.join(", ");
 
-    // Conversão de Tipo
     let tipoFormatado = "Mangá";
     if(m.type === "Manhwa" || m.type === "Manhua") tipoFormatado = "Manhwa";
     if(m.type === "Light Novel" || m.type === "Novel") tipoFormatado = "Novel";
     document.getElementById("input-tipo").value = tipoFormatado;
     
-    // Conversão de Status
     let statusFormatado = "Em Andamento";
     if(m.status === "Finished") statusFormatado = "Finalizado";
     if(m.status === "On Hiatus" || m.status === "Discontinued") statusFormatado = "Hiato";
     document.getElementById("input-status").value = statusFormatado;
     
-    // Conversão de Nota (Jikan é 1-10, nosso acervo é 1-5)
     document.getElementById("input-nota").value = m.score ? (m.score / 2).toFixed(1) : 5;
 
     document.getElementById("input-capitulo").value = m.chapters || 0;
