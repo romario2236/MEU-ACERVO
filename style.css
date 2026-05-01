@@ -61,7 +61,7 @@ body {
 .btn-salvar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 132, 255, 0.3); }
 
 /* ==========================================
-   4. GRID DE OBRAS (CARTÕES)
+   4. GRID DE OBRAS (CARTÕES) - AJUSTADO PARA NÃO CORTAR
    ========================================== */
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
@@ -69,8 +69,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
 .cartao-poster { background: var(--card-bg); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; border: 1px solid #222; }
 .cartao-poster:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-color: #333;}
-.moldura-imagem { height: 260px; position: relative; }
-.moldura-imagem img { width: 100%; height: 100%; object-fit: cover; }
+
+/* A mágica do enquadramento perfeito acontece aqui */
+.moldura-imagem { height: 260px; position: relative; background: #0a0a0a; display: flex; align-items: center; justify-content: center; }
+.moldura-imagem img { width: 100%; height: 100%; object-fit: contain; } 
 
 .tag-status { position: absolute; top: 8px; left: 8px; font-size: 0.7rem; padding: 4px 8px; background: rgba(0,0,0,0.8); border-radius: 6px; border: 1px solid var(--primary); color: var(--primary); font-weight: 600; backdrop-filter: blur(4px);}
 .tag-tipo-poster { position: absolute; top: 8px; right: 8px; font-size: 0.7rem; padding: 4px 8px; background: var(--primary); border-radius: 6px; font-weight: 600; color: white;}
@@ -87,7 +89,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
 /* Detalhes da Obra (Modal 1) */
 .modal-corpo { display: flex; gap: 30px; flex-wrap: wrap; }
-#modal-capa { width: 220px; border-radius: 12px; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+#modal-capa { width: 220px; border-radius: 12px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #0a0a0a; } /* Adicionado object-fit e fundo escuro aqui também */
 .modal-info { flex: 1; min-width: 280px; }
 .modal-info h2 { font-size: 2rem; margin-bottom: 8px; line-height: 1.1; letter-spacing: -0.5px;}
 
