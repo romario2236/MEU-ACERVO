@@ -45,6 +45,11 @@ function carregarAcervo() {
         });
         acervo.sort((a, b) => a.titulo.localeCompare(b.titulo));
         renderizarMangas(acervo);
+        
+        // Se houver um ID aberto no momento que o banco atualiza, ele re-renderiza o modal
+        if (idAbertoNoModal && modalFundo.style.display === "flex") {
+            window.abrirModal(idAbertoNoModal);
+        }
     });
 }
 carregarAcervo();
@@ -84,11 +89,17 @@ formulario.addEventListener("submit", async (e) => {
     
     try {
         if (id) {
+            // Se for Edição (tinha ID):
             await updateDoc(doc(db, "mangas", id), obra);
+            fecharModalForm();
+            // A MÁGICA: Após fechar o formulário de edição, reabre a ficha do mangá!
+            window.abrirModal(id);
         } else {
+            // Se for uma Obra Nova:
             await addDoc(collection(db, "mangas"), obra);
+            fecharModalForm();
+            // Se é novo, fecha tudo para ver na lista.
         }
-        fecharModalForm();
     } catch(err) {
         alert("Erro ao salvar no banco de dados!");
         console.error(err);
@@ -151,12 +162,10 @@ barraPesquisa.addEventListener("input", (e) => {
 });
 
 // ============================================================================
-// 5. CONTROLE DE MODAIS E LINKS DINÂMICOS
+// 5. CONTROLE DE MODAIS, EDIÇÃO E LINKS DINÂMICOS
 // ============================================================================
-
 window.adicionarCampoLink = function(nome = "", url = "") {
     const container = document.getElementById("container-links-inputs");
-    // Blindagem de segurança caso o HTML não esteja correto
     if(!container) return; 
 
     const div = document.createElement("div");
@@ -248,7 +257,6 @@ window.prepararAdicao = function() {
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("titulo-form").innerText = "Nova Obra";
     
-    // Limpa a lista de links e coloca uma caixa vazia pro usuário começar (com blindagem)
     const containerLinks = document.getElementById("container-links-inputs");
     if(containerLinks) {
         containerLinks.innerHTML = "";
@@ -273,7 +281,6 @@ window.prepararEdicao = function() {
         document.getElementById("input-id-firebase").value = o.idFirebase;
         document.getElementById("titulo-form").innerText = "Editar Obra";
         
-        // Recria os links de forma segura lendo o que estava no banco
         const containerLinks = document.getElementById("container-links-inputs");
         if(containerLinks) {
             containerLinks.innerHTML = "";
@@ -301,7 +308,10 @@ window.prepararEdicao = function() {
     }
 }
 
-window.fecharModal = () => { modalFundo.style.display = "none"; };
+window.fecharModal = () => { 
+    modalFundo.style.display = "none"; 
+    idAbertoNoModal = ""; // Limpa a variável quando fecha
+};
 window.fecharModalForm = () => { modalFormFundo.style.display = "none"; };
 window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
