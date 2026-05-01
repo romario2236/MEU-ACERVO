@@ -14,7 +14,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Ativar Cache Offline
 enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativado."));
 
 let acervo = [];
@@ -27,7 +26,6 @@ const formulario = document.getElementById("form-nova-obra");
 let idAbertoNoModal = "";
 let resultadosAPI = [];
 
-// Ouvinte em Tempo Real
 function carregarAcervo() {
     onSnapshot(collection(db, "mangas"), (snapshot) => {
         acervo = [];
@@ -61,7 +59,6 @@ function renderizarMangas(lista) {
     });
 }
 
-// Funções Globais (window.)
 window.abrirModal = function(id) {
     const obra = acervo.find(i => i.idFirebase === id);
     if (obra) {
@@ -77,7 +74,7 @@ window.abrirModal = function(id) {
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         (obra.linksLeitura || []).forEach(l => {
-            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${l}" target="_blank">📖 Ler</a>`;
+            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${l}" target="_blank"><i class="ph ph-book-open"></i> Ler Opção</a>`;
         });
         modalFundo.style.display = "flex";
     }
@@ -95,6 +92,7 @@ window.prepararAdicao = function() {
     formulario.reset();
     document.getElementById("input-id-firebase").value = "";
     document.getElementById("resultado-busca-api").style.display = "none";
+    document.getElementById("titulo-form").innerText = "Nova Obra";
     modalFormFundo.style.display = "flex";
 }
 
@@ -109,13 +107,14 @@ window.prepararEdicao = function() {
         document.getElementById("input-sinopse").value = o.sinopse;
         document.getElementById("input-link-leitura").value = (o.linksLeitura || []).join('\n');
         document.getElementById("input-id-firebase").value = o.idFirebase;
+        document.getElementById("titulo-form").innerText = "Editar Obra";
         modalFundo.style.display = "none";
         modalFormFundo.style.display = "flex";
     }
 }
 
 window.excluirObra = async function() {
-    if(confirm("Excluir definitivamente?")) {
+    if(confirm("Excluir definitivamente da nuvem?")) {
         await deleteDoc(doc(db, "mangas", idAbertoNoModal));
         modalFundo.style.display = "none";
     }
@@ -124,6 +123,9 @@ window.excluirObra = async function() {
 formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = document.getElementById("input-id-firebase").value;
+    const btn = formulario.querySelector('.btn-salvar');
+    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
+    
     const obra = {
         titulo: document.getElementById("input-titulo").value,
         generos: document.getElementById("input-generos").value,
@@ -134,23 +136,38 @@ formulario.addEventListener("submit", async (e) => {
         linksLeitura: document.getElementById("input-link-leitura").value.split('\n').filter(l => l.trim()),
         status: "Em Andamento", nota: 5
     };
-    if (id) await updateDoc(doc(db, "mangas", id), obra);
-    else await addDoc(collection(db, "mangas"), obra);
-    modalFormFundo.style.display = "none";
+    
+    try {
+        if (id) await updateDoc(doc(db, "mangas", id), obra);
+        else await addDoc(collection(db, "mangas"), obra);
+        modalFormFundo.style.display = "none";
+    } catch(err) {
+        alert("Erro ao salvar!");
+    } finally {
+        btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
+    }
 });
 
 // Busca API Jikan
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value;
-    const res = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=5`);
-    const d = await res.json();
-    resultadosAPI = d.data || [];
-    const div = document.getElementById("resultado-busca-api");
-    div.innerHTML = "";
-    resultadosAPI.forEach((m, i) => {
-        div.innerHTML += `<div class="item-api" onclick="preencherComAPI(${i})"><img src="${m.images.jpg.image_url}"><h4>${m.title}</h4></div>`;
-    });
-    div.style.display = "block";
+    if(!q) return;
+    const btn = document.getElementById("btn-buscar-api");
+    btn.innerHTML = '<i class="ph ph-spinner-gap"></i>...';
+    
+    try {
+        const res = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=5`);
+        const d = await res.json();
+        resultadosAPI = d.data || [];
+        const div = document.getElementById("resultado-busca-api");
+        div.innerHTML = "";
+        resultadosAPI.forEach((m, i) => {
+            div.innerHTML += `<div class="item-api" onclick="preencherComAPI(${i})"><img src="${m.images.jpg.image_url}"><h4>${m.title}</h4></div>`;
+        });
+        div.style.display = "block";
+    } finally {
+        btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
+    }
 }
 
 window.preencherComAPI = function(i) {
@@ -179,7 +196,7 @@ window.importarDados = (e) => {
     reader.readAsText(e.target.files[0]);
 };
 
-// Filtros e Fechar Modais corrigidos
+// Filtros e Fechar Modais
 window.filtrarPorTipo = (t) => {
     document.querySelectorAll('.btn-filter').forEach(btn => {
         btn.classList.remove('active');

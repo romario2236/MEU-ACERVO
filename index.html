@@ -21,7 +21,7 @@
 
                 <div class="action-group">
                     <button id="btn-abrir-form" class="btn-primary" onclick="prepararAdicao()">
-                        <i class="ph ph-plus"></i> Adicionar
+                        <i class="ph ph-plus-circle"></i> Adicionar
                     </button>
                     
                     <div class="util-buttons">
@@ -51,12 +51,14 @@
         </div>
 
         <div class="grid-mangas" id="lista-mangas">
-            </div>
+            <!-- Injetado pelo JS -->
+        </div>
     </main>
 
+    <!-- === MODAL DA FICHA TÉCNICA === -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
-            <span class="botao-fechar" onclick="fecharModal()">&times;</span>
+            <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
             <div class="modal-corpo">
                 <img id="modal-capa" src="" alt="Capa">
                 <div class="modal-info">
@@ -82,72 +84,88 @@
                     
                     <div class="acoes-modal">
                         <div id="container-links-leitura" class="container-links"></div>
-                        <button id="btn-editar-obra" onclick="prepararEdicao()">✏️ Editar</button>
-                        <button id="btn-excluir-obra" onclick="excluirObra()">🗑️ Excluir</button>
+                        <button id="btn-editar-obra" onclick="prepararEdicao()"><i class="ph ph-pencil-simple"></i> Editar</button>
+                        <button id="btn-excluir-obra" onclick="excluirObra()"><i class="ph ph-trash"></i> Excluir</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- === MODAL DO FORMULÁRIO (Elegante) === -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
-            <span class="botao-fechar" onclick="fecharModalForm()">&times;</span>
+            <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
             <div class="busca-api-container">
-                <label>Busca Automática:</label>
+                <div class="busca-api-header">
+                    <i class="ph ph-magic-wand"></i>
+                    <label>Busca Automática Inteligente</label>
+                </div>
                 <div class="busca-api-controles">
-                    <input type="text" id="input-busca-api" placeholder="Nome da obra...">
-                    <button type="button" id="btn-buscar-api" onclick="buscarNaAPI()">🔍</button>
+                    <input type="text" id="input-busca-api" placeholder="Digite o nome do mangá ou anime...">
+                    <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
+                        <i class="ph ph-magnifying-glass"></i> Buscar
+                    </button>
                 </div>
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
-
-            <hr class="divisor-form">
 
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
                 <input type="hidden" id="input-id-firebase" value="">
 
                 <div class="grupo-input">
-                    <label>Título:</label>
-                    <input type="text" id="input-titulo" required>
+                    <label>Título Principal</label>
+                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
                 </div>
+                
                 <div class="grupo-input">
-                    <label>Gêneros:</label>
-                    <input type="text" id="input-generos" required>
+                    <label>Gêneros (separados por vírgula)</label>
+                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia, Sistema">
                 </div>
-                <div class="linha-inputs">
+                
+                <div class="linha-inputs-grid">
                     <div class="grupo-input">
-                        <label>Tipo:</label>
-                        <select id="input-tipo">
-                            <option value="Mangá">Mangá</option>
-                            <option value="Manhwa">Manhwa</option>
-                            <option value="Novel">Novel</option>
-                        </select>
+                        <label>Tipo</label>
+                        <div class="select-wrapper">
+                            <select id="input-tipo">
+                                <option value="Mangá">Mangá</option>
+                                <option value="Manhwa">Manhwa</option>
+                                <option value="Novel">Novel</option>
+                            </select>
+                            <i class="ph ph-caret-down select-icon"></i>
+                        </div>
                     </div>
                     <div class="grupo-input">
-                        <label>Capítulo:</label>
-                        <input type="number" id="input-capitulo" required>
+                        <label>Capítulo Atual</label>
+                        <input type="number" id="input-capitulo" required placeholder="0">
                     </div>
                 </div>
+                
                 <div class="grupo-input">
-                    <label>Capa (URL):</label>
-                    <input type="text" id="input-capa" required>
+                    <label>Link da Capa (URL)</label>
+                    <input type="url" id="input-capa" required placeholder="https://...">
                 </div>
+                
                 <div class="grupo-input">
-                    <label>Links de Leitura:</label>
-                    <textarea id="input-link-leitura" rows="2"></textarea>
+                    <label>Links de Leitura (um por linha)</label>
+                    <textarea id="input-link-leitura" rows="2" placeholder="Cole aqui os links para ler a obra..."></textarea>
                 </div>
+                
                 <div class="grupo-input">
-                    <label>Sinopse:</label>
-                    <textarea id="input-sinopse" rows="3" required></textarea>
+                    <label>Sinopse</label>
+                    <textarea id="input-sinopse" rows="4" required placeholder="Um breve resumo sobre a história..."></textarea>
                 </div>
+                
                 <input type="hidden" id="input-status" value="Em Andamento">
                 <input type="hidden" id="input-nota" value="5">
                 <input type="hidden" id="input-titulos-alt" value="">
-                <button type="submit" class="btn-salvar">Salvar na Nuvem</button>
+                
+                <button type="submit" class="btn-salvar">
+                    <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
+                </button>
             </form>
         </div>
     </div>
