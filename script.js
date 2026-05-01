@@ -1,6 +1,15 @@
 // === IMPORTAÇÕES DO FIREBASE (Via CDN) ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    doc, 
+    onSnapshot, 
+    enableIndexedDbPersistence 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // === AS SUAS CONFIGURAÇÕES REAIS DO FIREBASE ===
 const firebaseConfig = {
@@ -13,9 +22,18 @@ const firebaseConfig = {
   measurementId: "G-CE6CSXTGMN"
 };
 
-// Inicializa o Firebase e o Banco de Dados (Firestore)
+// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// === NOVO: ATIVAR PERSISTÊNCIA OFFLINE (DEIXA O SITE INSTANTÂNEO) ===
+enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code == 'failed-precondition') {
+        console.warn("Muitas abas abertas, o cache offline não foi ativado.");
+    } else if (err.code == 'unimplemented') {
+        console.warn("O navegador atual não suporta cache offline.");
+    }
+});
 
 let acervo = [];
 const conteinerMangas = document.getElementById("lista-mangas");
@@ -38,23 +56,27 @@ let tituloAbertoNoModal = "";
 let idAbertoNoModal = ""; 
 let resultadosAPI = [];
 
-// Carregar do Firebase
-async function carregarAcervo() {
-    conteinerMangas.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>Carregando acervo da nuvem...</p>";
-    try {
-        const querySnapshot = await getDocs(collection(db, "mangas"));
+// === NOVO: CARREGAR COM ONSNAPSHOT (MUITO MAIS RÁPIDO E EM TEMPO REAL) ===
+function carregarAcervo() {
+    conteinerMangas.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>Conectando...</p>";
+    
+    // O onSnapshot fica "ouvindo" o banco. Se você mudar algo no celular, muda no PC na hora.
+    onSnapshot(collection(db, "mangas"), (querySnapshot) => {
         acervo = []; 
         querySnapshot.forEach((doc) => {
             let obra = doc.data();
             obra.idFirebase = doc.id; 
             acervo.push(obra);
         });
+        // Ordena por título para não ficar bagunçado ao carregar
+        acervo.sort((a, b) => a.titulo.localeCompare(b.titulo));
         renderizarMangas(acervo);
-    } catch (erro) {
-        console.error(erro);
-        conteinerMangas.innerHTML = "<p style='color:#e74c3c;'>Erro ao carregar do banco de dados.</p>";
-    }
+    }, (erro) => {
+        console.error("Erro no streaming de dados:", erro);
+        conteinerMangas.innerHTML = "<p style='color:#e74c3c;'>Erro de conexão.</p>";
+    });
 }
+
 carregarAcervo();
 
 function criarCartaoPoster(obra) {
@@ -63,7 +85,7 @@ function criarCartaoPoster(obra) {
     return `
         <div class="cartao cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
             <div class="moldura-imagem">
-                <img src="${obra.capa}" class="capa-imagem-poster">
+                <img src="${obra.capa}" class="capa-imagem-poster" loading="lazy">
                 <span class="tag-status ${classeStatus}">${obra.status}</span>
                 <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
                 <span class="tag-capitulo">Cap. ${obra.capitulo}</span>
@@ -111,22 +133,13 @@ window.alterarCapitulo = async function(mudanca) {
     let valor = (parseInt(modalCapituloEditavel.value) || 0) + mudanca;
     if (valor < 0) valor = 0; 
     modalCapituloEditavel.value = valor;
-    const index = acervo.findIndex(i => i.idFirebase === idAbertoNoModal);
-    if (index !== -1) {
-        acervo[index].capitulo = valor.toString();
-        renderizarMangas(acervo);
-        await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: valor.toString() });
-    }
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: valor.toString() });
+    // Note: onSnapshot atualizará a tela automaticamente
 }
 
 window.atualizarCapituloDigitado = async function() {
     let valor = parseInt(modalCapituloEditavel.value) || 0;
-    const index = acervo.findIndex(i => i.idFirebase === idAbertoNoModal);
-    if (index !== -1) {
-        acervo[index].capitulo = valor.toString();
-        renderizarMangas(acervo);
-        await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: valor.toString() });
-    }
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: valor.toString() });
 }
 
 window.prepararAdicao = function() {
@@ -159,8 +172,7 @@ window.prepararEdicao = function() {
 window.excluirObra = async function() {
     if (confirm("Excluir obra permanentemente?")) {
         await deleteDoc(doc(db, "mangas", idAbertoNoModal));
-        acervo = acervo.filter(i => i.idFirebase !== idAbertoNoModal);
-        renderizarMangas(acervo); fecharModal();
+        fecharModal();
     }
 }
 
@@ -181,17 +193,13 @@ formulario.addEventListener("submit", async (e) => {
     };
 
     if (id === "") {
-        const ref = await addDoc(collection(db, "mangas"), obra);
-        obra.idFirebase = ref.id; acervo.unshift(obra);
+        await addDoc(collection(db, "mangas"), obra);
     } else {
         await updateDoc(doc(db, "mangas", id), obra);
-        const idx = acervo.findIndex(i => i.idFirebase === id);
-        obra.idFirebase = id; acervo[idx] = obra;
     }
-    renderizarMangas(acervo); fecharModalForm();
+    fecharModalForm();
 });
 
-// Backup
 window.exportarDados = function() {
     const dados = acervo.map(({ idFirebase, ...r }) => r);
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
@@ -208,12 +216,10 @@ window.importarDados = function(e) {
         for (const o of lista) {
             if (!acervo.some(i => i.titulo === o.titulo)) await addDoc(collection(db, "mangas"), o);
         }
-        location.reload();
     };
     reader.readAsText(e.target.files[0]);
 };
 
-// API
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value;
     const res = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=5`);
