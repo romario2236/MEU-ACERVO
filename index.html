@@ -57,7 +57,6 @@
             <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
         </div>
 
-        <!-- Os cartões são injetados aqui pelo JavaScript -->
         <div class="grid-mangas" id="lista-mangas"></div>
     </main>
 
@@ -108,7 +107,6 @@
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
-            <!-- Integração com API Externa -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
@@ -123,7 +121,6 @@
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
-            <!-- Formulário Principal -->
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
                 <input type="hidden" id="input-id-firebase" value="">
@@ -131,6 +128,11 @@
                 <div class="grupo-input">
                     <label>Título Principal</label>
                     <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
+                </div>
+
+                <div class="grupo-input">
+                    <label>Títulos Alternativos (Opcional)</label>
+                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
                 </div>
                 
                 <div class="grupo-input">
@@ -155,6 +157,24 @@
                         <input type="number" id="input-capitulo" required placeholder="0">
                     </div>
                 </div>
+
+                <div class="linha-inputs-grid">
+                    <div class="grupo-input">
+                        <label>Status</label>
+                        <div class="select-wrapper">
+                            <select id="input-status">
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Finalizado">Finalizado</option>
+                                <option value="Hiato">Hiato</option>
+                            </select>
+                            <i class="ph ph-caret-down select-icon"></i>
+                        </div>
+                    </div>
+                    <div class="grupo-input">
+                        <label>Nota (1 a 5)</label>
+                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required placeholder="Ex: 5">
+                    </div>
+                </div>
                 
                 <div class="grupo-input">
                     <label>Link da Capa (URL)</label>
@@ -171,11 +191,6 @@
                     <textarea id="input-sinopse" rows="4" required placeholder="Um breve resumo sobre a história..."></textarea>
                 </div>
                 
-                <!-- Campos ocultos para metadados padrões -->
-                <input type="hidden" id="input-status" value="Em Andamento">
-                <input type="hidden" id="input-nota" value="5">
-                <input type="hidden" id="input-titulos-alt" value="">
-                
                 <button type="submit" class="btn-salvar">
                     <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
                 </button>
@@ -183,7 +198,6 @@
         </div>
     </div>
 
-    <!-- Script Principal -->
     <script type="module" src="script.js"></script>
 </body>
 </html>

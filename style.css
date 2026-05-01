@@ -21,7 +21,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Scrollbar Personalizada */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-color); }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
@@ -42,7 +41,6 @@ body {
 #barra-pesquisa { width: 100%; padding: 14px 14px 14px 44px; background: #252525; border: 1px solid transparent; border-radius: var(--radius); color: white; transition: all 0.2s;}
 #barra-pesquisa:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); }
 
-/* Filtros */
 .filter-nav { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
 .btn-filter { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; font-weight: 500; transition: 0.2s;}
 .btn-filter.active { background: white; color: black; border-color: white; }
@@ -61,7 +59,7 @@ body {
 .btn-salvar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 132, 255, 0.3); }
 
 /* ==========================================
-   4. GRID DE OBRAS (CARTÕES) - AJUSTADO PARA NÃO CORTAR
+   4. GRID DE OBRAS (CARTÕES)
    ========================================== */
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
@@ -70,7 +68,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .cartao-poster { background: var(--card-bg); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; border: 1px solid #222; }
 .cartao-poster:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-color: #333;}
 
-/* A mágica do enquadramento perfeito acontece aqui */
 .moldura-imagem { height: 260px; position: relative; background: #0a0a0a; display: flex; align-items: center; justify-content: center; }
 .moldura-imagem img { width: 100%; height: 100%; object-fit: contain; } 
 
@@ -89,7 +86,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
 /* Detalhes da Obra (Modal 1) */
 .modal-corpo { display: flex; gap: 30px; flex-wrap: wrap; }
-#modal-capa { width: 220px; border-radius: 12px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #0a0a0a; } /* Adicionado object-fit e fundo escuro aqui também */
+#modal-capa { width: 220px; border-radius: 12px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #0a0a0a; }
 .modal-info { flex: 1; min-width: 280px; }
 .modal-info h2 { font-size: 2rem; margin-bottom: 8px; line-height: 1.1; letter-spacing: -0.5px;}
 
