@@ -14,6 +14,11 @@
         <div class="controles-topo">
             <input type="text" id="barra-pesquisa" placeholder="Buscar mangá, manhwa ou novel...">
             <button id="btn-abrir-form" onclick="prepararAdicao()">+ Adicionar Obra</button>
+            
+            <!-- Botões de Backup -->
+            <button id="btn-exportar" class="btn-secundario" onclick="exportarDados()">📥 Exportar JSON</button>
+            <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
+            <button id="btn-importar-trigger" class="btn-secundario" onclick="document.getElementById('input-importar').click()">📤 Importar JSON</button>
         </div>
         
         <div class="filtros">
@@ -93,8 +98,6 @@
 
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
-                
-                <!-- AQUI ESTÁ A ALTERAÇÃO 1: Campo escondido para o ID do Firebase -->
                 <input type="hidden" id="input-id-firebase" value="">
 
                 <div class="grupo-input">
@@ -162,7 +165,6 @@
         </div>
     </div>
 
-    <!-- AQUI ESTÁ A ALTERAÇÃO 2: A chamada do script com o type="module" -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
