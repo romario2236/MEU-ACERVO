@@ -581,10 +581,32 @@ window.importarDados = (e) => {
 };
 
 // ==========================================
-// LIBERANDO FUNÇÕES PARA O HTML ENXERGAR
+// CONTROLE DO MODAL DE FORMULÁRIO (NOVA OBRA)
 // ==========================================
-if (typeof abrirModalForm === "function") window.abrirModalForm = abrirModalForm;
-if (typeof fecharModalForm === "function") window.fecharModalForm = fecharModalForm;
-if (typeof fecharModalFormPeloFundo === "function") window.fecharModalFormPeloFundo = fecharModalFormPeloFundo;
-if (typeof buscarNaAPI === "function") window.buscarNaAPI = buscarNaAPI;
-if (typeof adicionarCampoLink === "function") window.adicionarCampoLink = adicionarCampoLink;
+
+// Função para ABRIR a janela
+window.abrirModalForm = () => {
+    const modalForm = document.getElementById('modal-form-fundo');
+    const form = document.getElementById('form-nova-obra');
+    const tituloForm = document.getElementById('titulo-form');
+    const inputId = document.getElementById('input-id-firebase');
+
+    if (form) form.reset(); // Limpa os campos de texto
+    if (inputId) inputId.value = ""; // Garante que é uma obra nova (não edição)
+    if (tituloForm) tituloForm.innerText = "Nova Obra"; // Reseta o título principal
+
+    if (modalForm) modalForm.style.display = 'flex'; // Exibe a tela preta de fundo
+};
+
+// Função para FECHAR a janela no botão X
+window.fecharModalForm = () => {
+    const modalForm = document.getElementById('modal-form-fundo');
+    if (modalForm) modalForm.style.display = 'none';
+};
+
+// Função para FECHAR a janela clicando fora dela (no fundo preto)
+window.fecharModalFormPeloFundo = (event) => {
+    if (event.target.id === 'modal-form-fundo') {
+        window.fecharModalForm();
+    }
+};
