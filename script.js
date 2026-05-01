@@ -97,17 +97,76 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. INTERFACE E BUSCA AVANÇADA (Filtros Cruzados)
+// 4. INTERFACE, BUSCA AVANÇADA E PAGINAÇÃO (Scroll Infinito)
 // ============================================================================
 let filtroTexto = "";
 let filtroTipo = "Todos";
 
-function renderizarMangas(lista) {
-    conteinerMangas.innerHTML = "";
-    document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${lista.length} obras`;
-    lista.forEach(obra => {
+// Variáveis de Controle do Scroll Infinito
+let itensPorPagina = 24; // Quantidade de obras carregadas por vez
+let itensCarregados = 0;
+let listaAtualFiltrada = [];
+let carregandoScroll = false;
+
+// O CÉREBRO: Analisa todos os filtros de uma vez
+window.aplicarFiltros = () => {
+    let listaFiltrada = acervo;
+
+    // Filtro de Texto
+    if (filtroTexto) {
+        listaFiltrada = listaFiltrada.filter(o => 
+            (o.titulo || "").toLowerCase().includes(filtroTexto) || 
+            (o.titulosAlternativos || "").toLowerCase().includes(filtroTexto)
+        );
+    }
+
+    // Filtro de Tipo
+    if (filtroTipo !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
+    }
+
+    // Filtro de Status
+    const statusSelect = document.getElementById("select-status");
+    if (statusSelect && statusSelect.value !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
+    }
+
+    // Ordenação
+    const ordemSelect = document.getElementById("select-ordem");
+    if (ordemSelect) {
+        const ordem = ordemSelect.value;
+        listaFiltrada.sort((a, b) => {
+            if (ordem === "az") return (a.titulo || "").localeCompare(b.titulo || "");
+            if (ordem === "za") return (b.titulo || "").localeCompare(a.titulo || "");
+            if (ordem === "nota-alta") return (b.nota || 0) - (a.nota || 0);
+            if (ordem === "nota-baixa") return (a.nota || 0) - (b.nota || 0);
+            if (ordem === "cap-alto") return (parseInt(b.capitulo) || 0) - (parseInt(a.capitulo) || 0);
+            return 0;
+        });
+    }
+
+    // Prepara os dados para o Scroll Infinito
+    listaAtualFiltrada = listaFiltrada;
+    itensCarregados = 0;
+    conteinerMangas.innerHTML = ""; // Limpa a tela para aplicar o novo filtro do zero
+    document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras`;
+    
+    // Chama o primeiro lote de capas
+    carregarMaisItens();
+};
+
+// FUNÇÃO QUE DESENHA AS CAPAS AOS POUCOS
+function carregarMaisItens() {
+    // Recorta apenas o próximo lote de obras da lista filtrada
+    const proximosItens = listaAtualFiltrada.slice(itensCarregados, itensCarregados + itensPorPagina);
+    
+    if (proximosItens.length === 0) return; // Se não tem mais nada, ignora
+
+    proximosItens.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         let iconeStatus = (obra.status === 'Em Andamento') ? "▶" : (obra.status === 'Finalizado' ? "✔" : "⏸");
+        
+        // Adicionamos o atributo loading="lazy" nativo para economizar ainda mais a rede
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
@@ -122,62 +181,39 @@ function renderizarMangas(lista) {
                 </div>
             </div>`;
     });
+
+    // Atualiza a contagem de quantos já desenhamos na tela
+    itensCarregados += proximosItens.length;
 }
 
-// O CÉREBRO: Analisa todos os filtros de uma vez
-window.aplicarFiltros = () => {
-    let listaFiltrada = acervo;
-
-    // 1. Aplica Filtro de Texto (Pesquisa)
-    if (filtroTexto) {
-        listaFiltrada = listaFiltrada.filter(o => 
-            (o.titulo || "").toLowerCase().includes(filtroTexto) || 
-            (o.titulosAlternativos || "").toLowerCase().includes(filtroTexto)
-        );
+// O VIGIA DA BARRA DE ROLAGEM
+window.addEventListener('scroll', () => {
+    if (carregandoScroll) return; // Evita que o navegador chame a função dezenas de vezes seguidas
+    
+    // Calcula se o usuário chegou perto (200px) do fim da página
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
+        carregandoScroll = true;
+        carregarMaisItens();
+        
+        // Libera o vigia após 100 milissegundos
+        setTimeout(() => {
+            carregandoScroll = false;
+        }, 100);
     }
+});
 
-    // 2. Aplica Filtro de Tipo (Mangá, Manhwa, Novel)
-    if (filtroTipo !== "Todos") {
-        listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
-    }
-
-    // 3. Aplica Filtro de Status
-    const statusSelect = document.getElementById("select-status");
-    if (statusSelect && statusSelect.value !== "Todos") {
-        listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
-    }
-
-    // 4. Aplica a Ordenação
-    const ordemSelect = document.getElementById("select-ordem");
-    if (ordemSelect) {
-        const ordem = ordemSelect.value;
-        listaFiltrada.sort((a, b) => {
-            if (ordem === "az") return (a.titulo || "").localeCompare(b.titulo || "");
-            if (ordem === "za") return (b.titulo || "").localeCompare(a.titulo || "");
-            if (ordem === "nota-alta") return (b.nota || 0) - (a.nota || 0);
-            if (ordem === "nota-baixa") return (a.nota || 0) - (b.nota || 0);
-            if (ordem === "cap-alto") return (parseInt(b.capitulo) || 0) - (parseInt(a.capitulo) || 0);
-            return 0;
-        });
-    }
-
-    renderizarMangas(listaFiltrada);
-};
-
-// Evento da barra de pesquisa
+// Eventos dos inputs e botões
 barraPesquisa.addEventListener("input", (e) => {
     filtroTexto = e.target.value.toLowerCase();
     aplicarFiltros();
 });
 
-// Evento dos botões de tipo
 window.filtrarPorTipo = (t) => {
     document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
     filtroTipo = t;
     aplicarFiltros();
 };
-
 // ============================================================================
 // 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
 // ============================================================================
