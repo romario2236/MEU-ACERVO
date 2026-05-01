@@ -11,7 +11,7 @@
 <body>
 
     <!-- ========================================== -->
-    <!-- 1. CABEÇALHO (Logo, Buscas e Filtros)      -->
+    <!-- 1. CABEÇALHO (Buscas e Filtros)            -->
     <!-- ========================================== -->
     <header class="main-header">
         <div class="header-container">
@@ -20,7 +20,7 @@
             <div class="toolbar">
                 <div class="search-wrapper">
                     <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="barra-pesquisa" placeholder="Buscar no acervo...">
+                    <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo...">
                 </div>
 
                 <div class="action-group">
@@ -29,11 +29,11 @@
                     </button>
                     
                     <div class="util-buttons">
-                        <button class="btn-icon" title="Exportar Backup JSON" onclick="exportarDados()">
+                        <button class="btn-icon" title="Exportar Backup" onclick="exportarDados()">
                             <i class="ph ph-download-simple"></i>
                         </button>
                         <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
-                        <button class="btn-icon" title="Importar Backup JSON" onclick="document.getElementById('input-importar').click()">
+                        <button class="btn-icon" title="Importar Backup" onclick="document.getElementById('input-importar').click()">
                             <i class="ph ph-upload-simple"></i>
                         </button>
                     </div>
@@ -56,8 +56,10 @@
         <div class="stats-bar">
             <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
         </div>
-
-        <div class="grid-mangas" id="lista-mangas"></div>
+        
+        <div class="grid-mangas" id="lista-mangas">
+            <!-- Os cartões são injetados aqui pelo JavaScript -->
+        </div>
     </main>
 
     <!-- ========================================== -->
@@ -69,25 +71,19 @@
         <div class="modal-conteudo">
             <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
             <div class="modal-corpo">
-                <img id="modal-capa" src="" alt="Capa da Obra">
-                
+                <img id="modal-capa" src="" alt="Capa">
                 <div class="modal-info">
                     <h2 id="modal-titulo">Título</h2>
-                    
                     <div class="meta-badges">
                         <span id="modal-tipo" class="badge badge-tipo">Tipo</span>
                         <span id="modal-status" class="badge badge-status">Status</span>
                         <span class="badge badge-nota"><i class="ph-fill ph-star"></i> <span id="modal-nota-texto">5.0</span></span>
                     </div>
-                    
                     <p class="titulos-alt"><strong>Alts:</strong> <span id="modal-titulos-alt">...</span></p>
                     <div id="modal-generos" class="modal-generos"></div>
                     
                     <div class="controle-leitura">
-                        <div class="leitura-label">
-                            <i class="ph ph-bookmark-simple"></i>
-                            <strong>Progresso de Leitura</strong>
-                        </div>
+                        <div class="leitura-label"><i class="ph ph-bookmark-simple"></i> <strong>Capítulo Atual</strong></div>
                         <div class="contador">
                             <button class="btn-contador" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
                             <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
@@ -118,102 +114,89 @@
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
-            <!-- ÁREA DA API MELHORADA -->
             <div class="busca-api-container">
-                <div class="busca-api-header">
-                    <i class="ph ph-magic-wand"></i>
-                    <label>Busca Automática Inteligente</label>
-                </div>
+                <div class="busca-api-header"><i class="ph ph-magic-wand"></i> <label>Busca Inteligente</label></div>
                 <div class="busca-api-controles">
                     <select id="select-fonte-api" class="select-api">
-                        <option value="anilist">AniList</option>
-                        <option value="mangadex">MangaDex</option>
-                        <option value="jikan">MyAnimeList</option>
+                        <option value="anilist">AniList (Global)</option>
+                        <option value="mangadex">MangaDex (Multilingue)</option>
+                        <option value="jikan">MyAnimeList (Oficial)</option>
                     </select>
-                    <input type="text" id="input-busca-api" placeholder="Digite o nome...">
+                    <input type="text" id="input-busca-api" placeholder="Nome original ou alternativo...">
                     <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
-                        <i class="ph ph-magnifying-glass"></i> Buscar
+                        <i class="ph ph-magnifying-glass"></i>
                     </button>
                 </div>
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
             <form id="form-nova-obra">
-                <input type="hidden" id="input-titulo-original" value="">
                 <input type="hidden" id="input-id-firebase" value="">
-
+                
                 <div class="grupo-input">
                     <label>Título Principal</label>
-                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
-                </div>
-
-                <div class="grupo-input">
-                    <label>Títulos Alternativos (Opcional)</label>
-                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
+                    <input type="text" id="input-titulo" required>
                 </div>
                 
                 <div class="grupo-input">
-                    <label>Gêneros (separados por vírgula)</label>
-                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia, Sistema">
+                    <label>Títulos Alternativos</label>
+                    <input type="text" id="input-titulos-alt">
+                </div>
+                
+                <div class="grupo-input">
+                    <label>Gêneros</label>
+                    <input type="text" id="input-generos" required>
                 </div>
                 
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Tipo</label>
-                        <div class="select-wrapper">
-                            <select id="input-tipo">
-                                <option value="Mangá">Mangá</option>
-                                <option value="Manhwa">Manhwa</option>
-                                <option value="Novel">Novel</option>
-                            </select>
-                            <i class="ph ph-caret-down select-icon"></i>
-                        </div>
+                        <select id="input-tipo">
+                            <option value="Mangá">Mangá</option>
+                            <option value="Manhwa">Manhwa</option>
+                            <option value="Novel">Novel</option>
+                        </select>
                     </div>
                     <div class="grupo-input">
-                        <label>Capítulo Atual</label>
-                        <input type="number" id="input-capitulo" required placeholder="0">
+                        <label>Capítulo</label>
+                        <input type="number" id="input-capitulo" required>
                     </div>
                 </div>
-
+                
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Status</label>
-                        <div class="select-wrapper">
-                            <select id="input-status">
-                                <option value="Em Andamento">Em Andamento</option>
-                                <option value="Finalizado">Finalizado</option>
-                                <option value="Hiato">Hiato</option>
-                            </select>
-                            <i class="ph ph-caret-down select-icon"></i>
-                        </div>
+                        <select id="input-status">
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Hiato">Hiato</option>
+                        </select>
                     </div>
                     <div class="grupo-input">
                         <label>Nota (1 a 5)</label>
-                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required placeholder="Ex: 5">
+                        <input type="number" id="input-nota" step="0.1" min="1" max="5">
                     </div>
                 </div>
                 
                 <div class="grupo-input">
-                    <label>Link da Capa (URL)</label>
-                    <input type="url" id="input-capa" required placeholder="https://...">
+                    <label>Capa (URL)</label>
+                    <input type="url" id="input-capa" required>
                 </div>
                 
-                <div class="grupo-input" id="area-links">
-                    <label>Links para Leitura</label>
+                <div class="grupo-input">
+                    <label>Links de Leitura</label>
                     <div id="container-links-inputs"></div>
                     <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
-                        <i class="ph ph-plus"></i> Adicionar outro link
+                        <i class="ph ph-plus"></i> Adicionar Link
                     </button>
                 </div>
                 
                 <div class="grupo-input">
                     <label>Sinopse</label>
-                    <textarea id="input-sinopse" rows="4" required placeholder="Um breve resumo sobre a história..."></textarea>
+                    <textarea id="input-sinopse" rows="4" required></textarea>
                 </div>
                 
-                <button type="submit" class="btn-salvar">
-                    <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
-                </button>
+                <button type="submit" class="btn-salvar"><i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem</button>
             </form>
         </div>
     </div>
