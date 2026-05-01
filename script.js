@@ -333,10 +333,11 @@ window.buscarNaAPI = async function() {
                 
                 let capa = "";
                 if (fileName) {
-                    // Link original da capa (usando a miniatura .256.jpg para ser mais rápido)
-                    const urlCapaOriginal = `https://uploads.mangadex.org/covers/${m.id}/${fileName}.256.jpg`;
-                    // Passamos o link da IMAGEM pela ponte também!
-                    capa = `https://corsproxy.io/?${encodeURIComponent(urlCapaOriginal)}`;
+                    // Tiramos o "https://" da URL original para o proxy de imagem funcionar
+                    const urlCapaOriginal = `uploads.mangadex.org/covers/${m.id}/${fileName}.256.jpg`;
+                    
+                    // Usamos a ponte "wsrv.nl", que é especialista em burlar bloqueio de imagens
+                    capa = `https://wsrv.nl/?url=${urlCapaOriginal}`;
                 }
                 m.minhaCapaMangaDex = capa;
                 
