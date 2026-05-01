@@ -9,62 +9,67 @@
 </head>
 <body>
 
-    <header class="main-header">
-     <!-- 1. CABEÇALHO LIMPO (Só Busca e Ações) -->
-    <header class="header-limpo">
-        <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1400px; margin: 0 auto; padding: 15px 20px;">
+    <!-- ==========================================
+         1. CABEÇALHO (Busca e Botão Adicionar)
+    =========================================== -->
+    <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
+        <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
             
-            <!-- Barra de Pesquisa -->
-            <div class="busca-container" style="flex-grow: 1; max-width: 500px;">
-                <input type="text" id="input-busca" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 15px; border-radius: 8px; background: #222; border: 1px solid #333; color: #fff;">
-            </div>
-
-            <!-- Botões de Ação (Adicionar e Backup) -->
-            <div class="acoes-container" style="display: flex; gap: 10px;">
-                <button class="btn-primary" onclick="abrirModal()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold;">
-                    <i class="ph ph-plus-circle"></i> Adicionar
-                </button>
-            </div>
+            <input type="text" id="input-busca" placeholder="Buscar título ou nome alternativo..." style="width: 100%; max-width: 400px; padding: 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
+            
+            <button onclick="abrirModal()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
+            </button>
+            
         </div>
     </header>
 
-    <!-- 2. NOVO LAYOUT DIVIDIDO (Lateral + Obras) -->
-    <div class="layout-principal">
+    <!-- ==========================================
+         2. LAYOUT PRINCIPAL (Lateral + Grade)
+    =========================================== -->
+    <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
-        <!-- BARRA LATERAL ESQUERDA -->
-        <aside class="sidebar-filtros">
-            <h3>Categorias</h3>
-            <nav class="filter-nav-vertical">
-                <button class="btn-filter active" onclick="filtrarPorTipo('Todos')">Todos</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Mangá')">Mangás</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Novel')">Novels</button>
-            </nav>
+        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
+        <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
+            
+            <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;">
+                <button class="btn-filter active" onclick="filtrarPorTipo('Todos')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #2563eb; color: white;">Todos</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Mangá')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Mangás</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Manhwas</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Novel')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Novels</button>
+            </div>
 
-            <h3>Filtros Avançados</h3>
-            <div class="filtros-avancados-vertical">
-                <label>Status da Obra</label>
-                <select id="select-status" onchange="aplicarFiltros()">
-                    <option value="Todos">Todos</option>
-                    <option value="Em Andamento">Em Andamento</option>
-                    <option value="Finalizado">Finalizado</option>
-                    <option value="Hiato">Hiato</option>
-                </select>
+            <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #94a3b8; font-size: 0.85rem;">Status da Obra</label>
+                    <select id="select-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                        <option value="Todos">Todos</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Hiato">Hiato</option>
+                    </select>
+                </div>
 
-                <label>Ordenar por</label>
-                <select id="select-ordem" onchange="aplicarFiltros()">
-                    <option value="az">A - Z</option>
-                    <option value="za">Z - A</option>
-                    <option value="nota-alta">Maior Nota</option>
-                    <option value="nota-baixa">Menor Nota</option>
-                    <option value="cap-alto">Mais Capítulos</option>
-                </select>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #94a3b8; font-size: 0.85rem;">Ordenar por</label>
+                    <select id="select-ordem" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                        <option value="az">A - Z</option>
+                        <option value="za">Z - A</option>
+                        <option value="nota-alta">Maior Nota</option>
+                        <option value="nota-baixa">Menor Nota</option>
+                        <option value="cap-alto">Mais Capítulos</option>
+                    </select>
+                </div>
+
             </div>
         </aside>
 
-        <!-- LADO DIREITO (Onde aparecem as capas) -->
-        <main class="conteudo-principal">
-            <div id="contador-total" style="margin-bottom: 15px; color: #888; font-weight: 500;"></div>
+        <!-- LADO DIREITO (Grade de Capas) -->
+        <main style="min-width: 0;">
+            <div id="contador-total" style="color: #888; margin-bottom: 20px; font-weight: 500;"></div>
             
             <div id="conteiner-mangas" class="grid-mangas">
                 <!-- As capas serão desenhadas pelo JavaScript aqui -->
@@ -72,16 +77,10 @@
         </main>
 
     </div>
-    </header>
 
-    <main>
-        <div class="stats-bar">
-            <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
-        </div>
-        
-        <div class="grid-mangas" id="lista-mangas"></div>
-    </main>
-
+    <!-- ==========================================
+         3. MODAL DA OBRA (Mantido intacto)
+    =========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
             <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
@@ -129,6 +128,9 @@
         </div>
     </div>
 
+    <!-- ==========================================
+         4. MODAL DE CADASTRO (Mantido intacto)
+    =========================================== -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
