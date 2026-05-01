@@ -312,32 +312,40 @@ window.buscarNaAPI = async function() {
             div.innerHTML = "<p style='padding:15px; color:#aaa;'>Nada encontrado.</p>";
         } else {
             resultadosAPI.forEach((m, i) => {
-                let titulo = "", capa = "", ano = "";
-                if(fonte === 'anilist') {
-                    titulo = m.title.romaji || m.title.english || m.title.native;
-                    capa = m.coverImage.extraLarge;
-                    ano = m.startDate.year || "N/A";
-                } else if(fonte === 'mangadex') {
-                    titulo = m.attributes.title.en || Object.values(m.attributes.title)[0];
-                    let art = m.relationships.find(r => r.type === 'cover_art');
-                    capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes.fileName}` : "";
-                    ano = m.attributes.year || "N/A";
-                    m.minhaCapaMangaDex = capa;
-                } else {
-                    titulo = m.title;
-                    capa = m.images.jpg.image_url;
-                    ano = m.published?.prop?.from?.year || "N/A";
-                }
+                let titulo = "Sem Título"; 
+                let capa = ""; 
+                let ano = "N/A";
+                
+                try {
+                    // Aqui está a BLINDAGEM. Os pontos de interrogação (?.) protegem contra erros.
+                    if(fonte === 'anilist') {
+                        titulo = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
+                        capa = m.coverImage?.extraLarge || "";
+                        ano = m.startDate?.year || "N/A";
+                    } else if(fonte === 'mangadex') {
+                        let tObj = m.attributes?.title || {};
+                        titulo = tObj.en || tObj["pt-br"] || Object.values(tObj)[0] || "Sem Título";
+                        let art = (m.relationships || []).find(r => r.type === 'cover_art');
+                        capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
+                        ano = m.attributes?.year || "N/A";
+                        m.minhaCapaMangaDex = capa;
+                    } else {
+                        titulo = m.title || "Sem Título";
+                        capa = m.images?.jpg?.image_url || "";
+                        ano = m.published?.prop?.from?.year || "N/A";
+                    }
+                } catch(e) { console.warn("Obra pulada por erro de dados", e); }
+                
                 div.innerHTML += `<div class="item-api" onclick="preencherComAPI(${i})"><img src="${capa}"><div><h4>${titulo}</h4><p>${ano}</p></div></div>`;
             });
         }
         div.style.display = "block";
     } catch(err) {
         console.error("Erro na API:", err);
-        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão. Verifique sua internet.</p>";
+        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão. Verifique se o nome possui caracteres especiais.</p>";
         div.style.display = "block";
     } finally {
-        btn.innerHTML = '<i class="ph ph-magnifying-glass"></i>';
+        btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
         btn.disabled = false;
     }
 }
@@ -348,63 +356,74 @@ window.preencherComAPI = function(i) {
     
     let titulo = "", alts = "", capa = "", sinopse = "", generos = "", status = "Em Andamento", capitulos = 0, nota = 5, tipo = "Mangá";
 
-    if (fonteAtualAPI === 'anilist') {
-        titulo = m.title.romaji || m.title.english || m.title.native;
-        let altArr = [];
-        if(m.title.english) altArr.push(m.title.english);
-        if(m.title.native) altArr.push(m.title.native);
-        alts = altArr.join(", ");
-        capa = m.coverImage.extraLarge;
-        sinopse = (m.synopsis || "").replace(/<[^>]+>/g, '');
-        generos = (m.genres || []).join(", ");
-        capitulos = m.chapters || 0;
-        nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
-        if (m.status === "FINISHED") status = "Finalizado";
-    } 
-    else if (fonteAtualAPI === 'mangadex') {
-        titulo = m.attributes.title.en || Object.values(m.attributes.title)[0];
-        let altArr = [];
-        (m.attributes.altTitles || []).forEach(t => altArr.push(Object.values(t)[0]));
-        alts = altArr.join(", ");
-        capa = m.minhaCapaMangaDex;
-        sinopse = m.attributes.description.en || m.attributes.description["pt-br"] || "";
-        let tags = [];
-        (m.attributes.tags || []).forEach(t => tags.push(t.attributes.name.en));
-        generos = tags.join(", ");
-        capitulos = m.attributes.lastChapter || 0;
-        if (m.attributes.status === "completed") status = "Finalizado";
+    try {
+        if (fonteAtualAPI === 'anilist') {
+            titulo = m.title?.romaji || m.title?.english || m.title?.native || "";
+            let altArr = [];
+            if(m.title?.english) altArr.push(m.title.english);
+            if(m.title?.native) altArr.push(m.title.native);
+            alts = altArr.join(", ");
+            capa = m.coverImage?.extraLarge || "";
+            sinopse = (m.synopsis || "").replace(/<[^>]+>/g, '');
+            generos = (m.genres || []).join(", ");
+            capitulos = m.chapters || 0;
+            nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
+            if (m.status === "FINISHED") status = "Finalizado";
+        } 
+        else if (fonteAtualAPI === 'mangadex') {
+            let tObj = m.attributes?.title || {};
+            titulo = tObj.en || tObj["pt-br"] || Object.values(tObj)[0] || "";
+            let altArr = [];
+            (m.attributes?.altTitles || []).forEach(t => {
+                let val = Object.values(t)[0];
+                if(val) altArr.push(val);
+            });
+            alts = altArr.join(", ");
+            capa = m.minhaCapaMangaDex || "";
+            
+            let descObj = m.attributes?.description || {};
+            sinopse = descObj["pt-br"] || descObj.en || "";
+            
+            let tags = [];
+            (m.attributes?.tags || []).forEach(t => { if(t.attributes?.name?.en) tags.push(t.attributes.name.en) });
+            generos = tags.join(", ");
+            capitulos = m.attributes?.lastChapter || 0;
+            if (m.attributes?.status === "completed") status = "Finalizado";
+        }
+        else {
+            titulo = m.title || "";
+            let altArr = [];
+            if(m.title_english) altArr.push(m.title_english);
+            if(m.title_japanese) altArr.push(m.title_japanese);
+            alts = altArr.join(", ");
+            capa = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
+            sinopse = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
+            let tags = [];
+            if(m.genres) m.genres.forEach(g => tags.push(g.name));
+            generos = tags.join(", ");
+            capitulos = m.chapters || 0;
+            nota = m.score ? (m.score / 2).toFixed(1) : 5;
+            if (m.status === "Finished") status = "Finalizado";
+        }
+
+        let textoTipo = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
+        if (textoTipo.includes("manhwa") || textoTipo.includes("webtoon")) tipo = "Manhwa";
+        else if (textoTipo.includes("novel")) tipo = "Novel";
+
+        document.getElementById("input-titulo").value = titulo;
+        document.getElementById("input-titulos-alt").value = alts;
+        document.getElementById("input-capa").value = capa;
+        document.getElementById("input-sinopse").value = sinopse;
+        document.getElementById("input-generos").value = generos;
+        document.getElementById("input-capitulo").value = capitulos;
+        document.getElementById("input-nota").value = nota;
+        document.getElementById("input-status").value = status;
+        document.getElementById("input-tipo").value = tipo;
+
+        document.getElementById("resultado-busca-api").style.display = "none";
+    } catch(e) {
+        console.error("Erro ao preencher dados:", e);
     }
-    else {
-        titulo = m.title;
-        let altArr = [];
-        if(m.title_english) altArr.push(m.title_english);
-        if(m.title_japanese) altArr.push(m.title_japanese);
-        alts = altArr.join(", ");
-        capa = m.images.jpg.large_image_url || m.images.jpg.image_url;
-        sinopse = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
-        let tags = [];
-        if(m.genres) m.genres.forEach(g => tags.push(g.name));
-        generos = tags.join(", ");
-        capitulos = m.chapters || 0;
-        nota = m.score ? (m.score / 2).toFixed(1) : 5;
-        if (m.status === "Finished") status = "Finalizado";
-    }
-
-    let textoTipo = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
-    if (textoTipo.includes("manhwa") || textoTipo.includes("webtoon")) tipo = "Manhwa";
-    else if (textoTipo.includes("novel")) tipo = "Novel";
-
-    document.getElementById("input-titulo").value = titulo;
-    document.getElementById("input-titulos-alt").value = alts;
-    document.getElementById("input-capa").value = capa;
-    document.getElementById("input-sinopse").value = sinopse;
-    document.getElementById("input-generos").value = generos;
-    document.getElementById("input-capitulo").value = capitulos;
-    document.getElementById("input-nota").value = nota;
-    document.getElementById("input-status").value = status;
-    document.getElementById("input-tipo").value = tipo;
-
-    document.getElementById("resultado-busca-api").style.display = "none";
 }
 
 // ============================================================================
