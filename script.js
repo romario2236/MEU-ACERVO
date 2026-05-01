@@ -290,34 +290,20 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-// --- BUSCA ANILIST (GraphQL + Proxy CORSProxy para POST) ---
+// --- BUSCA ANILIST (Transformado em GET + Ponte AllOrigins) ---
         if (fonte === 'anilist') {
-            const queryAniList = `
-            query ($search: String) {
-              Page(page: 1, perPage: 5) {
-                media(search: $search, type: MANGA) {
-                  id title { romaji english native }
-                  coverImage { extraLarge }
-                  synopsis genres averageScore chapters status
-                  startDate { year } synonyms
-                }
-              }
-            }`;
-
-            // Ponte corsproxy.io (Suporta requisições POST perfeitamente)
-            const targetUrl = 'https://graphql.anilist.co';
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
-
-            const res = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json' 
-                },
-                body: JSON.stringify({ query: queryAniList, variables: { search: q } })
-            });
+            // A mesma pesquisa, mas em uma linha só
+            const queryAniList = `query ($search: String) { Page(page: 1, perPage: 5) { media(search: $search, type: MANGA) { id title { romaji english native } coverImage { extraLarge } synopsis genres averageScore chapters status startDate { year } synonyms } } }`;
             
-            if (!res.ok) throw new Error("AniList recusou a conexão via Proxy.");
+            // Aqui está a mágica: colocamos a pesquisa dentro da própria URL
+            const anilistUrl = `https://graphql.anilist.co?query=${encodeURIComponent(queryAniList)}&variables=${encodeURIComponent(JSON.stringify({ search: q }))}`;
+            
+            // Usamos a mesma ponte que JÁ FUNCIONOU perfeitamente com o MangaDex
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(anilistUrl)}`;
+
+            const res = await fetch(proxyUrl);
+            
+            if (!res.ok) throw new Error("AniList recusou a conexão.");
             const d = await res.json();
             resultadosAPI = d.data?.Page?.media || [];
 
