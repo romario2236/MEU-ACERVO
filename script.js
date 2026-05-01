@@ -290,14 +290,22 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-        // BUSCA MANGADEX
+        // BUSCA MANGADEX (COM PONTE PROXY PARA BURLAR O BLOQUEIO DE SEGURANÇA)
         if (fonte === 'mangadex') {
-            const res = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`);
-            if(!res.ok) throw new Error("MangaDex fora do ar");
+            // A URL original do MangaDex
+            const urlMangaDex = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
+            // A ponte mágica (Proxy) que busca os dados para a gente e contorna o erro
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMangaDex)}`;
+            
+            const res = await fetch(proxyUrl);
+            if(!res.ok) throw new Error("MangaDex recusou a conexão.");
+            
             const d = await res.json();
             resultadosAPI = d.data || [];
             
-            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MangaDex.</p>";
+            if(resultadosAPI.length === 0) {
+                div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MangaDex.</p>";
+            }
 
             resultadosAPI.forEach((m, i) => {
                 let titleObj = m.attributes?.title || {};
@@ -316,14 +324,16 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-        // BUSCA MYANIMELIST (JIKAN)
+        // BUSCA MYANIMELIST (JIKAN - Oficial e Estável)
         else {
             const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`);
             if(!res.ok) throw new Error("Jikan fora do ar");
             const d = await res.json();
             resultadosAPI = d.data || [];
             
-            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MyAnimeList.</p>";
+            if(resultadosAPI.length === 0) {
+                div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MyAnimeList.</p>";
+            }
 
             resultadosAPI.forEach((m, i) => {
                 let ano = m.published?.prop?.from?.year || "N/A";
@@ -338,8 +348,9 @@ window.buscarNaAPI = async function() {
         }
         div.style.display = "block";
     } catch(err) {
+        // Agora o erro detalhado aparece na tela para sabermos o que houve!
         console.error("Erro da API:", err);
-        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão com o banco de dados.</p>";
+        div.innerHTML = `<p style='padding:15px; color:#ef4444;'>Erro ao buscar: ${err.message}</p>`;
         div.style.display = "block";
     } finally {
         btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
