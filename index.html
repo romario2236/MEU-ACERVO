@@ -10,52 +10,48 @@
 <body>
 
     <header class="main-header">
-        <div class="header-container">
-            <h1 class="logo">Meu <span>Acervo</span></h1>
+     <!-- 1. CABEÇALHO LIMPO (Só Busca e Ações) -->
+    <header class="header-limpo">
+        <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1400px; margin: 0 auto; padding: 15px 20px;">
             
-            <div class="toolbar">
-                <div class="search-wrapper">
-                    <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo...">
-                </div>
-
-                <div class="action-group">
-                    <button id="btn-abrir-form" class="btn-primary" onclick="prepararAdicao()">
-                        <i class="ph ph-plus-circle"></i> Adicionar
-                    </button>
-                    
-                    <div class="util-buttons">
-                        <button class="btn-icon" title="Exportar Backup JSON" onclick="exportarDados()">
-                            <i class="ph ph-download-simple"></i>
-                        </button>
-                        <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
-                        <button class="btn-icon" title="Importar Backup JSON" onclick="document.getElementById('input-importar').click()">
-                            <i class="ph ph-upload-simple"></i>
-                        </button>
-                    </div>
-                </div>
+            <!-- Barra de Pesquisa -->
+            <div class="busca-container" style="flex-grow: 1; max-width: 500px;">
+                <input type="text" id="input-busca" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 15px; border-radius: 8px; background: #222; border: 1px solid #333; color: #fff;">
             </div>
 
-           <nav class="filter-nav">
+            <!-- Botões de Ação (Adicionar e Backup) -->
+            <div class="acoes-container" style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="abrirModal()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold;">
+                    <i class="ph ph-plus-circle"></i> Adicionar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. NOVO LAYOUT DIVIDIDO (Lateral + Obras) -->
+    <div class="layout-principal">
+        
+        <!-- BARRA LATERAL ESQUERDA -->
+        <aside class="sidebar-filtros">
+            <h3>Categorias</h3>
+            <nav class="filter-nav-vertical">
                 <button class="btn-filter active" onclick="filtrarPorTipo('Todos')">Todos</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Mangá')">Mangás</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Novel')">Novels</button>
-                
-                <!-- NOVO BOTÃO: Fica alinhado à direita e chama a função de esconder/mostrar -->
-                <button class="btn-filter" onclick="toggleFiltros()" style="margin-left: auto; border-color: #3b82f6; color: #3b82f6;">
-                    <i class="ph ph-faders"></i>
-                </button>
             </nav>
-            
-            <!-- Adicionamos o ID e o display:none para começar escondido -->
-            <div class="filtros-avancados" id="caixa-filtros" style="display: none;">
+
+            <h3>Filtros Avançados</h3>
+            <div class="filtros-avancados-vertical">
+                <label>Status da Obra</label>
                 <select id="select-status" onchange="aplicarFiltros()">
-                    <option value="Todos">Todos os Status</option>
+                    <option value="Todos">Todos</option>
                     <option value="Em Andamento">Em Andamento</option>
                     <option value="Finalizado">Finalizado</option>
                     <option value="Hiato">Hiato</option>
                 </select>
+
+                <label>Ordenar por</label>
                 <select id="select-ordem" onchange="aplicarFiltros()">
                     <option value="az">A - Z</option>
                     <option value="za">Z - A</option>
@@ -64,8 +60,18 @@
                     <option value="cap-alto">Mais Capítulos</option>
                 </select>
             </div>
+        </aside>
+
+        <!-- LADO DIREITO (Onde aparecem as capas) -->
+        <main class="conteudo-principal">
+            <div id="contador-total" style="margin-bottom: 15px; color: #888; font-weight: 500;"></div>
             
-        </div>
+            <div id="conteiner-mangas" class="grid-mangas">
+                <!-- As capas serão desenhadas pelo JavaScript aqui -->
+            </div>
+        </main>
+
+    </div>
     </header>
 
     <main>

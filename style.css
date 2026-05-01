@@ -197,3 +197,98 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .link-name-input, .link-url-input { flex: 100%; max-width: 100%; }
     .btn-remover-link { width: 100%; height: 40px; margin-top: 5px; }
 }
+
+/* =========================================
+   NOVO LAYOUT (SIDEBAR LATERAL)
+========================================= */
+.layout-principal {
+    display: flex;
+    gap: 25px;
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+    align-items: flex-start; 
+}
+
+.sidebar-filtros {
+    width: 260px;
+    background: #151515;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    flex-shrink: 0; 
+    position: sticky;
+    top: 20px; 
+}
+
+.sidebar-filtros h3 {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.filter-nav-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 30px;
+}
+
+.filter-nav-vertical .btn-filter {
+    text-align: left;
+    padding: 10px 15px;
+    width: 100%;
+    border-radius: 8px;
+    background: #1e1e1e;
+    color: #aaa;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.filter-nav-vertical .btn-filter.active {
+    background: #2563eb;
+    color: white;
+}
+
+.filtros-avancados-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.filtros-avancados-vertical label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: -8px; 
+}
+
+.filtros-avancados-vertical select {
+    width: 100%;
+    background: #0f0f11;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.conteudo-principal {
+    flex-grow: 1; 
+    min-width: 0; 
+}
+
+/* Deixa uma coluna só se abrir no celular */
+@media (max-width: 768px) {
+    .layout-principal {
+        flex-direction: column;
+    }
+    .sidebar-filtros {
+        width: 100%;
+        position: static; 
+        margin-bottom: 20px;
+    }
+}
