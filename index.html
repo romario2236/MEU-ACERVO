@@ -36,15 +36,20 @@
                 </div>
             </div>
 
-            <nav class="filter-nav">
+           <nav class="filter-nav">
                 <button class="btn-filter active" onclick="filtrarPorTipo('Todos')">Todos</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Mangá')">Mangás</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Novel')">Novels</button>
+                
+                <!-- NOVO BOTÃO: Fica alinhado à direita e chama a função de esconder/mostrar -->
+                <button class="btn-filter" onclick="toggleFiltros()" style="margin-left: auto; border-color: #3b82f6; color: #3b82f6;">
+                    <i class="ph ph-faders"></i>
+                </button>
             </nav>
             
-            <!-- NOVOS FILTROS AVANÇADOS -->
-            <div class="filtros-avancados">
+            <!-- Adicionamos o ID e o display:none para começar escondido -->
+            <div class="filtros-avancados" id="caixa-filtros" style="display: none;">
                 <select id="select-status" onchange="aplicarFiltros()">
                     <option value="Todos">Todos os Status</option>
                     <option value="Em Andamento">Em Andamento</option>
