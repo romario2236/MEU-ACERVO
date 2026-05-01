@@ -338,7 +338,6 @@ window.buscarNaAPI = async function() {
                     // Passamos o link da IMAGEM pela ponte também!
                     capa = `https://corsproxy.io/?${encodeURIComponent(urlCapaOriginal)}`;
                 }
-                
                 m.minhaCapaMangaDex = capa;
                 
                 // Adicionei um "onerror" para que, se a capa falhar, ele mostre um fundo cinza em vez do ícone quebrado
