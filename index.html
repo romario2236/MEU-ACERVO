@@ -42,6 +42,24 @@
                 <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
                 <button class="btn-filter" onclick="filtrarPorTipo('Novel')">Novels</button>
             </nav>
+            
+            <!-- NOVOS FILTROS AVANÇADOS -->
+            <div class="filtros-avancados">
+                <select id="select-status" onchange="aplicarFiltros()">
+                    <option value="Todos">Todos os Status</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Finalizado">Finalizado</option>
+                    <option value="Hiato">Hiato</option>
+                </select>
+                <select id="select-ordem" onchange="aplicarFiltros()">
+                    <option value="az">A - Z</option>
+                    <option value="za">Z - A</option>
+                    <option value="nota-alta">Maior Nota</option>
+                    <option value="nota-baixa">Menor Nota</option>
+                    <option value="cap-alto">Mais Capítulos</option>
+                </select>
+            </div>
+            
         </div>
     </header>
 

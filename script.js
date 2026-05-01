@@ -44,12 +44,10 @@ function carregarAcervo() {
             obra.idFirebase = doc.id;
             acervo.push(obra);
         });
-        acervo.sort((a, b) => a.titulo.localeCompare(b.titulo));
-        renderizarMangas(acervo);
+        // Removido o sort e renderizarMangas daqui. O cérebro faz isso agora:
+        aplicarFiltros(); 
         
-        if (idAbertoNoModal && modalFundo.style.display === "flex") {
-            window.abrirModal(idAbertoNoModal);
-        }
+        if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
     });
 }
 carregarAcervo();
@@ -99,49 +97,86 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. RENDERIZAÇÃO E INTERFACE (UI)
+// 4. INTERFACE E BUSCA AVANÇADA (Filtros Cruzados)
 // ============================================================================
+let filtroTexto = "";
+let filtroTipo = "Todos";
+
 function renderizarMangas(lista) {
     conteinerMangas.innerHTML = "";
     document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${lista.length} obras`;
-    
     lista.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         let iconeStatus = (obra.status === 'Em Andamento') ? "▶" : (obra.status === 'Finalizado' ? "✔" : "⏸");
-
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
-                <img src="${obra.capa}" loading="lazy" alt="${obra.titulo}" class="capa-bg">
+                <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="cartao-overlay"></div>
                 <div class="cartao-tags-topo">
                     <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
-                    <span class="tag-status-poster" title="${obra.status}">${iconeStatus}</span>
+                    <span class="tag-status-poster">${iconeStatus}</span>
                 </div>
                 <div class="cartao-info-bottom">
                     <h3 class="titulo-poster">${obra.titulo}</h3>
-                    <div class="cartao-meta">
-                        <span>Cap. ${obra.capitulo}</span>
-                        <span style="color:#fbbf24"><i class="ph-fill ph-star"></i> ${(obra.nota || 5).toFixed(1)}</span>
-                    </div>
+                    <div class="cartao-meta"><span>Cap. ${obra.capitulo}</span><span><i class="ph-fill ph-star"></i> ${(obra.nota || 5).toFixed(1)}</span></div>
                 </div>
             </div>`;
     });
 }
 
+// O CÉREBRO: Analisa todos os filtros de uma vez
+window.aplicarFiltros = () => {
+    let listaFiltrada = acervo;
+
+    // 1. Aplica Filtro de Texto (Pesquisa)
+    if (filtroTexto) {
+        listaFiltrada = listaFiltrada.filter(o => 
+            (o.titulo || "").toLowerCase().includes(filtroTexto) || 
+            (o.titulosAlternativos || "").toLowerCase().includes(filtroTexto)
+        );
+    }
+
+    // 2. Aplica Filtro de Tipo (Mangá, Manhwa, Novel)
+    if (filtroTipo !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
+    }
+
+    // 3. Aplica Filtro de Status
+    const statusSelect = document.getElementById("select-status");
+    if (statusSelect && statusSelect.value !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
+    }
+
+    // 4. Aplica a Ordenação
+    const ordemSelect = document.getElementById("select-ordem");
+    if (ordemSelect) {
+        const ordem = ordemSelect.value;
+        listaFiltrada.sort((a, b) => {
+            if (ordem === "az") return (a.titulo || "").localeCompare(b.titulo || "");
+            if (ordem === "za") return (b.titulo || "").localeCompare(a.titulo || "");
+            if (ordem === "nota-alta") return (b.nota || 0) - (a.nota || 0);
+            if (ordem === "nota-baixa") return (a.nota || 0) - (b.nota || 0);
+            if (ordem === "cap-alto") return (parseInt(b.capitulo) || 0) - (parseInt(a.capitulo) || 0);
+            return 0;
+        });
+    }
+
+    renderizarMangas(listaFiltrada);
+};
+
+// Evento da barra de pesquisa
+barraPesquisa.addEventListener("input", (e) => {
+    filtroTexto = e.target.value.toLowerCase();
+    aplicarFiltros();
+});
+
+// Evento dos botões de tipo
 window.filtrarPorTipo = (t) => {
     document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    renderizarMangas(t === 'Todos' ? acervo : acervo.filter(o => o.tipo === t));
+    filtroTipo = t;
+    aplicarFiltros();
 };
-
-barraPesquisa.addEventListener("input", (e) => {
-    const txt = e.target.value.toLowerCase();
-    const filtrados = acervo.filter(o => 
-        (o.titulo || "").toLowerCase().includes(txt) || 
-        (o.titulosAlternativos || "").toLowerCase().includes(txt)
-    );
-    renderizarMangas(filtrados);
-});
 
 // ============================================================================
 // 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
