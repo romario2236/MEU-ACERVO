@@ -99,7 +99,7 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. RENDERIZAÇÃO E INTERFACE (UI) -> NOVA CAPA FULL-BLEED
+// 4. RENDERIZAÇÃO E INTERFACE (UI)
 // ============================================================================
 function renderizarMangas(lista) {
     conteinerMangas.innerHTML = "";
@@ -165,7 +165,6 @@ window.abrirModal = function(id) {
         document.getElementById("modal-texto-sinopse").innerText = obra.sinopse;
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo;
         document.getElementById("modal-status").innerText = obra.status || "Em Andamento";
-        
         document.getElementById("modal-nota-texto").innerText = (obra.nota || 5).toFixed(1);
         
         const areaGeneros = document.getElementById("modal-generos");
@@ -176,11 +175,32 @@ window.abrirModal = function(id) {
             });
         }
         
+        // A INTELIGÊNCIA DOS LINKS ACONTECE AQUI
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
-        (obra.linksLeitura || []).forEach(l => {
-            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${l}" target="_blank"><i class="ph ph-book-open"></i> Ler</a>`;
+        
+        (obra.linksLeitura || []).forEach(linha => {
+            let url = linha.trim();
+            let nomeBotao = "Ler";
+
+            // Se o usuário usou a Regra do Pipe (Nome | Link)
+            if (linha.includes('|')) {
+                const partes = linha.split('|');
+                nomeBotao = partes[0].trim();
+                url = partes[1].trim();
+            } else {
+                // Se o usuário colou só o link, tenta extrair o domínio automaticamente
+                try {
+                    nomeBotao = new URL(url).hostname.replace('www.', '');
+                } catch(e) {}
+            }
+
+            // Evita botões quebrados caso esqueça o https://
+            if(url && !url.startsWith('http')) url = 'https://' + url;
+
+            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
         });
+        
         modalFundo.style.display = "flex";
     }
 }
