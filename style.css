@@ -18,22 +18,12 @@ body {
     overflow-x: hidden;
 }
 
-/* === CUSTOM SCROLLBAR === */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-color); }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #666; }
 
-/* === HEADER === */
-.main-header {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
-    padding: 20px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
+.main-header { background: var(--glass-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); padding: 20px 0; position: sticky; top: 0; z-index: 100; }
 .header-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; }
 .logo span { color: var(--primary); }
@@ -54,7 +44,6 @@ body {
 .btn-filter { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; font-weight: 500; transition: 0.2s;}
 .btn-filter.active { background: white; color: black; border-color: white; }
 
-/* === GRID DE MANGÁS === */
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
 .grid-mangas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
@@ -69,17 +58,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .tag-capitulo { position: absolute; bottom: 8px; right: 8px; font-size: 0.75rem; padding: 4px 8px; background: rgba(0,0,0,0.8); border-radius: 6px; font-weight: bold; }
 .titulo-poster { padding: 14px; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
 
-/* === MODAIS GERAIS === */
 .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 200; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
 .modal-conteudo { background: var(--card-bg); padding: 35px; border-radius: 20px; width: 100%; max-width: 750px; position: relative; border: 1px solid #2a2a2a; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); margin: auto;}
 .botao-fechar { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: #666; font-size: 1.5rem; cursor: pointer; transition: 0.2s; padding: 5px; display: flex;}
 .botao-fechar:hover { color: white; transform: scale(1.1); }
 
-/* === NOVO FORMULÁRIO ELEGANTE === */
 .modal-form-conteudo { max-width: 600px; padding: 40px; }
 #titulo-form { font-size: 1.6rem; font-weight: 700; margin-bottom: 25px; color: white; letter-spacing: -0.5px;}
 
-/* Caixa Inteligente da API */
 .busca-api-container { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; padding: 20px; border-radius: 14px; margin-bottom: 25px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); }
 .busca-api-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #60a5fa; }
 .busca-api-header i { font-size: 1.2rem; }
@@ -96,29 +82,24 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .item-api:hover { background: #334155; }
 .item-api img { width: 45px; height: 65px; object-fit: cover; border-radius: 6px; }
 .item-api h4 { font-size: 0.95rem; font-weight: 500; color: white;}
+.item-api p { font-size: 0.75rem; color: #60a5fa; margin-top: 3px; }
 
-/* Inputs do Formulário */
 .grupo-input { display: flex; flex-direction: column; margin-bottom: 20px; }
 .grupo-input label { font-size: 0.8rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .grupo-input input, .grupo-input textarea, .grupo-input select { background: #222; border: 1px solid #333; color: white; padding: 14px 16px; border-radius: 10px; font-family: inherit; font-size: 0.95rem; transition: all 0.2s ease; }
 .grupo-input input:focus, .grupo-input textarea:focus, .grupo-input select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); background: #2a2a2a; }
-.grupo-input input::placeholder, .grupo-input textarea::placeholder { color: #555; }
 .grupo-input textarea { resize: vertical; min-height: 100px;}
 
-/* Grid para os inputs menores ficarem lado a lado perfeito */
 .linha-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .linha-inputs-grid .grupo-input { margin-bottom: 20px; }
 
-/* Estilizando o Select */
 .select-wrapper { position: relative; }
 .select-wrapper select { width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer; }
 .select-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
 
-/* Botão Salvar */
 .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;}
 .btn-salvar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 132, 255, 0.3); }
 
-/* === MODAL DE DETALHES DA OBRA === */
 .modal-corpo { display: flex; gap: 30px; flex-wrap: wrap; }
 #modal-capa { width: 220px; border-radius: 12px; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .modal-info { flex: 1; min-width: 280px; }
@@ -148,7 +129,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 #btn-excluir-obra { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s; margin-left: auto;}
 #btn-excluir-obra:hover { background: #ef4444; color: white; }
 
-/* Responsividade */
 @media (max-width: 600px) {
     .modal-corpo { flex-direction: column; align-items: center; text-align: center; }
     .toolbar { flex-direction: column; }

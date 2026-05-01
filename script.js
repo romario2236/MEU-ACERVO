@@ -148,34 +148,82 @@ formulario.addEventListener("submit", async (e) => {
     }
 });
 
-// Busca API Jikan
+// === BUSCA API JIKAN (CORRIGIDA E COMPLETA) ===
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value;
-    if(!q) return;
+    const div = document.getElementById("resultado-busca-api");
     const btn = document.getElementById("btn-buscar-api");
-    btn.innerHTML = '<i class="ph ph-spinner-gap"></i>...';
+    
+    if(!q.trim()) return;
+    
+    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Buscando...';
+    btn.disabled = true;
     
     try {
         const res = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=5`);
         const d = await res.json();
         resultadosAPI = d.data || [];
-        const div = document.getElementById("resultado-busca-api");
         div.innerHTML = "";
-        resultadosAPI.forEach((m, i) => {
-            div.innerHTML += `<div class="item-api" onclick="preencherComAPI(${i})"><img src="${m.images.jpg.image_url}"><h4>${m.title}</h4></div>`;
-        });
+        
+        if(resultadosAPI.length === 0) {
+            div.innerHTML = "<p style='padding:15px; color:#94a3b8;'>Nenhum resultado encontrado.</p>";
+        } else {
+            resultadosAPI.forEach((m, i) => {
+                let ano = m.published?.prop?.from?.year || "N/A";
+                let tipo = m.type || "Mangá";
+                div.innerHTML += `
+                    <div class="item-api" onclick="preencherComAPI(${i})">
+                        <img src="${m.images.jpg.image_url}" alt="${m.title}">
+                        <div>
+                            <h4>${m.title}</h4>
+                            <p>${tipo} • Lançamento: ${ano}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+        div.style.display = "block";
+    } catch(err) {
+        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão com a API.</p>";
         div.style.display = "block";
     } finally {
         btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
+        btn.disabled = false;
     }
 }
 
+// === PREENCHIMENTO AUTOMÁTICO (CORRIGIDO) ===
 window.preencherComAPI = function(i) {
     const m = resultadosAPI[i];
-    document.getElementById("input-titulo").value = m.title;
-    document.getElementById("input-capa").value = m.images.jpg.large_image_url;
-    document.getElementById("input-sinopse").value = m.synopsis;
+    
+    // Título
+    document.getElementById("input-titulo").value = m.title || "";
+    
+    // Gêneros
+    let listaGeneros = [];
+    if(m.genres) m.genres.forEach(g => listaGeneros.push(g.name));
+    if(m.themes) m.themes.forEach(t => listaGeneros.push(t.name));
+    document.getElementById("input-generos").value = listaGeneros.join(", ");
+
+    // Conversão de Tipo
+    let tipoFormatado = "Mangá";
+    if(m.type === "Manhwa" || m.type === "Manhua") tipoFormatado = "Manhwa";
+    if(m.type === "Light Novel" || m.type === "Novel") tipoFormatado = "Novel";
+    document.getElementById("input-tipo").value = tipoFormatado;
+
+    // Capítulos
+    document.getElementById("input-capitulo").value = m.chapters || 0;
+    
+    // Capa (Pega a maior resolução possível)
+    document.getElementById("input-capa").value = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
+    
+    // Sinopse (Limpa aquela mensagem padrão do MyAnimeList)
+    let sinopse = m.synopsis || "";
+    sinopse = sinopse.replace("[Written by MAL Rewrite]", "").trim();
+    document.getElementById("input-sinopse").value = sinopse;
+
+    // Esconde a lista e limpa a busca
     document.getElementById("resultado-busca-api").style.display = "none";
+    document.getElementById("input-busca-api").value = "";
 }
 
 // Backup JSON
