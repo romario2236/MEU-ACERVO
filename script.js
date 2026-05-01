@@ -314,6 +314,8 @@ window.buscarNaAPI = async function() {
        // --- BUSCA MANGADEX (REST com Nova Ponte Proxy) ---
         else if (fonte === 'mangadex') {
             const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
+            
+            // Trocamos o 'allorigins' (que caiu) pelo 'corsproxy.io' (mais estável)
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
             
             const res = await fetch(proxyUrl);
@@ -326,25 +328,13 @@ window.buscarNaAPI = async function() {
             resultadosAPI.forEach((m, i) => {
                 const titles = m.attributes?.title || {};
                 const t = titles.en || titles['pt-br'] || Object.values(titles)[0] || "Sem Título";
-                
-                // Encontrando o nome do arquivo da capa de forma segura
                 const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
-                const fileName = art?.attributes?.fileName;
-                
-                let capa = "";
-                if (fileName) {
-                    // Tiramos o "https://" da URL original para o proxy de imagem funcionar
-                    const urlCapaOriginal = `uploads.mangadex.org/covers/${m.id}/${fileName}.256.jpg`;
-                    
-                    // Usamos a ponte "wsrv.nl", que é especialista em burlar bloqueio de imagens
-                    capa = `https://wsrv.nl/?url=${urlCapaOriginal}`;
-                }
+                const capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
                 m.minhaCapaMangaDex = capa;
                 
-                // Adicionei um "onerror" para que, se a capa falhar, ele mostre um fundo cinza em vez do ícone quebrado
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
-                        <img src="${capa}" onerror="this.src='https://via.placeholder.com/40x60/1a1a1a/60a5fa?text=Sem+Capa'">
+                        <img src="${capa}">
                         <div><h4>${t}</h4><p>MangaDex • ${m.attributes?.year || 'N/A'}</p></div>
                     </div>`;
             });
