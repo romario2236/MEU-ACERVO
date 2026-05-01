@@ -4,58 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>Meu Acervo</h1>
-        
-        <div class="controles-topo">
-            <input type="text" id="barra-pesquisa" placeholder="Buscar mangá, manhwa ou novel...">
-            <button id="btn-abrir-form" onclick="prepararAdicao()">+ Adicionar Obra</button>
+    <header class="main-header">
+        <div class="header-container">
+            <h1 class="logo">Meu <span>Acervo</span></h1>
             
-            <!-- Botões de Backup -->
-            <button id="btn-exportar" class="btn-secundario" onclick="exportarDados()">📥 Exportar JSON</button>
-            <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
-            <button id="btn-importar-trigger" class="btn-secundario" onclick="document.getElementById('input-importar').click()">📤 Importar JSON</button>
-        </div>
-        
-        <div class="filtros">
-            <button class="btn-filtro" onclick="filtrarPorTipo('Todos')">Todos</button>
-            <button class="btn-filtro" onclick="filtrarPorTipo('Mangá')">Mangás</button>
-            <button class="btn-filtro" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
-            <button class="btn-filtro" onclick="filtrarPorTipo('Novel')">Novels</button>
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="barra-pesquisa" placeholder="Buscar no acervo...">
+                </div>
+
+                <div class="action-group">
+                    <button id="btn-abrir-form" class="btn-primary" onclick="prepararAdicao()">
+                        <i class="ph ph-plus"></i> Adicionar
+                    </button>
+                    
+                    <div class="util-buttons">
+                        <button class="btn-icon" title="Exportar JSON" onclick="exportarDados()">
+                            <i class="ph ph-download-simple"></i>
+                        </button>
+                        <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
+                        <button class="btn-icon" title="Importar JSON" onclick="document.getElementById('input-importar').click()">
+                            <i class="ph ph-upload-simple"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="filter-nav">
+                <button class="btn-filter active" onclick="filtrarPorTipo('Todos')">Todos</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Mangá')">Mangás</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')">Manhwas</button>
+                <button class="btn-filter" onclick="filtrarPorTipo('Novel')">Novels</button>
+            </nav>
         </div>
     </header>
 
     <main>
-        <div class="barra-resultados">
-            <span id="contador-total">0 obras</span>
+        <div class="stats-bar">
+            <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
         </div>
 
         <div class="grid-mangas" id="lista-mangas">
-            <!-- O JavaScript vai injetar os cartões aqui -->
-        </div>
+            </div>
     </main>
 
-    <!-- === MODAL DA FICHA TÉCNICA (DETALHES) === -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
             <span class="botao-fechar" onclick="fecharModal()">&times;</span>
             <div class="modal-corpo">
-                <img id="modal-capa" src="" alt="Capa da Obra">
+                <img id="modal-capa" src="" alt="Capa">
                 <div class="modal-info">
-                    <h2 id="modal-titulo">Título da Obra</h2>
+                    <h2 id="modal-titulo">Título</h2>
                     <span id="modal-tipo" class="tag-tipo">Tipo</span>
-                    
-                    <p class="titulos-alt"><strong>Títulos Alternativos:</strong> <span id="modal-titulos-alt">...</span></p>
+                    <p class="titulos-alt"><strong>Alts:</strong> <span id="modal-titulos-alt">...</span></p>
                     <div id="modal-generos" class="modal-generos"></div>
-
                     <p><strong>Status:</strong> <span id="modal-status">...</span></p>
                     
                     <div class="controle-leitura">
-                        <strong>Capítulo Atual:</strong>
+                        <strong>Capítulo:</strong>
                         <div class="contador">
                             <button class="btn-contador" onclick="alterarCapitulo(-1)">-</button>
                             <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
@@ -78,43 +90,34 @@
         </div>
     </div>
 
-    <!-- === MODAL DO FORMULÁRIO DE CADASTRO/EDIÇÃO === -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <span class="botao-fechar" onclick="fecharModalForm()">&times;</span>
+            <h2 id="titulo-form">Nova Obra</h2>
             
-            <h2 id="titulo-form">Adicionar Nova Obra</h2>
-            
-            <div class="busca-api-container" id="area-busca-api">
-                <label>Preenchimento Automático (Pesquise na internet):</label>
+            <div class="busca-api-container">
+                <label>Busca Automática:</label>
                 <div class="busca-api-controles">
-                    <input type="text" id="input-busca-api" placeholder="Digite o nome da obra...">
-                    <button type="button" id="btn-buscar-api" onclick="buscarNaAPI()">🔍 Buscar</button>
+                    <input type="text" id="input-busca-api" placeholder="Nome da obra...">
+                    <button type="button" id="btn-buscar-api" onclick="buscarNaAPI()">🔍</button>
                 </div>
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
-            <hr class="divisor-form" id="divisor-api">
+            <hr class="divisor-form">
 
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
                 <input type="hidden" id="input-id-firebase" value="">
 
                 <div class="grupo-input">
-                    <label>Título Principal:</label>
-                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
+                    <label>Título:</label>
+                    <input type="text" id="input-titulo" required>
                 </div>
-
                 <div class="grupo-input">
-                    <label>Títulos Alternativos (Opcional):</label>
-                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
+                    <label>Gêneros:</label>
+                    <input type="text" id="input-generos" required>
                 </div>
-
-                <div class="grupo-input">
-                    <label>Gêneros (Separe por vírgula):</label>
-                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia, Sistema">
-                </div>
-
                 <div class="linha-inputs">
                     <div class="grupo-input">
                         <label>Tipo:</label>
@@ -125,42 +128,26 @@
                         </select>
                     </div>
                     <div class="grupo-input">
-                        <label>Status:</label>
-                        <select id="input-status">
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Finalizado">Finalizado</option>
-                            <option value="Hiato">Hiato</option>
-                        </select>
+                        <label>Capítulo:</label>
+                        <input type="number" id="input-capitulo" required>
                     </div>
                 </div>
-
-                <div class="linha-inputs">
-                    <div class="grupo-input">
-                        <label>Capítulo Atual:</label>
-                        <input type="number" id="input-capitulo" required placeholder="Ex: 250">
-                    </div>
-                    <div class="grupo-input">
-                        <label>Nota (1 a 5):</label>
-                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required placeholder="Ex: 4.5">
-                    </div>
-                </div>
-
                 <div class="grupo-input">
-                    <label>Link da Capa (URL da Imagem):</label>
-                    <input type="text" id="input-capa" required placeholder="Cole o link da imagem aqui">
+                    <label>Capa (URL):</label>
+                    <input type="text" id="input-capa" required>
                 </div>
-
                 <div class="grupo-input">
-                    <label>Links de Leitura (Um por linha - Opcional):</label>
-                    <textarea id="input-link-leitura" rows="3" placeholder="https://site1.com/manga&#10;https://site2.com/manga"></textarea>
+                    <label>Links de Leitura:</label>
+                    <textarea id="input-link-leitura" rows="2"></textarea>
                 </div>
-
                 <div class="grupo-input">
                     <label>Sinopse:</label>
-                    <textarea id="input-sinopse" rows="3" required placeholder="Digite um resumo da obra..."></textarea>
+                    <textarea id="input-sinopse" rows="3" required></textarea>
                 </div>
-
-                <button type="submit" class="btn-salvar">Salvar Obra</button>
+                <input type="hidden" id="input-status" value="Em Andamento">
+                <input type="hidden" id="input-nota" value="5">
+                <input type="hidden" id="input-titulos-alt" value="">
+                <button type="submit" class="btn-salvar">Salvar na Nuvem</button>
             </form>
         </div>
     </div>
