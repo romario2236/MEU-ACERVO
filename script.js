@@ -33,7 +33,7 @@ const modalFormFundo = document.getElementById("modal-form-fundo");
 const formulario = document.getElementById("form-nova-obra");
 
 // ============================================================================
-// 3. COMUNICAÇÃO COM O BANCO DE DADOS (FIREBASE CRUD)
+// 3. COMUNICAÇÃO COM O BANCO DE DADOS E CRIAÇÃO
 // ============================================================================
 function carregarAcervo() {
     onSnapshot(collection(db, "mangas"), (snapshot) => {
@@ -49,28 +49,12 @@ function carregarAcervo() {
 }
 carregarAcervo();
 
-window.alterarCapitulo = async function(val) {
-    let input = document.getElementById("modal-capitulo-editavel");
-    let novo = (parseInt(input.value) || 0) + val;
-    if(novo < 0) novo = 0;
-    input.value = novo;
-    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
-}
-
-window.excluirObra = async function() {
-    if(confirm("Tem certeza que deseja excluir definitivamente da nuvem?")) {
-        await deleteDoc(doc(db, "mangas", idAbertoNoModal));
-        fecharModal();
-    }
-}
-
 formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = document.getElementById("input-id-firebase").value;
     const btn = formulario.querySelector('.btn-salvar');
     btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
     
-    // Processar os links dinâmicos da nova UI
     const linksArray = [];
     document.querySelectorAll('.link-row').forEach(row => {
         const nome = row.querySelector('.link-name-input').value.trim();
@@ -86,15 +70,15 @@ formulario.addEventListener("submit", async (e) => {
     });
 
     const obra = {
-        titulo: document.getElementById("input-titulo").value,
-        titulosAlternativos: document.getElementById("input-titulos-alt").value,
-        generos: document.getElementById("input-generos").value,
-        tipo: document.getElementById("input-tipo").value,
-        capitulo: document.getElementById("input-capitulo").value,
-        status: document.getElementById("input-status").value,
+        titulo: document.getElementById("input-titulo").value || "",
+        titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
+        generos: document.getElementById("input-generos").value || "",
+        tipo: document.getElementById("input-tipo").value || "Mangá",
+        capitulo: document.getElementById("input-capitulo").value || "0",
+        status: document.getElementById("input-status").value || "Em Andamento",
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
-        capa: document.getElementById("input-capa").value,
-        sinopse: document.getElementById("input-sinopse").value,
+        capa: document.getElementById("input-capa").value || "",
+        sinopse: document.getElementById("input-sinopse").value || "",
         linksLeitura: linksArray
     };
     
@@ -162,14 +146,13 @@ window.filtrarPorTipo = (t) => {
 
 barraPesquisa.addEventListener("input", (e) => {
     const txt = e.target.value.toLowerCase();
-    const filtrado = acervo.filter(o => o.titulo.toLowerCase().includes(txt));
+    const filtrado = acervo.filter(o => (o.titulo || "").toLowerCase().includes(txt));
     renderizarMangas(filtrado);
 });
 
 // ============================================================================
-// 5. CONTROLE DE MODAIS E LINKS DINÂMICOS
+// 5. CONTROLE DE MODAIS, EDIÇÃO E LINKS DINÂMICOS
 // ============================================================================
-
 window.adicionarCampoLink = function(nome = "", url = "") {
     const container = document.getElementById("container-links-inputs");
     const div = document.createElement("div");
@@ -188,12 +171,12 @@ window.abrirModal = function(id) {
     const obra = acervo.find(i => i.idFirebase === id);
     if (obra) {
         idAbertoNoModal = id;
-        document.getElementById("modal-capa").src = obra.capa;
-        document.getElementById("modal-titulo").innerText = obra.titulo;
-        document.getElementById("modal-tipo").innerText = obra.tipo;
+        document.getElementById("modal-capa").src = obra.capa || "";
+        document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
+        document.getElementById("modal-tipo").innerText = obra.tipo || "Mangá";
         document.getElementById("modal-titulos-alt").innerText = obra.titulosAlternativos || "Nenhum";
-        document.getElementById("modal-texto-sinopse").innerText = obra.sinopse;
-        document.getElementById("modal-capitulo-editavel").value = obra.capitulo;
+        document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
+        document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
         document.getElementById("modal-status").innerText = obra.status || "Em Andamento";
         document.getElementById("modal-nota-texto").innerText = (obra.nota || 5).toFixed(1);
         
@@ -208,24 +191,52 @@ window.abrirModal = function(id) {
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         
-        (obra.linksLeitura || []).forEach(linha => {
-            let url = linha.trim();
-            let nomeBotao = "Ler";
+        if (obra.linksLeitura && Array.isArray(obra.linksLeitura)) {
+            obra.linksLeitura.forEach(linha => {
+                if (typeof linha === 'string') {
+                    let url = linha.trim();
+                    let nomeBotao = "Ler";
 
-            if (linha.includes('|')) {
-                const partes = linha.split('|');
-                nomeBotao = partes[0].trim();
-                url = partes[1].trim();
-            } else {
-                try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
-            }
+                    if (linha.includes('|')) {
+                        const partes = linha.split('|');
+                        nomeBotao = partes[0].trim();
+                        url = partes[1].trim();
+                    } else {
+                        try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
+                    }
 
-            if(url && !url.startsWith('http')) url = 'https://' + url;
-
-            containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
-        });
+                    if(url && !url.startsWith('http')) url = 'https://' + url;
+                    containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
+                }
+            });
+        }
         
         modalFundo.style.display = "flex";
+    }
+}
+
+// Edição de Capítulos na Ficha
+window.alterarCapitulo = async function(val) {
+    let input = document.getElementById("modal-capitulo-editavel");
+    let novo = (parseInt(input.value) || 0) + val;
+    if(novo < 0) novo = 0;
+    input.value = novo;
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
+}
+
+// Função restaurada: Edição direta digitando o número no modal
+window.atualizarCapituloDigitado = async function() {
+    let input = document.getElementById("modal-capitulo-editavel");
+    let novo = parseInt(input.value) || 0;
+    if(novo < 0) novo = 0;
+    input.value = novo;
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
+}
+
+window.excluirObra = async function() {
+    if(confirm("Tem certeza que deseja excluir definitivamente da nuvem?")) {
+        await deleteDoc(doc(db, "mangas", idAbertoNoModal));
+        fecharModal();
     }
 }
 
@@ -241,40 +252,47 @@ window.prepararAdicao = function() {
     modalFormFundo.style.display = "flex";
 }
 
+// A FUNÇÃO EDITAR BLINDADA CONTRA ERROS
 window.prepararEdicao = function() {
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
-        document.getElementById("input-titulo").value = o.titulo;
+        // Preenche com vazio ("") se o mangá antigo não tiver o dado salvo
+        document.getElementById("input-titulo").value = o.titulo || "";
         document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
-        document.getElementById("input-generos").value = o.generos;
-        document.getElementById("input-tipo").value = o.tipo;
-        document.getElementById("input-capitulo").value = o.capitulo;
+        document.getElementById("input-generos").value = o.generos || "";
+        document.getElementById("input-tipo").value = o.tipo || "Mangá";
+        document.getElementById("input-capitulo").value = o.capitulo || 0;
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
-        document.getElementById("input-capa").value = o.capa;
-        document.getElementById("input-sinopse").value = o.sinopse;
+        document.getElementById("input-capa").value = o.capa || "";
+        document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
         document.getElementById("titulo-form").innerText = "Editar Obra";
         
+        // Recria os links de forma segura
         const containerLinks = document.getElementById("container-links-inputs");
         containerLinks.innerHTML = "";
-        if (o.linksLeitura && o.linksLeitura.length > 0) {
+        
+        if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
             o.linksLeitura.forEach(linha => {
-                let nome = "";
-                let url = linha;
-                if (linha.includes('|')) {
-                    const partes = linha.split('|');
-                    nome = partes[0].trim();
-                    url = partes[1].trim();
+                if (typeof linha === 'string') {
+                    let nome = "";
+                    let url = linha;
+                    if (linha.includes('|')) {
+                        const partes = linha.split('|');
+                        nome = partes[0].trim();
+                        url = partes[1].trim();
+                    }
+                    window.adicionarCampoLink(nome, url);
                 }
-                window.adicionarCampoLink(nome, url);
             });
         } else {
+            // Se não tinha link nenhum na época, cria uma caixinha vazia
             window.adicionarCampoLink();
         }
 
-        fecharModal();
-        modalFormFundo.style.display = "flex";
+        fecharModal(); // Fecha os detalhes
+        modalFormFundo.style.display = "flex"; // Abre o formulário de edição
     }
 }
 
