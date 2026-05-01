@@ -579,3 +579,12 @@ window.importarDados = (e) => {
     };
     reader.readAsText(e.target.files[0]);
 };
+
+// ==========================================
+// LIBERANDO FUNÇÕES PARA O HTML ENXERGAR
+// ==========================================
+if (typeof abrirModalForm === "function") window.abrirModalForm = abrirModalForm;
+if (typeof fecharModalForm === "function") window.fecharModalForm = fecharModalForm;
+if (typeof fecharModalFormPeloFundo === "function") window.fecharModalFormPeloFundo = fecharModalFormPeloFundo;
+if (typeof buscarNaAPI === "function") window.buscarNaAPI = buscarNaAPI;
+if (typeof adicionarCampoLink === "function") window.adicionarCampoLink = adicionarCampoLink;
