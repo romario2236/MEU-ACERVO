@@ -290,7 +290,7 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-        // --- BUSCA ANILIST (GraphQL Direto - O AniList permite acesso livre) ---
+// --- BUSCA ANILIST (GraphQL + Proxy CORSProxy para POST) ---
         if (fonte === 'anilist') {
             const queryAniList = `
             query ($search: String) {
@@ -304,13 +304,20 @@ window.buscarNaAPI = async function() {
               }
             }`;
 
-            const res = await fetch('https://graphql.anilist.co', {
+            // Ponte corsproxy.io (Suporta requisições POST perfeitamente)
+            const targetUrl = 'https://graphql.anilist.co';
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+
+            const res = await fetch(proxyUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Accept': 'application/json' 
+                },
                 body: JSON.stringify({ query: queryAniList, variables: { search: q } })
             });
             
-            if (!res.ok) throw new Error("AniList recusou a conexão.");
+            if (!res.ok) throw new Error("AniList recusou a conexão via Proxy.");
             const d = await res.json();
             resultadosAPI = d.data?.Page?.media || [];
 
