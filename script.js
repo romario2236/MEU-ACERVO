@@ -1,18 +1,19 @@
-// === IMPORTAÇÕES DO FIREBASE ===
+// === IMPORTAÇÕES DO FIREBASE (Via CDN) ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// ⚠️ COLE AS SUAS CONFIGURAÇÕES DO FIREBASE AQUI ⚠️
+// === AS SUAS CONFIGURAÇÕES REAIS DO FIREBASE ===
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY_AQUI",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
+  apiKey: "AIzaSyAH-7clKFuTdisyN4fNxGd1JTicX3ZWJnw",
+  authDomain: "meu-acervo-b8eaf.firebaseapp.com",
+  projectId: "meu-acervo-b8eaf",
+  storageBucket: "meu-acervo-b8eaf.firebasestorage.app",
+  messagingSenderId: "397695115084",
+  appId: "1:397695115084:web:13b5ffc8ca61e1fe7879e9",
+  measurementId: "G-CE6CSXTGMN"
 };
 
-// Inicializa o Firebase
+// Inicializa o Firebase e o Banco de Dados (Firestore)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -56,7 +57,7 @@ async function carregarAcervo() {
         renderizarMangas(acervo);
     } catch (erro) {
         console.error("Erro ao carregar do Firebase:", erro);
-        conteinerMangas.innerHTML = "<p style='color:#e74c3c;'>Erro ao carregar dados. Verifique o console.</p>";
+        conteinerMangas.innerHTML = "<p style='color:#e74c3c;'>Erro ao conectar com o Firebase. Verifique se o banco foi criado em 'Modo de Teste'.</p>";
     }
 }
 
@@ -70,7 +71,6 @@ function criarCartaoPoster(obra) {
     else if (obra.tipo === 'Mangá') classeTipo = 'tipo-manga';
     else classeTipo = 'tipo-novel';
 
-    // Os aspas simples no abrirModal agora passam o ID do Firebase em vez do título
     return `
         <div class="cartao cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
             <div class="moldura-imagem">
@@ -103,12 +103,11 @@ barraPesquisa.addEventListener("input", (evento) => {
     renderizarMangas(listaFiltrada);
 });
 
-// Modificada para buscar pelo ID do Firebase em vez do Título
 window.abrirModal = function(idSelecionado) {
     const obra = acervo.find(item => item.idFirebase === idSelecionado);
     if (obra) {
         tituloAbertoNoModal = obra.titulo; 
-        idAbertoNoModal = obra.idFirebase; // Guarda o ID
+        idAbertoNoModal = obra.idFirebase; 
 
         modalCapa.src = obra.capa;
         modalTitulo.innerText = obra.titulo;
@@ -159,10 +158,9 @@ window.atualizarCapituloDigitado = function() {
 async function salvarCapituloNoAcervo(novoValor) {
     const index = acervo.findIndex(item => item.idFirebase === idAbertoNoModal);
     if (index !== -1) {
-        acervo[index].capitulo = novoValor.toString(); // Atualiza na tela
-        barraPesquisa.dispatchEvent(new Event('input')); // Recarrega os posters
+        acervo[index].capitulo = novoValor.toString(); 
+        barraPesquisa.dispatchEvent(new Event('input')); 
         
-        // Atualiza no Firebase sem travar a tela (roda no fundo)
         try {
             const obraRef = doc(db, "mangas", idAbertoNoModal);
             await updateDoc(obraRef, { capitulo: novoValor.toString() });
@@ -201,7 +199,7 @@ window.prepararEdicao = function() {
         document.getElementById("input-sinopse").value = obra.sinopse;
 
         document.getElementById("input-titulo-original").value = obra.titulo;
-        document.getElementById("input-id-firebase").value = obra.idFirebase; // Guarda o ID pro update
+        document.getElementById("input-id-firebase").value = obra.idFirebase; 
         document.getElementById("titulo-form").innerText = "Editar Obra";
 
         document.getElementById("area-busca-api").style.display = "none";
@@ -218,10 +216,7 @@ window.excluirObra = async function() {
         fecharModal();
         
         try {
-            // Remove do banco
             await deleteDoc(doc(db, "mangas", idParaDeletar));
-            
-            // Remove da tela
             const index = acervo.findIndex(item => item.idFirebase === idParaDeletar);
             if (index !== -1) acervo.splice(index, 1);
             renderizarMangas(acervo);
@@ -232,18 +227,16 @@ window.excluirObra = async function() {
     }
 }
 
-// FORMULÁRIO (SALVAR E ATUALIZAR)
 formulario.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     const btnSalvar = formulario.querySelector('.btn-salvar');
-    btnSalvar.innerText = "Salvando...";
+    btnSalvar.innerText = "Salvando na Nuvem...";
     btnSalvar.disabled = true;
 
     const idFirebase = document.getElementById("input-id-firebase").value;
     const titulo = document.getElementById("input-titulo").value.trim();
     const tituloOriginal = document.getElementById("input-titulo-original").value;
     
-    // Trava de duplicatas
     if (tituloOriginal === "") {
         if (acervo.some(item => item.titulo.toLowerCase() === titulo.toLowerCase())) {
             alert(`Atenção: A obra "${titulo}" já está adicionada ao seu acervo!`);
@@ -265,7 +258,6 @@ formulario.addEventListener("submit", async (evento) => {
     const textoLinks = document.getElementById("input-link-leitura").value;
     const arrayLinks = textoLinks.split('\n').map(link => link.trim()).filter(link => link !== "");
 
-    // Monta o objeto que vai pro banco
     const obraParaSalvar = {
         titulo: titulo, 
         titulosAlternativos: document.getElementById("input-titulos-alt").value, 
@@ -281,22 +273,18 @@ formulario.addEventListener("submit", async (evento) => {
 
     try {
         if (idFirebase === "") {
-            // ADICIONANDO NOVO (Cria no Firestore)
             const docRef = await addDoc(collection(db, "mangas"), obraParaSalvar);
-            obraParaSalvar.idFirebase = docRef.id; // Pega o ID gerado e põe na obra
+            obraParaSalvar.idFirebase = docRef.id; 
             acervo.unshift(obraParaSalvar);
         } else {
-            // ATUALIZANDO EXISTENTE (Atualiza no Firestore)
             const obraRef = doc(db, "mangas", idFirebase);
             await updateDoc(obraRef, obraParaSalvar);
-            
             const index = acervo.findIndex(item => item.idFirebase === idFirebase);
             if (index !== -1) {
                 obraParaSalvar.idFirebase = idFirebase;
                 acervo[index] = obraParaSalvar;
             }
         }
-
         renderizarMangas(acervo); 
         fecharModalForm(); 
     } catch (e) {
@@ -307,7 +295,6 @@ formulario.addEventListener("submit", async (evento) => {
         btnSalvar.disabled = false;
     }
 });
-
 
 // === FUNÇÕES DA API (Jikan) ===
 window.buscarNaAPI = async function() {
@@ -397,7 +384,6 @@ window.preencherComAPI = function(index) {
     document.getElementById("input-busca-api").value = "";
 }
 
-// Funções globais menores para o HTML enxergar
 window.abrirModalForm = function() { modalFormFundo.style.display = "flex"; }
 window.fecharModalForm = function() { modalFormFundo.style.display = "none"; }
 window.fecharModalFormPeloFundo = function(evento) { if (evento.target === modalFormFundo) window.fecharModalForm(); }
