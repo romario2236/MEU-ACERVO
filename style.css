@@ -249,3 +249,21 @@ main { width: 100%; margin: 0; padding: 0; }
     width: 100% !important;
     align-items: start;
 }
+/* Cores dos botões da barra lateral */
+.sidebar-btn {
+    text-align: left !important;
+    padding: 10px 15px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    background: #1e1e1e !important; 
+    color: #aaa !important; 
+    transition: 0.2s !important;
+}
+
+/* A cor de quando o botão é clicado */
+.sidebar-btn.active {
+    background: #2563eb !important; 
+    color: white !important;
+}
