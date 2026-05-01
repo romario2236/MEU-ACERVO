@@ -1,3 +1,6 @@
+// ============================================================================
+// 1. IMPORTAÇÕES E CONFIGURAÇÕES DO FIREBASE
+// ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -14,19 +17,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Ativa o cache para o site funcionar offline ou mais rápido
 enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativado."));
 
+// ============================================================================
+// 2. VARIÁVEIS DE ESTADO E REFERÊNCIAS DO DOM (TELA)
+// ============================================================================
 let acervo = [];
+let idAbertoNoModal = "";
+let resultadosAPI = [];
+
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
 const modalFundo = document.getElementById("modal-fundo");
 const modalFormFundo = document.getElementById("modal-form-fundo");
 const formulario = document.getElementById("form-nova-obra");
 
-let idAbertoNoModal = "";
-let resultadosAPI = [];
-
+// ============================================================================
+// 3. COMUNICAÇÃO COM O BANCO DE DADOS (FIREBASE CRUD)
+// ============================================================================
 function carregarAcervo() {
+    // onSnapshot cria um "túnel" em tempo real com o banco
     onSnapshot(collection(db, "mangas"), (snapshot) => {
         acervo = [];
         snapshot.forEach(doc => {
@@ -34,23 +45,76 @@ function carregarAcervo() {
             obra.idFirebase = doc.id;
             acervo.push(obra);
         });
-        acervo.sort((a, b) => a.titulo.localeCompare(b.titulo));
+        acervo.sort((a, b) => a.titulo.localeCompare(b.titulo)); // Ordem alfabética
         renderizarMangas(acervo);
     });
 }
 carregarAcervo();
 
+window.alterarCapitulo = async function(val) {
+    let input = document.getElementById("modal-capitulo-editavel");
+    let novo = (parseInt(input.value) || 0) + val;
+    if(novo < 0) novo = 0;
+    input.value = novo;
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
+}
+
+window.excluirObra = async function() {
+    if(confirm("Tem certeza que deseja excluir definitivamente da nuvem?")) {
+        await deleteDoc(doc(db, "mangas", idAbertoNoModal));
+        fecharModal();
+    }
+}
+
+formulario.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("input-id-firebase").value;
+    const btn = formulario.querySelector('.btn-salvar');
+    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
+    
+    // Monta a obra com os dados digitados
+    const obra = {
+        titulo: document.getElementById("input-titulo").value,
+        generos: document.getElementById("input-generos").value,
+        tipo: document.getElementById("input-tipo").value,
+        capitulo: document.getElementById("input-capitulo").value,
+        capa: document.getElementById("input-capa").value,
+        sinopse: document.getElementById("input-sinopse").value,
+        linksLeitura: document.getElementById("input-link-leitura").value.split('\n').filter(l => l.trim()),
+        status: "Em Andamento", 
+        nota: 5
+    };
+    
+    try {
+        if (id) {
+            await updateDoc(doc(db, "mangas", id), obra); // Atualiza existente
+        } else {
+            await addDoc(collection(db, "mangas"), obra); // Cria novo
+        }
+        fecharModalForm();
+    } catch(err) {
+        alert("Erro ao salvar no banco de dados!");
+        console.error(err);
+    } finally {
+        btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
+    }
+});
+
+// ============================================================================
+// 4. RENDERIZAÇÃO E INTERFACE (UI)
+// ============================================================================
 function renderizarMangas(lista) {
     conteinerMangas.innerHTML = "";
     document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${lista.length} obras`;
+    
     lista.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
                 <div class="moldura-imagem">
-                    <img src="${obra.capa}" loading="lazy">
+                    <img src="${obra.capa}" loading="lazy" alt="${obra.titulo}">
                     <span class="tag-status">${obra.status}</span>
-                    <span class="tag-tipo-poster">${obra.tipo}</span>
+                    <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
                     <span class="tag-capitulo">Cap. ${obra.capitulo}</span>
                 </div>
                 <h3 class="titulo-poster">${obra.titulo}</h3>
@@ -59,6 +123,27 @@ function renderizarMangas(lista) {
     });
 }
 
+// Filtro Superior (Todos, Mangás, etc)
+window.filtrarPorTipo = (t) => {
+    document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.innerText === t || (t === 'Todos' && btn.innerText === 'Todos')) {
+            btn.classList.add('active');
+        }
+    });
+    renderizarMangas(t === 'Todos' ? acervo : acervo.filter(o => o.tipo === t));
+};
+
+// Barra de Pesquisa Manual
+barraPesquisa.addEventListener("input", (e) => {
+    const txt = e.target.value.toLowerCase();
+    const filtrado = acervo.filter(o => o.titulo.toLowerCase().includes(txt));
+    renderizarMangas(filtrado);
+});
+
+// ============================================================================
+// 5. CONTROLE DE MODAIS (JANELAS SOBREPOSTAS)
+// ============================================================================
 window.abrirModal = function(id) {
     const obra = acervo.find(i => i.idFirebase === id);
     if (obra) {
@@ -78,14 +163,6 @@ window.abrirModal = function(id) {
         });
         modalFundo.style.display = "flex";
     }
-}
-
-window.alterarCapitulo = async function(val) {
-    let input = document.getElementById("modal-capitulo-editavel");
-    let novo = (parseInt(input.value) || 0) + val;
-    if(novo < 0) novo = 0;
-    input.value = novo;
-    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
 }
 
 window.prepararAdicao = function() {
@@ -108,47 +185,19 @@ window.prepararEdicao = function() {
         document.getElementById("input-link-leitura").value = (o.linksLeitura || []).join('\n');
         document.getElementById("input-id-firebase").value = o.idFirebase;
         document.getElementById("titulo-form").innerText = "Editar Obra";
-        modalFundo.style.display = "none";
+        fecharModal();
         modalFormFundo.style.display = "flex";
     }
 }
 
-window.excluirObra = async function() {
-    if(confirm("Excluir definitivamente da nuvem?")) {
-        await deleteDoc(doc(db, "mangas", idAbertoNoModal));
-        modalFundo.style.display = "none";
-    }
-}
+window.fecharModal = () => { modalFundo.style.display = "none"; };
+window.fecharModalForm = () => { modalFormFundo.style.display = "none"; };
+window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
+window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
-formulario.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("input-id-firebase").value;
-    const btn = formulario.querySelector('.btn-salvar');
-    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
-    
-    const obra = {
-        titulo: document.getElementById("input-titulo").value,
-        generos: document.getElementById("input-generos").value,
-        tipo: document.getElementById("input-tipo").value,
-        capitulo: document.getElementById("input-capitulo").value,
-        capa: document.getElementById("input-capa").value,
-        sinopse: document.getElementById("input-sinopse").value,
-        linksLeitura: document.getElementById("input-link-leitura").value.split('\n').filter(l => l.trim()),
-        status: "Em Andamento", nota: 5
-    };
-    
-    try {
-        if (id) await updateDoc(doc(db, "mangas", id), obra);
-        else await addDoc(collection(db, "mangas"), obra);
-        modalFormFundo.style.display = "none";
-    } catch(err) {
-        alert("Erro ao salvar!");
-    } finally {
-        btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
-    }
-});
-
-// === BUSCA API JIKAN (CORRIGIDA E COMPLETA) ===
+// ============================================================================
+// 6. INTEGRAÇÃO COM API EXTERNA (MYANIMELIST / JIKAN)
+// ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value;
     const div = document.getElementById("resultado-busca-api");
@@ -191,71 +240,55 @@ window.buscarNaAPI = async function() {
     }
 }
 
-// === PREENCHIMENTO AUTOMÁTICO (CORRIGIDO) ===
 window.preencherComAPI = function(i) {
     const m = resultadosAPI[i];
     
-    // Título
     document.getElementById("input-titulo").value = m.title || "";
     
-    // Gêneros
     let listaGeneros = [];
     if(m.genres) m.genres.forEach(g => listaGeneros.push(g.name));
     if(m.themes) m.themes.forEach(t => listaGeneros.push(t.name));
     document.getElementById("input-generos").value = listaGeneros.join(", ");
 
-    // Conversão de Tipo
     let tipoFormatado = "Mangá";
     if(m.type === "Manhwa" || m.type === "Manhua") tipoFormatado = "Manhwa";
     if(m.type === "Light Novel" || m.type === "Novel") tipoFormatado = "Novel";
     document.getElementById("input-tipo").value = tipoFormatado;
 
-    // Capítulos
     document.getElementById("input-capitulo").value = m.chapters || 0;
-    
-    // Capa (Pega a maior resolução possível)
     document.getElementById("input-capa").value = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
     
-    // Sinopse (Limpa aquela mensagem padrão do MyAnimeList)
     let sinopse = m.synopsis || "";
-    sinopse = sinopse.replace("[Written by MAL Rewrite]", "").trim();
-    document.getElementById("input-sinopse").value = sinopse;
+    document.getElementById("input-sinopse").value = sinopse.replace("[Written by MAL Rewrite]", "").trim();
 
-    // Esconde a lista e limpa a busca
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("input-busca-api").value = "";
 }
 
-// Backup JSON
+// ============================================================================
+// 7. FERRAMENTAS DE BACKUP (JSON)
+// ============================================================================
 window.exportarDados = () => {
+    // Remove o ID interno do Firebase para não dar erro ao importar depois
     const blob = new Blob([JSON.stringify(acervo.map(({idFirebase, ...r}) => r), null, 2)], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = "backup.json"; a.click();
+    a.href = url; 
+    a.download = "backup.json"; 
+    a.click();
 };
 
 window.importarDados = (e) => {
     const reader = new FileReader();
     reader.onload = async (f) => {
         const lista = JSON.parse(f.target.result);
-        for (const o of lista) if(!acervo.some(i => i.titulo === o.titulo)) await addDoc(collection(db, "mangas"), o);
-        location.reload();
+        for (const o of lista) {
+            // Se o mangá não existir na lista atual, adiciona no Firebase
+            if(!acervo.some(i => i.titulo === o.titulo)) {
+                await addDoc(collection(db, "mangas"), o);
+            }
+        }
+        location.reload(); // Recarrega a página para puxar os novos dados
     };
     reader.readAsText(e.target.files[0]);
 };
-
-// Filtros e Fechar Modais
-window.filtrarPorTipo = (t) => {
-    document.querySelectorAll('.btn-filter').forEach(btn => {
-        btn.classList.remove('active');
-        if(btn.innerText === t || (t === 'Todos' && btn.innerText === 'Todos')) {
-            btn.classList.add('active');
-        }
-    });
-    renderizarMangas(t === 'Todos' ? acervo : acervo.filter(o => o.tipo === t));
-};
-
-window.fecharModal = () => { modalFundo.style.display = "none"; };
-window.fecharModalForm = () => { modalFormFundo.style.display = "none"; };
-window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
-window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };

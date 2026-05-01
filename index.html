@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
+    <!-- Bibliotecas Externas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- ========================================== -->
+    <!-- 1. CABEÇALHO (Logo, Buscas e Filtros)      -->
+    <!-- ========================================== -->
     <header class="main-header">
         <div class="header-container">
             <h1 class="logo">Meu <span>Acervo</span></h1>
@@ -25,11 +29,11 @@
                     </button>
                     
                     <div class="util-buttons">
-                        <button class="btn-icon" title="Exportar JSON" onclick="exportarDados()">
+                        <button class="btn-icon" title="Exportar Backup JSON" onclick="exportarDados()">
                             <i class="ph ph-download-simple"></i>
                         </button>
                         <input type="file" id="input-importar" style="display: none;" onchange="importarDados(event)">
-                        <button class="btn-icon" title="Importar JSON" onclick="document.getElementById('input-importar').click()">
+                        <button class="btn-icon" title="Importar Backup JSON" onclick="document.getElementById('input-importar').click()">
                             <i class="ph ph-upload-simple"></i>
                         </button>
                     </div>
@@ -45,22 +49,28 @@
         </div>
     </header>
 
+    <!-- ========================================== -->
+    <!-- 2. CONTEÚDO PRINCIPAL (Grid de Obras)      -->
+    <!-- ========================================== -->
     <main>
         <div class="stats-bar">
             <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
         </div>
 
-        <div class="grid-mangas" id="lista-mangas">
-            <!-- Injetado pelo JS -->
-        </div>
+        <!-- Os cartões são injetados aqui pelo JavaScript -->
+        <div class="grid-mangas" id="lista-mangas"></div>
     </main>
 
-    <!-- === MODAL DA FICHA TÉCNICA === -->
+    <!-- ========================================== -->
+    <!-- 3. MODAIS (Janelas Sobrepostas)            -->
+    <!-- ========================================== -->
+    
+    <!-- 3.1 Modal: Detalhes da Obra -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
             <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
             <div class="modal-corpo">
-                <img id="modal-capa" src="" alt="Capa">
+                <img id="modal-capa" src="" alt="Capa da Obra">
                 <div class="modal-info">
                     <h2 id="modal-titulo">Título</h2>
                     <span id="modal-tipo" class="tag-tipo">Tipo</span>
@@ -92,12 +102,13 @@
         </div>
     </div>
 
-    <!-- === MODAL DO FORMULÁRIO === -->
+    <!-- 3.2 Modal: Formulário de Cadastro/Edição -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
+            <!-- Integração com API Externa -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
@@ -112,6 +123,7 @@
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
+            <!-- Formulário Principal -->
             <form id="form-nova-obra">
                 <input type="hidden" id="input-titulo-original" value="">
                 <input type="hidden" id="input-id-firebase" value="">
@@ -159,6 +171,7 @@
                     <textarea id="input-sinopse" rows="4" required placeholder="Um breve resumo sobre a história..."></textarea>
                 </div>
                 
+                <!-- Campos ocultos para metadados padrões -->
                 <input type="hidden" id="input-status" value="Em Andamento">
                 <input type="hidden" id="input-nota" value="5">
                 <input type="hidden" id="input-titulos-alt" value="">
@@ -170,6 +183,7 @@
         </div>
     </div>
 
+    <!-- Script Principal -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
