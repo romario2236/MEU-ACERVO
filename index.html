@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
+    <!-- Bibliotecas Externas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -191,14 +192,14 @@
                     <input type="url" id="input-capa" required placeholder="https://...">
                 </div>
                 
-                <!-- === NOVA ÁREA DE LINKS DINÂMICOS === -->
+                <!-- === ÁREA DINÂMICA DOS LINKS === -->
                 <div class="grupo-input">
                     <label>Links para Leitura</label>
-                    <div id="container-links-dinamicos">
+                    <div id="container-links-inputs">
                         <!-- O JS injeta os inputs aqui -->
                     </div>
-                    <button type="button" class="btn-adicionar-link" onclick="adicionarCampoLink()">
-                        <i class="ph ph-plus"></i> Adicionar Link
+                    <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
+                        <i class="ph ph-plus"></i> Adicionar outro link
                     </button>
                 </div>
                 

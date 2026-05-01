@@ -151,10 +151,14 @@ barraPesquisa.addEventListener("input", (e) => {
 });
 
 // ============================================================================
-// 5. CONTROLE DE MODAIS, EDIÇÃO E LINKS DINÂMICOS
+// 5. CONTROLE DE MODAIS E LINKS DINÂMICOS
 // ============================================================================
+
 window.adicionarCampoLink = function(nome = "", url = "") {
     const container = document.getElementById("container-links-inputs");
+    // Blindagem de segurança caso o HTML não esteja correto
+    if(!container) return; 
+
     const div = document.createElement("div");
     div.className = "link-row";
     div.innerHTML = `
@@ -215,7 +219,6 @@ window.abrirModal = function(id) {
     }
 }
 
-// Edição de Capítulos na Ficha
 window.alterarCapitulo = async function(val) {
     let input = document.getElementById("modal-capitulo-editavel");
     let novo = (parseInt(input.value) || 0) + val;
@@ -224,7 +227,6 @@ window.alterarCapitulo = async function(val) {
     await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
 }
 
-// Função restaurada: Edição direta digitando o número no modal
 window.atualizarCapituloDigitado = async function() {
     let input = document.getElementById("modal-capitulo-editavel");
     let novo = parseInt(input.value) || 0;
@@ -246,17 +248,19 @@ window.prepararAdicao = function() {
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("titulo-form").innerText = "Nova Obra";
     
-    document.getElementById("container-links-inputs").innerHTML = "";
-    window.adicionarCampoLink();
+    // Limpa a lista de links e coloca uma caixa vazia pro usuário começar (com blindagem)
+    const containerLinks = document.getElementById("container-links-inputs");
+    if(containerLinks) {
+        containerLinks.innerHTML = "";
+        window.adicionarCampoLink();
+    }
     
     modalFormFundo.style.display = "flex";
 }
 
-// A FUNÇÃO EDITAR BLINDADA CONTRA ERROS
 window.prepararEdicao = function() {
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
-        // Preenche com vazio ("") se o mangá antigo não tiver o dado salvo
         document.getElementById("input-titulo").value = o.titulo || "";
         document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
         document.getElementById("input-generos").value = o.generos || "";
@@ -269,30 +273,31 @@ window.prepararEdicao = function() {
         document.getElementById("input-id-firebase").value = o.idFirebase;
         document.getElementById("titulo-form").innerText = "Editar Obra";
         
-        // Recria os links de forma segura
+        // Recria os links de forma segura lendo o que estava no banco
         const containerLinks = document.getElementById("container-links-inputs");
-        containerLinks.innerHTML = "";
-        
-        if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
-            o.linksLeitura.forEach(linha => {
-                if (typeof linha === 'string') {
-                    let nome = "";
-                    let url = linha;
-                    if (linha.includes('|')) {
-                        const partes = linha.split('|');
-                        nome = partes[0].trim();
-                        url = partes[1].trim();
+        if(containerLinks) {
+            containerLinks.innerHTML = "";
+            
+            if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
+                o.linksLeitura.forEach(linha => {
+                    if (typeof linha === 'string') {
+                        let nome = "";
+                        let url = linha;
+                        if (linha.includes('|')) {
+                            const partes = linha.split('|');
+                            nome = partes[0].trim();
+                            url = partes[1].trim();
+                        }
+                        window.adicionarCampoLink(nome, url);
                     }
-                    window.adicionarCampoLink(nome, url);
-                }
-            });
-        } else {
-            // Se não tinha link nenhum na época, cria uma caixinha vazia
-            window.adicionarCampoLink();
+                });
+            } else {
+                window.adicionarCampoLink();
+            }
         }
 
-        fecharModal(); // Fecha os detalhes
-        modalFormFundo.style.display = "flex"; // Abre o formulário de edição
+        fecharModal(); 
+        modalFormFundo.style.display = "flex"; 
     }
 }
 
