@@ -282,7 +282,8 @@ window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) wind
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value;
-    const fonte = document.getElementById("select-fonte-api").value; // Qual site o usuario escolheu?
+    const fonteSelect = document.getElementById("select-fonte-api");
+    const fonte = fonteSelect ? fonteSelect.value : 'jikan'; // Fallback seguro
     fonteAtualAPI = fonte; // Salva para sabermos como traduzir os dados depois
     
     const div = document.getElementById("resultado-busca-api");
@@ -290,7 +291,7 @@ window.buscarNaAPI = async function() {
     
     if(!q.trim()) return;
     
-    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> ...';
+    btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Buscando...';
     btn.disabled = true;
     
     try {
@@ -305,7 +306,7 @@ window.buscarNaAPI = async function() {
             query ($search: String) {
                 Page(page: 1, perPage: 5) {
                     media(search: $search, type: MANGA) {
-                        id title { romaji english } coverImage { extraLarge }
+                        id title { romaji english } coverImage { extraLarge large }
                         synopsis genres averageScore chapters status
                         startDate { year }
                     }
@@ -316,17 +317,21 @@ window.buscarNaAPI = async function() {
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ query: queryGraphQL, variables: { search: q } })
             });
+            
+            if(!res.ok) throw new Error("Falha ao contatar a API do AniList");
             const d = await res.json();
-            resultadosAPI = d.data.Page.media || [];
+            resultadosAPI = d.data?.Page?.media || [];
             
             if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado.</p>";
             
             resultadosAPI.forEach((m, i) => {
-                let titulo = m.title.romaji || m.title.english || "Sem Título";
+                let titulo = m.title?.romaji || m.title?.english || "Sem Título";
                 let ano = m.startDate?.year || "N/A";
+                let capaUrl = m.coverImage?.extraLarge || m.coverImage?.large || "";
+                
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
-                        <img src="${m.coverImage.extraLarge}" alt="${titulo}">
+                        <img src="${capaUrl}" alt="${titulo}">
                         <div><h4>${titulo}</h4><p>AniList • Lançamento: ${ano}</p></div>
                     </div>`;
             });
@@ -336,21 +341,22 @@ window.buscarNaAPI = async function() {
         // CÓDIGO DO MANGADEX (REST com Relacionamentos)
         // --------------------------------------------------
         else if (fonte === 'mangadex') {
-            const res = await fetch(`https://api.mangadex.org/manga?title=${q}&limit=5&includes[]=cover_art`);
+            // EncodeURIComponent salva a URL se houver espaços ou caracteres especiais
+            const res = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`);
+            if(!res.ok) throw new Error("Falha ao contatar a API do MangaDex");
             const d = await res.json();
             resultadosAPI = d.data || [];
             
             if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado.</p>";
 
             resultadosAPI.forEach((m, i) => {
-                let titulo = m.attributes.title.en || m.attributes.title["pt-br"] || Object.values(m.attributes.title)[0] || "Sem Título";
-                let ano = m.attributes.year || "N/A";
+                let titleObj = m.attributes?.title || {};
+                let titulo = titleObj.en || titleObj["pt-br"] || Object.values(titleObj)[0] || "Sem Título";
+                let ano = m.attributes?.year || "N/A";
                 
-                // MangaDex guarda a capa em um "relacionamento" separado
-                let coverArt = m.relationships.find(rel => rel.type === 'cover_art');
-                let coverUrl = coverArt ? `https://uploads.mangadex.org/covers/${m.id}/${coverArt.attributes.fileName}` : "";
+                let coverArt = (m.relationships || []).find(rel => rel.type === 'cover_art');
+                let coverUrl = coverArt ? `https://uploads.mangadex.org/covers/${m.id}/${coverArt.attributes?.fileName}` : "";
                 
-                // Salvamos a url da capa dentro do objeto para o preencherComAPI achar depois
                 m.minhaCapaMangaDex = coverUrl;
 
                 div.innerHTML += `
@@ -364,8 +370,9 @@ window.buscarNaAPI = async function() {
         // --------------------------------------------------
         // CÓDIGO DO MYANIMELIST / JIKAN (REST Padrão)
         // --------------------------------------------------
-        else if (fonte === 'jikan') {
-            const res = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=5`);
+        else {
+            const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`);
+            if(!res.ok) throw new Error("Falha ao contatar a API do Jikan");
             const d = await res.json();
             resultadosAPI = d.data || [];
             
@@ -373,9 +380,11 @@ window.buscarNaAPI = async function() {
 
             resultadosAPI.forEach((m, i) => {
                 let ano = m.published?.prop?.from?.year || "N/A";
+                let capaUrl = m.images?.jpg?.image_url || "";
+                
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
-                        <img src="${m.images.jpg.image_url}" alt="${m.title}">
+                        <img src="${capaUrl}" alt="${m.title}">
                         <div><h4>${m.title}</h4><p>MyAnimeList • Lançamento: ${ano}</p></div>
                     </div>`;
             });
@@ -383,6 +392,8 @@ window.buscarNaAPI = async function() {
 
         div.style.display = "block";
     } catch(err) {
+        // Agora, se quebrar, ele joga o motivo no Console (F12) para podermos ler!
+        console.error("Erro detalhado da API:", err);
         div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão com a API.</p>";
         div.style.display = "block";
     } finally {
@@ -391,85 +402,99 @@ window.buscarNaAPI = async function() {
     }
 }
 
-// "Tradutor" de Dados: Pega as informações do site escolhido e joga no nosso formulário
+// "Tradutor" de Dados Blindado com Optional Chaining (?.)
 window.preencherComAPI = function(i) {
     const m = resultadosAPI[i];
+    if(!m) return;
     
     let titulo = "", titulosAlt = "", capa = "", sinopse = "", generos = "", status = "Em Andamento", capitulos = 0, nota = 5, tipo = "Mangá";
 
-    if (fonteAtualAPI === 'anilist') {
-        titulo = m.title.romaji || m.title.english || "";
-        titulosAlt = m.title.english && m.title.romaji ? m.title.english : "";
-        capa = m.coverImage.extraLarge || "";
-        sinopse = (m.synopsis || "").replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''); // Limpa códigos HTML da sinopse
-        generos = (m.genres || []).join(", ");
-        capitulos = m.chapters || 0;
-        nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5; // AniList é de 0 a 100
+    try {
+        if (fonteAtualAPI === 'anilist') {
+            titulo = m.title?.romaji || m.title?.english || "";
+            titulosAlt = (m.title?.english && m.title?.romaji) ? m.title.english : "";
+            capa = m.coverImage?.extraLarge || m.coverImage?.large || "";
+            sinopse = (m.synopsis || "").replace(/<br>/g, '\n').replace(/<[^>]+>/g, '');
+            generos = (m.genres || []).join(", ");
+            capitulos = m.chapters || 0;
+            nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
+            
+            if (m.status === "FINISHED") status = "Finalizado";
+            else if (m.status === "HIATUS" || m.status === "CANCELLED") status = "Hiato";
+        } 
+        else if (fonteAtualAPI === 'mangadex') {
+            let titleObj = m.attributes?.title || {};
+            titulo = titleObj.en || titleObj["pt-br"] || Object.values(titleObj)[0] || "";
+            
+            let altArray = [];
+            (m.attributes?.altTitles || []).forEach(t => {
+                let val = Object.values(t)[0];
+                if(val) altArray.push(val);
+            });
+            titulosAlt = altArray.join(", ");
+            
+            capa = m.minhaCapaMangaDex || "";
+            
+            let descObj = m.attributes?.description || {};
+            sinopse = descObj["pt-br"] || descObj.en || "";
+            
+            let tags = [];
+            (m.attributes?.tags || []).forEach(tag => {
+                if(tag.attributes?.name?.en) tags.push(tag.attributes.name.en);
+            });
+            generos = tags.join(", ");
+            
+            capitulos = m.attributes?.lastChapter || 0;
+            
+            if (m.attributes?.status === "completed") status = "Finalizado";
+            else if (m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") status = "Hiato";
+        }
+        else {
+            titulo = m.title || "";
+            let altArray = [];
+            if (m.title_english) altArray.push(m.title_english);
+            if (m.title_japanese) altArray.push(m.title_japanese);
+            titulosAlt = altArray.join(", ");
+            
+            capa = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
+            sinopse = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
+            
+            let tags = [];
+            if(m.genres) m.genres.forEach(g => tags.push(g.name));
+            if(m.themes) m.themes.forEach(t => tags.push(t.name));
+            generos = tags.join(", ");
+            
+            capitulos = m.chapters || 0;
+            nota = m.score ? (m.score / 2).toFixed(1) : 5;
+            
+            if (m.status === "Finished") status = "Finalizado";
+            else if (m.status === "On Hiatus" || m.status === "Discontinued") status = "Hiato";
+        }
+
+        // Identificação Universal do Tipo
+        let textoJunto = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
+        if (textoJunto.includes("manhwa") || textoJunto.includes("webtoon")) tipo = "Manhwa";
+        else if (textoJunto.includes("novel") || textoJunto.includes("light novel")) tipo = "Novel";
+
+        // Joga para os inputs da tela
+        document.getElementById("input-titulo").value = titulo;
+        document.getElementById("input-titulos-alt").value = titulosAlt;
+        document.getElementById("input-capa").value = capa;
+        document.getElementById("input-sinopse").value = sinopse;
+        document.getElementById("input-generos").value = generos;
+        document.getElementById("input-capitulo").value = capitulos;
+        document.getElementById("input-nota").value = nota;
+        document.getElementById("input-status").value = status;
+        document.getElementById("input-tipo").value = tipo;
+
+        document.getElementById("resultado-busca-api").style.display = "none";
+        document.getElementById("input-busca-api").value = "";
         
-        if (m.status === "FINISHED") status = "Finalizado";
-        else if (m.status === "HIATUS" || m.status === "CANCELLED") status = "Hiato";
-    } 
-    else if (fonteAtualAPI === 'mangadex') {
-        titulo = m.attributes.title.en || m.attributes.title["pt-br"] || Object.values(m.attributes.title)[0] || "";
-        
-        let altArray = [];
-        (m.attributes.altTitles || []).forEach(t => altArray.push(Object.values(t)[0]));
-        titulosAlt = altArray.join(", ");
-        
-        capa = m.minhaCapaMangaDex || "";
-        sinopse = m.attributes.description["pt-br"] || m.attributes.description.en || "";
-        
-        let tags = [];
-        (m.attributes.tags || []).forEach(tag => tags.push(tag.attributes.name.en));
-        generos = tags.join(", ");
-        
-        capitulos = m.attributes.lastChapter || 0;
-        
-        if (m.attributes.status === "completed") status = "Finalizado";
-        else if (m.attributes.status === "hiatus" || m.attributes.status === "cancelled") status = "Hiato";
+    } catch(e) {
+        console.error("Erro ao preencher dados do formulário:", e);
+        alert("Ocorreu um erro ao extrair os dados. Tente preencher manualmente.");
     }
-    else if (fonteAtualAPI === 'jikan') {
-        titulo = m.title || "";
-        let altArray = [];
-        if (m.title_english) altArray.push(m.title_english);
-        if (m.title_japanese) altArray.push(m.title_japanese);
-        titulosAlt = altArray.join(", ");
-        
-        capa = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
-        sinopse = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
-        
-        let tags = [];
-        if(m.genres) m.genres.forEach(g => tags.push(g.name));
-        if(m.themes) m.themes.forEach(t => tags.push(t.name));
-        generos = tags.join(", ");
-        
-        capitulos = m.chapters || 0;
-        nota = m.score ? (m.score / 2).toFixed(1) : 5; // Jikan é de 0 a 10
-        
-        if (m.status === "Finished") status = "Finalizado";
-        else if (m.status === "On Hiatus" || m.status === "Discontinued") status = "Hiato";
-    }
-
-    // Identificação de Tipo Universal
-    let textoJunto = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
-    if (textoJunto.includes("manhwa") || textoJunto.includes("webtoon")) tipo = "Manhwa";
-    else if (textoJunto.includes("novel") || textoJunto.includes("light novel")) tipo = "Novel";
-
-    // Joga as variáveis traduzidas nos inputs
-    document.getElementById("input-titulo").value = titulo;
-    document.getElementById("input-titulos-alt").value = titulosAlt;
-    document.getElementById("input-capa").value = capa;
-    document.getElementById("input-sinopse").value = sinopse;
-    document.getElementById("input-generos").value = generos;
-    document.getElementById("input-capitulo").value = capitulos;
-    document.getElementById("input-nota").value = nota;
-    document.getElementById("input-status").value = status;
-    document.getElementById("input-tipo").value = tipo;
-
-    document.getElementById("resultado-busca-api").style.display = "none";
-    document.getElementById("input-busca-api").value = "";
 }
-
 // ============================================================================
 // 7. FERRAMENTAS DE BACKUP (JSON)
 // ============================================================================
