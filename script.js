@@ -270,7 +270,7 @@ window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecha
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
 // ============================================================================
-// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs EXTERNAS
+// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (COM PONTE PROXY)
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
@@ -290,11 +290,10 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-        // BUSCA MANGADEX (COM PONTE PROXY PARA BURLAR O BLOQUEIO DE SEGURANÇA)
+        // BUSCA MANGADEX (Usando Proxy para burlar o CORS igual o Netlify fazia)
         if (fonte === 'mangadex') {
-            // A URL original do MangaDex
             const urlMangaDex = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-            // A ponte mágica (Proxy) que busca os dados para a gente e contorna o erro
+            // Ponte mágica pública
             const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMangaDex)}`;
             
             const res = await fetch(proxyUrl);
@@ -303,13 +302,12 @@ window.buscarNaAPI = async function() {
             const d = await res.json();
             resultadosAPI = d.data || [];
             
-            if(resultadosAPI.length === 0) {
-                div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MangaDex.</p>";
-            }
+            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado.</p>";
 
             resultadosAPI.forEach((m, i) => {
-                let titleObj = m.attributes?.title || {};
-                let titulo = titleObj.en || titleObj["pt-br"] || Object.values(titleObj)[0] || "Sem Título";
+                // Lógica resgatada do seu código antigo
+                let titles = m.attributes?.title || {};
+                let titulo = titles.en || titles['pt-br'] || titles.es || titles['ja-ro'] || Object.values(titles)[0] || "Sem Título";
                 let ano = m.attributes?.year || "N/A";
                 
                 let coverArt = (m.relationships || []).find(rel => rel.type === 'cover_art');
@@ -324,16 +322,14 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-        // BUSCA MYANIMELIST (JIKAN - Oficial e Estável)
+        // BUSCA MYANIMELIST (Acesso Direto Funciona)
         else {
             const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`);
             if(!res.ok) throw new Error("Jikan fora do ar");
             const d = await res.json();
             resultadosAPI = d.data || [];
             
-            if(resultadosAPI.length === 0) {
-                div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MyAnimeList.</p>";
-            }
+            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado.</p>";
 
             resultadosAPI.forEach((m, i) => {
                 let ano = m.published?.prop?.from?.year || "N/A";
@@ -348,9 +344,8 @@ window.buscarNaAPI = async function() {
         }
         div.style.display = "block";
     } catch(err) {
-        // Agora o erro detalhado aparece na tela para sabermos o que houve!
         console.error("Erro da API:", err);
-        div.innerHTML = `<p style='padding:15px; color:#ef4444;'>Erro ao buscar: ${err.message}</p>`;
+        div.innerHTML = `<p style='padding:15px; color:#ef4444;'>Erro: ${err.message}</p>`;
         div.style.display = "block";
     } finally {
         btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
@@ -366,8 +361,9 @@ window.preencherComAPI = function(i) {
 
     try {
         if (fonteAtualAPI === 'mangadex') {
-            let titleObj = m.attributes?.title || {};
-            titulo = titleObj.en || titleObj["pt-br"] || Object.values(titleObj)[0] || "";
+            // Lógica do seu código antigo implantada aqui
+            let titles = m.attributes?.title || {};
+            titulo = titles.en || titles['pt-br'] || titles.es || titles['ja-ro'] || Object.values(titles)[0] || "";
             
             let altArray = [];
             (m.attributes?.altTitles || []).forEach(t => {
@@ -375,17 +371,20 @@ window.preencherComAPI = function(i) {
                 if(val) altArray.push(val);
             });
             titulosAlt = altArray.join(", ");
+            
             capa = m.minhaCapaMangaDex || "";
             
-            let descObj = m.attributes?.description || {};
-            sinopse = descObj["pt-br"] || descObj.en || "";
+            let descriptions = m.attributes?.description || {};
+            sinopse = descriptions.en || descriptions['pt-br'] || descriptions.es || Object.values(descriptions)[0] || "";
             
             let tags = [];
             (m.attributes?.tags || []).forEach(tag => {
                 if(tag.attributes?.name?.en) tags.push(tag.attributes.name.en);
             });
             generos = tags.join(", ");
+            
             capitulos = m.attributes?.lastChapter || 0;
+            
             if (m.attributes?.status === "completed") status = "Finalizado";
             else if (m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") status = "Hiato";
         }
@@ -407,16 +406,15 @@ window.preencherComAPI = function(i) {
             
             capitulos = m.chapters || 0;
             nota = m.score ? (m.score / 2).toFixed(1) : 5;
+            
             if (m.status === "Finished") status = "Finalizado";
             else if (m.status === "On Hiatus" || m.status === "Discontinued") status = "Hiato";
         }
 
-        // Reconhecimento de Tipo (Manhwa, Novel)
         let textoJunto = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
         if (textoJunto.includes("manhwa") || textoJunto.includes("webtoon")) tipo = "Manhwa";
         else if (textoJunto.includes("novel") || textoJunto.includes("light novel")) tipo = "Novel";
 
-        // Preenchendo os campos na tela
         document.getElementById("input-titulo").value = titulo;
         document.getElementById("input-titulos-alt").value = titulosAlt;
         document.getElementById("input-capa").value = capa;
@@ -434,7 +432,6 @@ window.preencherComAPI = function(i) {
         console.error("Erro ao preencher dados:", e);
     }
 }
-
 // ============================================================================
 // 7. BACKUP JSON
 // ============================================================================
