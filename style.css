@@ -238,3 +238,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
         top: 0;
     }
 }
+/* =========================================
+   GRADE DE MANGÁS (Arrumando as colunas)
+========================================= */
+.grid-mangas {
+    display: grid !important;
+    /* Essa linha mágica cria colunas automáticas dependendo do tamanho da tela: */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    gap: 25px !important;
+    width: 100% !important;
+    align-items: start;
+}
