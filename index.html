@@ -33,11 +33,11 @@
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
             
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;">
-                <button class="btn-filter active" onclick="filtrarPorTipo('Todos')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #2563eb; color: white;">Todos</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Mangá')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Mangás</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Manhwa')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Manhwas</button>
-                <button class="btn-filter" onclick="filtrarPorTipo('Novel')" style="text-align: left; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; background: #1e1e1e; color: #aaa;">Novels</button>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;" id="botoes-categoria">
+                <button class="btn-filter sidebar-btn active" onclick="filtrarPorTipo('Todos', this)">Todos</button>
+                <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Mangá', this)">Mangás</button>
+                <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Manhwa', this)">Manhwas</button>
+                <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Novel', this)">Novels</button>
             </div>
 
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
