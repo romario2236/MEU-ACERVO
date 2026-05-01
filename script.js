@@ -270,7 +270,7 @@ window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecha
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
 // ============================================================================
-// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (Jikan, MangaDex e AniList)
+// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (Jikan, MangaDex e Kitsu)
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
@@ -290,31 +290,24 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-// --- BUSCA ANILIST (Transformado em GET + Ponte AllOrigins) ---
-        if (fonte === 'anilist') {
-            // A mesma pesquisa, mas em uma linha só
-            const queryAniList = `query ($search: String) { Page(page: 1, perPage: 5) { media(search: $search, type: MANGA) { id title { romaji english native } coverImage { extraLarge } synopsis genres averageScore chapters status startDate { year } synonyms } } }`;
-            
-            // Aqui está a mágica: colocamos a pesquisa dentro da própria URL
-            const anilistUrl = `https://graphql.anilist.co?query=${encodeURIComponent(queryAniList)}&variables=${encodeURIComponent(JSON.stringify({ search: q }))}`;
-            
-            // Usamos a mesma ponte que JÁ FUNCIONOU perfeitamente com o MangaDex
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(anilistUrl)}`;
-
-            const res = await fetch(proxyUrl);
-            
-            if (!res.ok) throw new Error("AniList recusou a conexão.");
+        // --- BUSCA KITSU (Acesso Direto, Rápido e Sem Erros) ---
+        if (fonte === 'kitsu') {
+            const res = await fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`);
+            if(!res.ok) throw new Error("Kitsu fora do ar");
             const d = await res.json();
-            resultadosAPI = d.data?.Page?.media || [];
+            resultadosAPI = d.data || [];
+
+            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no Kitsu.</p>";
 
             resultadosAPI.forEach((m, i) => {
-                const t = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
-                const c = m.coverImage?.extraLarge || "";
-                const ano = m.startDate?.year || "N/A";
+                const t = m.attributes?.canonicalTitle || "Sem Título";
+                const c = m.attributes?.posterImage?.small || m.attributes?.posterImage?.original || "";
+                const ano = m.attributes?.startDate ? m.attributes.startDate.substring(0,4) : "N/A";
+                
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
                         <img src="${c}">
-                        <div><h4>${t}</h4><p>AniList • ${ano}</p></div>
+                        <div><h4>${t}</h4><p>Kitsu • ${ano}</p></div>
                     </div>`;
             });
         }
@@ -327,6 +320,8 @@ window.buscarNaAPI = async function() {
             if (!res.ok) throw new Error("MangaDex recusou a conexão.");
             const d = await res.json();
             resultadosAPI = d.data || [];
+
+            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MangaDex.</p>";
 
             resultadosAPI.forEach((m, i) => {
                 const titles = m.attributes?.title || {};
@@ -348,6 +343,8 @@ window.buscarNaAPI = async function() {
             if (!res.ok) throw new Error("Jikan fora do ar");
             const d = await res.json();
             resultadosAPI = d.data || [];
+
+            if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MyAnimeList.</p>";
             
             resultadosAPI.forEach((m, i) => {
                 const t = m.title || "Sem Título";
@@ -361,7 +358,6 @@ window.buscarNaAPI = async function() {
             });
         }
 
-        if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px; color:#aaa;'>Nada encontrado.</p>";
         div.style.display = "block";
 
     } catch(err) {
@@ -381,21 +377,34 @@ window.preencherComAPI = function(i) {
     let t = "", alts = "", capa = "", sin = "", gen = "", st = "Em Andamento", cap = 0, nota = 5, tipo = "Mangá";
 
     try {
-        if (fonteAtualAPI === 'anilist') {
-            t = m.title?.romaji || m.title?.english || m.title?.native || "";
+        if (fonteAtualAPI === 'kitsu') {
+            t = m.attributes?.canonicalTitle || "";
+            
             let altArr = [];
-            if(m.title?.english && m.title.english !== t) altArr.push(m.title.english);
-            if(m.title?.native && m.title.native !== t) altArr.push(m.title.native);
-            if(m.synonyms) altArr = [...altArr, ...m.synonyms];
+            if(m.attributes?.titles) {
+                Object.values(m.attributes.titles).forEach(val => {
+                    if(val && val !== t) altArr.push(val);
+                });
+            }
             alts = altArr.join(", ");
             
-            capa = m.coverImage?.extraLarge || "";
-            sin = (m.synopsis || "").replace(/<[^>]+>/g, '');
-            gen = (m.genres || []).join(", ");
-            cap = m.chapters || 0;
-            nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
-            if(m.status === "FINISHED") st = "Finalizado";
-            else if (m.status === "HIATUS" || m.status === "CANCELLED") st = "Hiato";
+            capa = m.attributes?.posterImage?.original || "";
+            sin = m.attributes?.synopsis || "";
+            
+            // O Kitsu pede uma busca extra só para gêneros, então deixamos para o usuário digitar
+            gen = ""; 
+            
+            cap = m.attributes?.chapterCount || 0;
+            nota = m.attributes?.averageRating ? (m.attributes.averageRating / 20).toFixed(1) : 5;
+            
+            if (m.attributes?.status === "finished") st = "Finalizado";
+            else if (m.attributes?.status === "current") st = "Em Andamento";
+            else st = "Hiato";
+
+            let mangaType = (m.attributes?.mangaType || "").toLowerCase();
+            if (mangaType === "manhwa") tipo = "Manhwa";
+            else if (mangaType === "novel") tipo = "Novel";
+            else tipo = "Mangá";
         } 
         else if (fonteAtualAPI === 'mangadex') {
             const titles = m.attributes?.title || {};
@@ -439,17 +448,12 @@ window.preencherComAPI = function(i) {
             else if (m.status === "On Hiatus" || m.status === "Discontinued") st = "Hiato";
         }
 
-        // Identificação de Tipo (Manhwa/Novel)
-        let textoTotal = (gen + " " + (m.type || m.attributes?.publicationDemographic || "") + " " + t).toLowerCase();
-        if(textoTotal.includes("manhwa") || textoTotal.includes("webtoon")) tipo = "Manhwa";
-        else if(textoTotal.includes("novel") || textoTotal.includes("light novel")) tipo = "Novel";
-
         // Preenchendo a tela
         document.getElementById("input-titulo").value = t;
         document.getElementById("input-titulos-alt").value = alts;
         document.getElementById("input-capa").value = capa;
         document.getElementById("input-sinopse").value = sin;
-        document.getElementById("input-generos").value = gen;
+        if(gen) document.getElementById("input-generos").value = gen;
         document.getElementById("input-capitulo").value = cap;
         document.getElementById("input-nota").value = nota;
         document.getElementById("input-status").value = st;
