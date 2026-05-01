@@ -99,7 +99,7 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. RENDERIZAÇÃO E INTERFACE (UI)
+// 4. RENDERIZAÇÃO E INTERFACE (UI) -> NOVA CAPA FULL-BLEED
 // ============================================================================
 function renderizarMangas(lista) {
     conteinerMangas.innerHTML = "";
@@ -107,15 +107,29 @@ function renderizarMangas(lista) {
     
     lista.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
+        
+        let iconeStatus = "";
+        if(obra.status === 'Em Andamento') iconeStatus = "▶";
+        else if(obra.status === 'Finalizado') iconeStatus = "✔";
+        else iconeStatus = "⏸";
+
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
-                <div class="moldura-imagem">
-                    <img src="${obra.capa}" loading="lazy" alt="${obra.titulo}">
-                    <span class="tag-status">${obra.status}</span>
+                <img src="${obra.capa}" loading="lazy" alt="${obra.titulo}" class="capa-bg">
+                <div class="cartao-overlay"></div>
+                
+                <div class="cartao-tags-topo">
                     <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
-                    <span class="tag-capitulo">Cap. ${obra.capitulo}</span>
+                    <span class="tag-status-poster" title="${obra.status}">${iconeStatus}</span>
                 </div>
-                <h3 class="titulo-poster">${obra.titulo}</h3>
+                
+                <div class="cartao-info-bottom">
+                    <h3 class="titulo-poster">${obra.titulo}</h3>
+                    <div class="cartao-meta">
+                        <span class="tag-capitulo-poster">Cap. ${obra.capitulo}</span>
+                        <span class="tag-nota-poster"><i class="ph-fill ph-star"></i> ${(obra.nota || 5).toFixed(1)}</span>
+                    </div>
+                </div>
             </div>
         `;
     });
@@ -152,10 +166,8 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo;
         document.getElementById("modal-status").innerText = obra.status || "Em Andamento";
         
-        // Formata a nota na tela de detalhes
         document.getElementById("modal-nota-texto").innerText = (obra.nota || 5).toFixed(1);
         
-        // Limpa e recria as tags de gênero usando a nova classe
         const areaGeneros = document.getElementById("modal-generos");
         areaGeneros.innerHTML = "";
         if (obra.generos) {
