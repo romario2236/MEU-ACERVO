@@ -4,15 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
-    <!-- Bibliotecas Externas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- 1. CABEÇALHO (Buscas e Filtros)            -->
-    <!-- ========================================== -->
     <header class="main-header">
         <div class="header-container">
             <h1 class="logo">Meu <span>Acervo</span></h1>
@@ -20,7 +16,7 @@
             <div class="toolbar">
                 <div class="search-wrapper">
                     <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo...">
+                    <input type="text" id="barra-pesquisa" placeholder="Buscar no meu acervo...">
                 </div>
 
                 <div class="action-group">
@@ -49,24 +45,13 @@
         </div>
     </header>
 
-    <!-- ========================================== -->
-    <!-- 2. CONTEÚDO PRINCIPAL (Grid de Obras)      -->
-    <!-- ========================================== -->
     <main>
         <div class="stats-bar">
             <span id="contador-total"><i class="ph ph-books"></i> 0 obras</span>
         </div>
-        
-        <div class="grid-mangas" id="lista-mangas">
-            <!-- Os cartões são injetados aqui pelo JavaScript -->
-        </div>
+        <div class="grid-mangas" id="lista-mangas"></div>
     </main>
 
-    <!-- ========================================== -->
-    <!-- 3. MODAIS (Janelas Sobrepostas)            -->
-    <!-- ========================================== -->
-    
-    <!-- 3.1 Modal: Detalhes da Obra -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo">
             <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
@@ -83,7 +68,7 @@
                     <div id="modal-generos" class="modal-generos"></div>
                     
                     <div class="controle-leitura">
-                        <div class="leitura-label"><i class="ph ph-bookmark-simple"></i> <strong>Capítulo Atual</strong></div>
+                        <div class="leitura-label"><i class="ph ph-bookmark-simple"></i> <strong>Progresso</strong></div>
                         <div class="contador">
                             <button class="btn-contador" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
                             <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
@@ -108,23 +93,17 @@
         </div>
     </div>
 
-    <!-- 3.2 Modal: Formulário de Cadastro/Edição -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
             <div class="busca-api-container">
-                <div class="busca-api-header"><i class="ph ph-magic-wand"></i> <label>Busca Inteligente</label></div>
+                <div class="busca-api-header"><i class="ph ph-magic-wand"></i> <label>Busca Inteligente AniList</label></div>
                 <div class="busca-api-controles">
-                    <select id="select-fonte-api" class="select-api">
-                        <option value="anilist">AniList (Global)</option>
-                        <option value="mangadex">MangaDex (Multilingue)</option>
-                        <option value="jikan">MyAnimeList (Oficial)</option>
-                    </select>
-                    <input type="text" id="input-busca-api" placeholder="Nome original ou alternativo...">
+                    <input type="text" id="input-busca-api" placeholder="Pesquisar por título ou nome alternativo...">
                     <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
-                        <i class="ph ph-magnifying-glass"></i>
+                        <i class="ph ph-magnifying-glass"></i> Buscar
                     </button>
                 </div>
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
@@ -158,7 +137,7 @@
                         </select>
                     </div>
                     <div class="grupo-input">
-                        <label>Capítulo</label>
+                        <label>Capítulo Atual</label>
                         <input type="number" id="input-capitulo" required>
                     </div>
                 </div>

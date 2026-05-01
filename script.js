@@ -25,7 +25,6 @@ enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativad
 let acervo = [];
 let idAbertoNoModal = "";
 let resultadosAPI = [];
-let fonteAtualAPI = "anilist";
 
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
@@ -34,7 +33,7 @@ const modalFormFundo = document.getElementById("modal-form-fundo");
 const formulario = document.getElementById("form-nova-obra");
 
 // ============================================================================
-// 3. COMUNICAÇÃO COM O BANCO DE DADOS (CRUD)
+// 3. BANCO DE DADOS (CRUD)
 // ============================================================================
 function carregarAcervo() {
     onSnapshot(collection(db, "mangas"), (snapshot) => {
@@ -46,7 +45,6 @@ function carregarAcervo() {
         });
         acervo.sort((a, b) => a.titulo.localeCompare(b.titulo));
         renderizarMangas(acervo);
-        
         if (idAbertoNoModal && modalFundo.style.display === "flex") {
             window.abrirModal(idAbertoNoModal);
         }
@@ -84,13 +82,13 @@ formulario.addEventListener("submit", async (e) => {
         if (id) {
             await updateDoc(doc(db, "mangas", id), obra);
             fecharModalForm();
-            window.abrirModal(id); // Reabre a ficha após editar
+            window.abrirModal(id);
         } else {
             await addDoc(collection(db, "mangas"), obra);
             fecharModalForm();
         }
     } catch(err) {
-        alert("Erro ao salvar no banco!");
+        alert("Erro no banco!");
         console.error(err);
     } finally {
         btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
@@ -98,7 +96,7 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. RENDERIZAÇÃO E INTERFACE (UI)
+// 4. INTERFACE (UI)
 // ============================================================================
 function renderizarMangas(lista) {
     conteinerMangas.innerHTML = "";
@@ -114,7 +112,7 @@ function renderizarMangas(lista) {
                 <div class="cartao-overlay"></div>
                 <div class="cartao-tags-topo">
                     <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
-                    <span class="tag-status-poster" title="${obra.status}">${iconeStatus}</span>
+                    <span class="tag-status-poster">${iconeStatus}</span>
                 </div>
                 <div class="cartao-info-bottom">
                     <h3 class="titulo-poster">${obra.titulo}</h3>
@@ -135,15 +133,14 @@ window.filtrarPorTipo = (t) => {
 
 barraPesquisa.addEventListener("input", (e) => {
     const txt = e.target.value.toLowerCase();
-    const filtrados = acervo.filter(o => 
+    renderizarMangas(acervo.filter(o => 
         (o.titulo || "").toLowerCase().includes(txt) || 
         (o.titulosAlternativos || "").toLowerCase().includes(txt)
-    );
-    renderizarMangas(filtrados);
+    ));
 });
 
 // ============================================================================
-// 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
+// 5. MODAIS E LINKS DINÂMICOS
 // ============================================================================
 window.adicionarCampoLink = function(nome = "", url = "") {
     const container = document.getElementById("container-links-inputs");
@@ -188,9 +185,7 @@ window.abrirModal = function(id) {
                     if (linha.includes('|')) {
                         const partes = linha.split('|');
                         nomeBotao = partes[0].trim(); url = partes[1].trim();
-                    } else {
-                        try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
-                    }
+                    } else { try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {} }
                     if(url && !url.startsWith('http')) url = 'https://' + url;
                     containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
                 }
@@ -204,7 +199,6 @@ window.alterarCapitulo = async function(val) {
     let input = document.getElementById("modal-capitulo-editavel");
     let novo = (parseInt(input.value) || 0) + val;
     if(novo < 0) novo = 0;
-    input.value = novo;
     await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
 }
 
@@ -240,12 +234,11 @@ window.prepararEdicao = function() {
         
         const containerLinks = document.getElementById("container-links-inputs");
         containerLinks.innerHTML = "";
-        if (o.linksLeitura && Array.isArray(o.linksLeitura)) {
+        if (o.linksLeitura) {
             o.linksLeitura.forEach(linha => {
                 let nome = "", url = linha;
                 if (linha.includes('|')) {
-                    const partes = linha.split('|');
-                    nome = partes[0].trim(); url = partes[1].trim();
+                    const p = linha.split('|'); nome = p[0].trim(); url = p[1].trim();
                 }
                 window.adicionarCampoLink(nome, url);
             });
@@ -268,15 +261,12 @@ window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecha
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
 // ============================================================================
-// 6. INTEGRAÇÃO COM MULTIPLAS APIs
+// 6. INTEGRAÇÃO ANILIST (O MOTOR PRINCIPAL)
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
     if(!q) return;
 
-    const fonte = document.getElementById("select-fonte-api").value;
-    fonteAtualAPI = fonte;
-    
     const div = document.getElementById("resultado-busca-api");
     const btn = document.getElementById("btn-buscar-api");
     
@@ -285,64 +275,53 @@ window.buscarNaAPI = async function() {
     
     try {
         div.innerHTML = "";
-        resultadosAPI = [];
+        
+        // Query blindada que busca por Nome oficial e alternativos
+        const queryGraphQL = `
+        query ($search: String) {
+          Page(page: 1, perPage: 5) {
+            media(search: $search, type: MANGA) {
+              id
+              title { romaji english native }
+              coverImage { extraLarge }
+              synopsis
+              genres
+              averageScore
+              chapters
+              status
+              startDate { year }
+              synonyms
+            }
+          }
+        }`;
 
-        if (fonte === 'anilist') {
-            const queryGraphQL = `query ($search: String) { Page(page: 1, perPage: 5) { media(search: $search, type: MANGA) { id title { romaji english native } coverImage { extraLarge } synopsis genres averageScore chapters status startDate { year } } } }`;
-            const res = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: queryGraphQL, variables: { search: q } })
-            });
-            const d = await res.json();
-            resultadosAPI = d.data?.Page?.media || [];
-        }
-        else if (fonte === 'mangadex') {
-            const res = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`);
-            const d = await res.json();
-            resultadosAPI = d.data || [];
-        }
-        else {
-            const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`);
-            const d = await res.json();
-            resultadosAPI = d.data || [];
-        }
+        const res = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: queryGraphQL, variables: { search: q } })
+        });
+        
+        const data = await res.json();
+        resultadosAPI = data.data?.Page?.media || [];
 
         if(resultadosAPI.length === 0) {
-            div.innerHTML = "<p style='padding:15px; color:#aaa;'>Nada encontrado.</p>";
+            div.innerHTML = "<p style='padding:15px; color:#aaa;'>Nada encontrado no AniList.</p>";
         } else {
             resultadosAPI.forEach((m, i) => {
-                let titulo = "Sem Título"; 
-                let capa = ""; 
-                let ano = "N/A";
-                
-                try {
-                    // Aqui está a BLINDAGEM. Os pontos de interrogação (?.) protegem contra erros.
-                    if(fonte === 'anilist') {
-                        titulo = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
-                        capa = m.coverImage?.extraLarge || "";
-                        ano = m.startDate?.year || "N/A";
-                    } else if(fonte === 'mangadex') {
-                        let tObj = m.attributes?.title || {};
-                        titulo = tObj.en || tObj["pt-br"] || Object.values(tObj)[0] || "Sem Título";
-                        let art = (m.relationships || []).find(r => r.type === 'cover_art');
-                        capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
-                        ano = m.attributes?.year || "N/A";
-                        m.minhaCapaMangaDex = capa;
-                    } else {
-                        titulo = m.title || "Sem Título";
-                        capa = m.images?.jpg?.image_url || "";
-                        ano = m.published?.prop?.from?.year || "N/A";
-                    }
-                } catch(e) { console.warn("Obra pulada por erro de dados", e); }
-                
-                div.innerHTML += `<div class="item-api" onclick="preencherComAPI(${i})"><img src="${capa}"><div><h4>${titulo}</h4><p>${ano}</p></div></div>`;
+                const titulo = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
+                const capa = m.coverImage?.extraLarge || "";
+                const ano = m.startDate?.year || "N/A";
+                div.innerHTML += `
+                    <div class="item-api" onclick="preencherComAPI(${i})">
+                        <img src="${capa}">
+                        <div><h4>${titulo}</h4><p>Lançamento: ${ano}</p></div>
+                    </div>`;
             });
         }
         div.style.display = "block";
     } catch(err) {
-        console.error("Erro na API:", err);
-        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão. Verifique se o nome possui caracteres especiais.</p>";
+        console.error("Erro AniList:", err);
+        div.innerHTML = "<p style='padding:15px; color:#ef4444;'>Erro na conexão com AniList.</p>";
         div.style.display = "block";
     } finally {
         btn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Buscar';
@@ -354,76 +333,32 @@ window.preencherComAPI = function(i) {
     const m = resultadosAPI[i];
     if(!m) return;
     
-    let titulo = "", alts = "", capa = "", sinopse = "", generos = "", status = "Em Andamento", capitulos = 0, nota = 5, tipo = "Mangá";
+    // Título e Nomes Alternativos
+    const tituloPrincipal = m.title?.romaji || m.title?.english || "";
+    let listaAlts = [];
+    if(m.title?.english && m.title.english !== tituloPrincipal) listaAlts.push(m.title.english);
+    if(m.title?.native) listaAlts.push(m.title.native);
+    if(m.synonyms) listaAlts = [...listaAlts, ...m.synonyms];
+    
+    // Preenchendo campos
+    document.getElementById("input-titulo").value = tituloPrincipal;
+    document.getElementById("input-titulos-alt").value = listaAlts.join(", ");
+    document.getElementById("input-generos").value = (m.genres || []).join(", ");
+    document.getElementById("input-capa").value = m.coverImage?.extraLarge || "";
+    document.getElementById("input-capitulo").value = m.chapters || 0;
+    document.getElementById("input-nota").value = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
+    
+    // Status e Sinopse (Limpa HTML)
+    document.getElementById("input-status").value = (m.status === "FINISHED") ? "Finalizado" : "Em Andamento";
+    document.getElementById("input-sinopse").value = (m.synopsis || "").replace(/<[^>]+>/g, '');
 
-    try {
-        if (fonteAtualAPI === 'anilist') {
-            titulo = m.title?.romaji || m.title?.english || m.title?.native || "";
-            let altArr = [];
-            if(m.title?.english) altArr.push(m.title.english);
-            if(m.title?.native) altArr.push(m.title.native);
-            alts = altArr.join(", ");
-            capa = m.coverImage?.extraLarge || "";
-            sinopse = (m.synopsis || "").replace(/<[^>]+>/g, '');
-            generos = (m.genres || []).join(", ");
-            capitulos = m.chapters || 0;
-            nota = m.averageScore ? (m.averageScore / 20).toFixed(1) : 5;
-            if (m.status === "FINISHED") status = "Finalizado";
-        } 
-        else if (fonteAtualAPI === 'mangadex') {
-            let tObj = m.attributes?.title || {};
-            titulo = tObj.en || tObj["pt-br"] || Object.values(tObj)[0] || "";
-            let altArr = [];
-            (m.attributes?.altTitles || []).forEach(t => {
-                let val = Object.values(t)[0];
-                if(val) altArr.push(val);
-            });
-            alts = altArr.join(", ");
-            capa = m.minhaCapaMangaDex || "";
-            
-            let descObj = m.attributes?.description || {};
-            sinopse = descObj["pt-br"] || descObj.en || "";
-            
-            let tags = [];
-            (m.attributes?.tags || []).forEach(t => { if(t.attributes?.name?.en) tags.push(t.attributes.name.en) });
-            generos = tags.join(", ");
-            capitulos = m.attributes?.lastChapter || 0;
-            if (m.attributes?.status === "completed") status = "Finalizado";
-        }
-        else {
-            titulo = m.title || "";
-            let altArr = [];
-            if(m.title_english) altArr.push(m.title_english);
-            if(m.title_japanese) altArr.push(m.title_japanese);
-            alts = altArr.join(", ");
-            capa = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
-            sinopse = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
-            let tags = [];
-            if(m.genres) m.genres.forEach(g => tags.push(g.name));
-            generos = tags.join(", ");
-            capitulos = m.chapters || 0;
-            nota = m.score ? (m.score / 2).toFixed(1) : 5;
-            if (m.status === "Finished") status = "Finalizado";
-        }
+    // Tipo Inteligente
+    let tipo = "Mangá";
+    const infoTexto = (m.genres || []).join(" ").toLowerCase();
+    if(infoTexto.includes("manhwa") || infoTexto.includes("webtoon")) tipo = "Manhwa";
+    document.getElementById("input-tipo").value = tipo;
 
-        let textoTipo = (generos + " " + (m.type || m.attributes?.publicationDemographic || "")).toLowerCase();
-        if (textoTipo.includes("manhwa") || textoTipo.includes("webtoon")) tipo = "Manhwa";
-        else if (textoTipo.includes("novel")) tipo = "Novel";
-
-        document.getElementById("input-titulo").value = titulo;
-        document.getElementById("input-titulos-alt").value = alts;
-        document.getElementById("input-capa").value = capa;
-        document.getElementById("input-sinopse").value = sinopse;
-        document.getElementById("input-generos").value = generos;
-        document.getElementById("input-capitulo").value = capitulos;
-        document.getElementById("input-nota").value = nota;
-        document.getElementById("input-status").value = status;
-        document.getElementById("input-tipo").value = tipo;
-
-        document.getElementById("resultado-busca-api").style.display = "none";
-    } catch(e) {
-        console.error("Erro ao preencher dados:", e);
-    }
+    div.style.display = "none";
 }
 
 // ============================================================================
