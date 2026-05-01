@@ -311,13 +311,15 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-        // --- BUSCA MANGADEX (REST com Ponte Proxy) ---
+       // --- BUSCA MANGADEX (REST com Nova Ponte Proxy) ---
         else if (fonte === 'mangadex') {
             const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMD)}`;
+            
+            // Trocamos o 'allorigins' (que caiu) pelo 'corsproxy.io' (mais estável)
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
             
             const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error("MangaDex recusou a conexão.");
+            if (!res.ok) throw new Error("A ponte de conexão falhou ao acessar o MangaDex.");
             const d = await res.json();
             resultadosAPI = d.data || [];
 
