@@ -118,13 +118,19 @@
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
+            <!-- ÁREA DA API MELHORADA -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
                     <label>Busca Automática Inteligente</label>
                 </div>
                 <div class="busca-api-controles">
-                    <input type="text" id="input-busca-api" placeholder="Digite o nome do mangá ou novel...">
+                    <select id="select-fonte-api" class="select-api">
+                        <option value="anilist">AniList</option>
+                        <option value="mangadex">MangaDex</option>
+                        <option value="jikan">MyAnimeList</option>
+                    </select>
+                    <input type="text" id="input-busca-api" placeholder="Digite o nome...">
                     <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
                         <i class="ph ph-magnifying-glass"></i> Buscar
                     </button>
@@ -192,12 +198,9 @@
                     <input type="url" id="input-capa" required placeholder="https://...">
                 </div>
                 
-                <!-- === ÁREA DINÂMICA DOS LINKS === -->
-                <div class="grupo-input">
+                <div class="grupo-input" id="area-links">
                     <label>Links para Leitura</label>
-                    <div id="container-links-inputs">
-                        <!-- O JS injeta os inputs aqui -->
-                    </div>
+                    <div id="container-links-inputs"></div>
                     <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
                         <i class="ph ph-plus"></i> Adicionar outro link
                     </button>
