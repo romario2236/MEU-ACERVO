@@ -70,6 +70,21 @@ formulario.addEventListener("submit", async (e) => {
     const btn = formulario.querySelector('.btn-salvar');
     btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
     
+    // Processar os links dinâmicos da nova UI
+    const linksArray = [];
+    document.querySelectorAll('.link-row').forEach(row => {
+        const nome = row.querySelector('.link-name-input').value.trim();
+        const url = row.querySelector('.link-url-input').value.trim();
+        
+        if (url) {
+            if (nome) {
+                linksArray.push(`${nome} | ${url}`);
+            } else {
+                linksArray.push(url);
+            }
+        }
+    });
+
     const obra = {
         titulo: document.getElementById("input-titulo").value,
         titulosAlternativos: document.getElementById("input-titulos-alt").value,
@@ -80,7 +95,7 @@ formulario.addEventListener("submit", async (e) => {
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
         capa: document.getElementById("input-capa").value,
         sinopse: document.getElementById("input-sinopse").value,
-        linksLeitura: document.getElementById("input-link-leitura").value.split('\n').filter(l => l.trim())
+        linksLeitura: linksArray
     };
     
     try {
@@ -152,8 +167,23 @@ barraPesquisa.addEventListener("input", (e) => {
 });
 
 // ============================================================================
-// 5. CONTROLE DE MODAIS (JANELAS SOBREPOSTAS)
+// 5. CONTROLE DE MODAIS E LINKS DINÂMICOS
 // ============================================================================
+
+window.adicionarCampoLink = function(nome = "", url = "") {
+    const container = document.getElementById("container-links-inputs");
+    const div = document.createElement("div");
+    div.className = "link-row";
+    div.innerHTML = `
+        <input type="text" class="link-name-input" placeholder="Nome (Ex: TMO)" value="${nome}">
+        <input type="url" class="link-url-input" placeholder="https://..." value="${url}">
+        <button type="button" class="btn-remover-link" onclick="this.parentElement.remove()" title="Remover link">
+            <i class="ph ph-x"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
 window.abrirModal = function(id) {
     const obra = acervo.find(i => i.idFirebase === id);
     if (obra) {
@@ -175,7 +205,6 @@ window.abrirModal = function(id) {
             });
         }
         
-        // A INTELIGÊNCIA DOS LINKS ACONTECE AQUI
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         
@@ -183,19 +212,14 @@ window.abrirModal = function(id) {
             let url = linha.trim();
             let nomeBotao = "Ler";
 
-            // Se o usuário usou a Regra do Pipe (Nome | Link)
             if (linha.includes('|')) {
                 const partes = linha.split('|');
                 nomeBotao = partes[0].trim();
                 url = partes[1].trim();
             } else {
-                // Se o usuário colou só o link, tenta extrair o domínio automaticamente
-                try {
-                    nomeBotao = new URL(url).hostname.replace('www.', '');
-                } catch(e) {}
+                try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
             }
 
-            // Evita botões quebrados caso esqueça o https://
             if(url && !url.startsWith('http')) url = 'https://' + url;
 
             containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
@@ -210,6 +234,10 @@ window.prepararAdicao = function() {
     document.getElementById("input-id-firebase").value = "";
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("titulo-form").innerText = "Nova Obra";
+    
+    document.getElementById("container-links-inputs").innerHTML = "";
+    window.adicionarCampoLink();
+    
     modalFormFundo.style.display = "flex";
 }
 
@@ -225,9 +253,26 @@ window.prepararEdicao = function() {
         document.getElementById("input-nota").value = o.nota || 5;
         document.getElementById("input-capa").value = o.capa;
         document.getElementById("input-sinopse").value = o.sinopse;
-        document.getElementById("input-link-leitura").value = (o.linksLeitura || []).join('\n');
         document.getElementById("input-id-firebase").value = o.idFirebase;
         document.getElementById("titulo-form").innerText = "Editar Obra";
+        
+        const containerLinks = document.getElementById("container-links-inputs");
+        containerLinks.innerHTML = "";
+        if (o.linksLeitura && o.linksLeitura.length > 0) {
+            o.linksLeitura.forEach(linha => {
+                let nome = "";
+                let url = linha;
+                if (linha.includes('|')) {
+                    const partes = linha.split('|');
+                    nome = partes[0].trim();
+                    url = partes[1].trim();
+                }
+                window.adicionarCampoLink(nome, url);
+            });
+        } else {
+            window.adicionarCampoLink();
+        }
+
         fecharModal();
         modalFormFundo.style.display = "flex";
     }

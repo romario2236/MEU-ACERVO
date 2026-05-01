@@ -21,7 +21,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Scrollbar Personalizada */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-color); }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
@@ -42,7 +41,6 @@ body {
 #barra-pesquisa { width: 100%; padding: 14px 14px 14px 44px; background: #252525; border: 1px solid transparent; border-radius: var(--radius); color: white; transition: all 0.2s;}
 #barra-pesquisa:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); }
 
-/* Filtros */
 .filter-nav { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
 .btn-filter { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; font-weight: 500; transition: 0.2s;}
 .btn-filter.active { background: white; color: black; border-color: white; }
@@ -66,139 +64,25 @@ body {
 main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
 
-.grid-mangas { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap: 20px; 
-}
+.grid-mangas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
 
-.cartao-poster { 
-    background: #111; 
-    border-radius: 14px; 
-    overflow: hidden; 
-    cursor: pointer; 
-    transition: transform 0.2s, box-shadow 0.2s; 
-    position: relative; 
-    border: 1px solid #2a2a2a;
-    aspect-ratio: 2 / 3; 
-    display: flex;
-    flex-direction: column;
-}
+.cartao-poster { background: #111; border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border: 1px solid #2a2a2a; aspect-ratio: 2 / 3; display: flex; flex-direction: column;}
+.cartao-poster:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0,0,0,0.7); border-color: #444;}
+.capa-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;}
+.cartao-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 35%, transparent 100%); z-index: 2; pointer-events: none;}
 
-.cartao-poster:hover { 
-    transform: translateY(-6px); 
-    box-shadow: 0 12px 25px rgba(0,0,0,0.7); 
-    border-color: #444;
-}
-
-.capa-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 1;
-}
-
-.cartao-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 75%;
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 35%, transparent 100%);
-    z-index: 2;
-    pointer-events: none;
-}
-
-.cartao-tags-topo {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    z-index: 3;
-}
-
-.tag-tipo-poster {
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
+.cartao-tags-topo { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 3;}
+.tag-tipo-poster { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);}
 .tag-tipo-poster.tipo-manga { border-left: 3px solid #0984e3; }
 .tag-tipo-poster.tipo-manhwa { border-left: 3px solid #e84393; }
 .tag-tipo-poster.tipo-novel { border-left: 3px solid #6c5ce7; }
+.tag-status-poster { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; color: #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.3);}
 
-.tag-status-poster {
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: bold;
-    color: #ddd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.cartao-info-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 15px 12px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.titulo-poster {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: white;
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.9);
-}
-
-.cartao-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 4px;
-}
-
-.tag-capitulo-poster {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #e2e8f0;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-}
-
-.tag-nota-poster {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #fbbf24;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-}
+.cartao-info-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px 12px; z-index: 3; display: flex; flex-direction: column; gap: 6px;}
+.titulo-poster { font-size: 1.1rem; font-weight: 800; color: white; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 6px rgba(0,0,0,0.9);}
+.cartao-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px;}
+.tag-capitulo-poster { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; text-shadow: 0 1px 3px rgba(0,0,0,0.9);}
+.tag-nota-poster { font-size: 0.8rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.9);}
 
 /* ==========================================
    5. MODAL DE DETALHES DA OBRA
@@ -285,6 +169,17 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .select-wrapper select { width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer; }
 .select-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
 
+/* === NOVOS ESTILOS PARA LINKS DINÂMICOS === */
+#container-links-dinamicos { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.linha-link { display: flex; gap: 10px; align-items: center; }
+.linha-link input { margin-bottom: 0 !important; }
+.input-nome-link { flex: 1; min-width: 100px; }
+.input-url-link { flex: 2; }
+.btn-remover-link { background: #ef4444; color: white; border: none; width: 48px; height: 48px; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;}
+.btn-remover-link:hover { background: #dc2626; transform: scale(1.05); }
+.btn-adicionar-link { background: transparent; color: var(--primary); border: 2px dashed #334155; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;}
+.btn-adicionar-link:hover { border-color: var(--primary); background: rgba(0, 132, 255, 0.1); }
+
 /* ==========================================
    7. RESPONSIVIDADE (CELULARES)
    ========================================== */
@@ -296,4 +191,9 @@ main { max-width: 1200px; margin: 0 auto; padding: 20px; }
     #modal-capa { width: 200px; }
     .modal-form-conteudo { padding: 25px 20px; }
     .acoes-modal { justify-content: center; }
+    
+    /* Adaptação dos links dinâmicos para celular */
+    .linha-link { flex-wrap: wrap; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333;}
+    .input-nome-link, .input-url-link { flex: 100%; min-width: 100%; }
+    .btn-remover-link { width: 100%; height: 40px; margin-top: 5px;}
 }
