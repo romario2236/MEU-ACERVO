@@ -112,6 +112,16 @@ let carregandoScroll = false;
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo;
 
+    // Função para mostrar/esconder a caixa de filtros extras
+window.toggleFiltros = () => {
+    const caixa = document.getElementById("caixa-filtros");
+    if (caixa.style.display === "none") {
+        caixa.style.display = "flex"; // Mostra os filtros
+    } else {
+        caixa.style.display = "none"; // Esconde os filtros
+    }
+};
+
     // Filtro de Texto
     if (filtroTexto) {
         listaFiltrada = listaFiltrada.filter(o => 
