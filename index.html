@@ -125,79 +125,112 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         4. MODAL DE CADASTRO / EDIÇÃO
-    =========================================== -->
-    <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
-        <div class="modal-conteudo modal-form-conteudo">
-            <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
-            <h2 id="titulo-form">Cadastrar Obra</h2>
-            
-            <div class="busca-api-container">
-                <div class="busca-api-header"><i class="ph ph-magic-wand"></i> Busca Automática</div>
-                <div class="busca-api-controles">
-                    <select id="select-fonte-api" class="select-api">
-                        <option value="jikan">MyAnimeList</option>
-                        <option value="mangadex">MangaDex</option>
-                        <option value="kitsu">Kitsu</option>
-                    </select>
-                    <input type="text" id="input-busca-api" placeholder="Pesquisar título...">
-                    <button type="button" class="btn-buscar" onclick="buscarNaAPI()"><i class="ph ph-magnifying-glass"></i></button>
-                </div>
-                <div id="resultado-busca-api" class="resultado-busca-api"></div>
+<!-- ==========================================
+     4. MODAL DE CADASTRO (VERSÃO AJUSTADA)
+=========================================== -->
+<div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
+    <div class="modal-conteudo modal-form-conteudo" style="max-width: 600px;">
+        <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
+        <h2 id="titulo-form" style="margin-bottom: 20px;">Cadastrar Obra</h2>
+        
+        <!-- Bloco de Busca API -->
+        <div class="busca-api-container" style="background: #1a2233; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <div class="busca-api-header" style="color: #60a5fa; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">
+                <i class="ph ph-magic-wand"></i> Busca Automática
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <select id="select-fonte-api" style="flex: 1; padding: 10px; border-radius: 8px; background: #0f172a; color: white; border: 1px solid #334155;">
+                    <option value="jikan">MyAnimeList</option>
+                    <option value="mangadex">MangaDex</option>
+                    <option value="kitsu">Kitsu</option>
+                </select>
+                <input type="text" id="input-busca-api" placeholder="Pesquisar..." style="flex: 2; padding: 10px; border-radius: 8px; background: #0f172a; color: white; border: 1px solid #334155;">
+                <button type="button" onclick="buscarNaAPI()" style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer;">
+                    <i class="ph ph-magnifying-glass"></i>
+                </button>
+            </div>
+            <div id="resultado-busca-api" class="resultado-busca-api"></div>
+        </div>
+
+        <form id="form-nova-obra">
+            <input type="hidden" id="input-id-firebase">
+
+            <div class="grupo-input">
+                <label>Título Principal</label>
+                <input type="text" id="input-titulo" required>
             </div>
 
-            <form id="form-nova-obra">
-                <input type="hidden" id="input-id-firebase">
+            <div class="grupo-input">
+                <label>Lista Personalizada</label>
+                <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Ex: Favoritos...">
+                <datalist id="sugestoes-listas"></datalist>
+            </div>
+
+            <!-- Títulos Alternativos e Gêneros em uma linha -->
+            <div class="linha-inputs-grid">
                 <div class="grupo-input">
-                    <label>Título Principal</label>
-                    <input type="text" id="input-titulo" required>
+                    <label>Títulos Alternativos</label>
+                    <input type="text" id="input-titulos-alt">
                 </div>
                 <div class="grupo-input">
-                    <label>Lista Personalizada</label>
-                    <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Ex: Favoritos, Ler Depois...">
-                    <datalist id="sugestoes-listas"></datalist>
+                    <label>Gêneros</label>
+                    <input type="text" id="input-generos" required>
                 </div>
-                <div class="linha-inputs-grid">
-                    <div class="grupo-input">
-                        <label>Tipo</label>
-                        <select id="input-tipo">
-                            <option value="Mangá">Mangá</option>
-                            <option value="Manhwa">Manhwa</option>
-                            <option value="Manhua">Manhua</option>
-                            <option value="Novel">Novel</option>
-                        </select>
-                    </div>
-                    <div class="grupo-input">
-                        <label>Capítulo Atual</label>
-                        <input type="number" id="input-capitulo" value="0">
-                    </div>
-                </div>
-                <div class="linha-inputs-grid">
-                    <div class="grupo-input">
-                        <label>Status</label>
-                        <select id="input-status">
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Finalizado">Finalizado</option>
-                            <option value="Hiato">Hiato</option>
-                        </select>
-                    </div>
-                    <div class="grupo-input">
-                        <label>Nota</label>
-                        <input type="number" id="input-nota" step="0.1" min="0" max="5">
-                    </div>
-                </div>
-                <div class="grupo-input"><label>Sinopse</label><textarea id="input-sinopse" rows="4"></textarea></div>
-                <div class="grupo-input"><label>URL da Capa</label><input type="url" id="input-capa"></div>
+            </div>
+            
+            <div class="linha-inputs-grid">
                 <div class="grupo-input">
-                    <label>Links de Leitura</label>
-                    <div id="container-links-inputs"></div>
-                    <button type="button" class="btn-add-link" onclick="adicionarCampoLink()"><i class="ph ph-plus"></i></button>
+                    <label>Tipo</label>
+                    <select id="input-tipo">
+                        <option value="Mangá">Mangá</option>
+                        <option value="Manhwa">Manhwa</option>
+                        <option value="Manhua">Manhua</option>
+                        <option value="Novel">Novel</option>
+                    </select>
                 </div>
-                <button type="submit" class="btn-salvar">Salvar no Acervo</button>
-            </form>
-        </div>
+                <div class="grupo-input">
+                    <label>Capítulo Atual</label>
+                    <input type="number" id="input-capitulo" value="0">
+                </div>
+            </div>
+
+            <div class="linha-inputs-grid">
+                <div class="grupo-input">
+                    <label>Status</label>
+                    <select id="input-status">
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Hiato">Hiato</option>
+                    </select>
+                </div>
+                <div class="grupo-input">
+                    <label>Nota (1 a 5)</label>
+                    <input type="number" id="input-nota" step="0.1" min="0" max="5">
+                </div>
+            </div>
+            
+            <div class="grupo-input">
+                <label>URL da Capa</label>
+                <input type="url" id="input-capa">
+            </div>
+            
+            <div class="grupo-input">
+                <label>Links para Leitura</label>
+                <div id="container-links-inputs" style="margin-bottom: 10px;"></div>
+                <button type="button" class="btn-add-link" onclick="adicionarCampoLink()" style="width: 100%; border: 1px dashed #555; background: transparent; color: #888; padding: 10px; border-radius: 8px; cursor: pointer;">
+                    <i class="ph ph-plus"></i> Adicionar Link
+                </button>
+            </div>
+            
+            <div class="grupo-input">
+                <label>Sinopse</label>
+                <textarea id="input-sinopse" rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-salvar">Salvar no Acervo</button>
+        </form>
     </div>
+</div>
 
     <script type="module" src="script.js"></script>
     <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; display: none; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; z-index: 1000;"><i class="ph ph-caret-up"></i></button>
