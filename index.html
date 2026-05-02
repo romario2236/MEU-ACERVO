@@ -179,96 +179,113 @@
         </div>
     </div>
 
-    <!-- ==========================================
-     4. MODAL DE CADASTRO (Versão Corrigida)
-=========================================== -->
-<div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
-    <div class="modal-conteudo modal-form-conteudo">
-        <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
-        <h2 id="titulo-form">Nova Obra</h2>
-        
-        <!-- ... (mantenha o bloco busca-api-container igual) ... -->
-
-        <form id="form-nova-obra">
-            <input type="hidden" id="input-id-firebase" value="">
-
-            <div class="grupo-input">
-                <label>Título Principal</label>
-                <input type="text" id="input-titulo" required>
-            </div>
-
-            <div class="grupo-input">
-                <label>Títulos Alternativos (Opcional)</label>
-                <input type="text" id="input-titulos-alt">
-            </div>
+   <!-- ==========================================
+         4. MODAL DE CADASTRO (ESTRUTURA COMPLETA)
+    =========================================== -->
+    <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
+        <div class="modal-conteudo modal-form-conteudo">
+            <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
+            <h2 id="titulo-form">Nova Obra</h2>
             
-            <div class="grupo-input">
-                <label>Gêneros (separados por vírgula)</label>
-                <input type="text" id="input-generos" required>
-            </div>
-            
-            <!-- CAMPO ÚNICO E CORRIGIDO DE LISTA -->
-            <div class="grupo-input">
-                <label>Lista Personalizada (Opcional)</label>
-                <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Selecione ou digite...">
-                <datalist id="sugestoes-listas"></datalist>
-            </div>
-            
-            <div class="linha-inputs-grid">
-                <div class="grupo-input">
-                    <label>Tipo</label>
-                    <select id="input-tipo">
-                        <option value="Mangá">Mangá</option>
-                        <option value="Manhwa">Manhwa</option>
-                        <option value="Manhua">Manhua</option>
-                        <option value="Novel">Novel</option>
+            <!-- BLOCO DE BUSCA API -->
+            <div class="busca-api-container">
+                <div class="busca-api-header">
+                    <i class="ph ph-magic-wand"></i>
+                    <label>Busca Automática</label>
+                </div>
+                <div class="busca-api-controles">
+                    <select id="select-fonte-api" class="select-api">
+                        <option value="jikan">MyAnimeList</option>
+                        <option value="mangadex">MangaDex</option>
+                        <option value="kitsu">Kitsu</option>
                     </select>
+                    <input type="text" id="input-busca-api" placeholder="Digite o título...">
+                    <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
+                        <i class="ph ph-magnifying-glass"></i> Buscar
+                    </button>
                 </div>
-                <div class="grupo-input">
-                    <label>Capítulo Atual</label>
-                    <input type="number" id="input-capitulo" required>
-                </div>
+                <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
-            <div class="linha-inputs-grid">
+            <form id="form-nova-obra">
+                <input type="hidden" id="input-id-firebase" value="">
+
                 <div class="grupo-input">
-                    <label>Status</label>
-                    <select id="input-status">
-                        <option value="Em Andamento">Em Andamento</option>
-                        <option value="Finalizado">Finalizado</option>
-                        <option value="Hiato">Hiato</option>
-                    </select>
+                    <label>Título Principal</label>
+                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
                 </div>
+
                 <div class="grupo-input">
-                    <label>Nota (1 a 5)</label>
-                    <input type="number" id="input-nota" step="0.1" min="1" max="5" required>
+                    <label>Lista Personalizada (Opcional)</label>
+                    <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Selecione ou digite...">
+                    <datalist id="sugestoes-listas"></datalist>
                 </div>
-            </div>
-            
-            <div class="grupo-input">
-                <label>Link da Capa (URL)</label>
-                <input type="url" id="input-capa" required>
-            </div>
-            
-            <div class="grupo-input">
-                <label>Links para Leitura</label>
-                <div id="container-links-inputs"></div>
-                <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
-                    <i class="ph ph-plus"></i> Adicionar Link
+
+                <div class="grupo-input">
+                    <label>Títulos Alternativos</label>
+                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
+                </div>
+                
+                <div class="grupo-input">
+                    <label>Gêneros (separados por vírgula)</label>
+                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia">
+                </div>
+                
+                <div class="linha-inputs-grid">
+                    <div class="grupo-input">
+                        <label>Tipo</label>
+                        <select id="input-tipo">
+                            <option value="Mangá">Mangá</option>
+                            <option value="Manhwa">Manhwa</option>
+                            <option value="Manhua">Manhua</option>
+                            <option value="Novel">Novel</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label>Capítulo Atual</label>
+                        <input type="number" id="input-capitulo" required placeholder="0">
+                    </div>
+                </div>
+
+                <div class="linha-inputs-grid">
+                    <div class="grupo-input">
+                        <label>Status</label>
+                        <select id="input-status">
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Hiato">Hiato</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label>Nota (1 a 5)</label>
+                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required>
+                    </div>
+                </div>
+                
+                <div class="grupo-input">
+                    <label>Link da Capa (URL)</label>
+                    <input type="url" id="input-capa" required>
+                </div>
+                
+                <div class="grupo-input">
+                    <label>Links para Leitura</label>
+                    <div id="container-links-inputs"></div>
+                    <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
+                        <i class="ph ph-plus"></i> Adicionar Link
+                    </button>
+                </div>
+                
+                <div class="grupo-input">
+                    <label>Sinopse</label>
+                    <textarea id="input-sinopse" rows="4" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-salvar">
+                    <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
                 </button>
-            </div>
-            
-            <div class="grupo-input">
-                <label>Sinopse</label>
-                <textarea id="input-sinopse" rows="4" required></textarea>
-            </div>
-            
-            <button type="submit" class="btn-salvar">
-                <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
-            </button>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
     <script type="module" src="script.js"></script>
     <!-- Botão Flutuante: Voltar ao Topo -->
