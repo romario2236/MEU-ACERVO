@@ -9,17 +9,29 @@
 </head>
 <body>
 
-    <!-- ==========================================
-         1. CABEÇALHO (Busca e Botão Adicionar)
+   <!-- ==========================================
+         1. CABEÇALHO (Busca, Backup e Adicionar)
     =========================================== -->
     <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
         <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
             
-            <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; max-width: 400px; padding: 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
+            <!-- Barra de Pesquisa com Botão Limpar -->
+            <div style="position: relative; width: 100%; max-width: 400px; display: flex; align-items: center;">
+                <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
+                <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none; padding: 5px; align-items: center; justify-content: center;">
+                    <i class="ph ph-x-circle" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
             
-            <button onclick="abrirModalForm()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
-            </button>
+            <!-- Botões de Ação -->
+            <div style="display: flex; gap: 10px;">
+                <button onclick="fazerBackup()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+                    <i class="ph ph-download-simple" style="font-size: 1.2rem;"></i> Backup
+                </button>
+                <button onclick="abrirModalForm()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
+                </button>
+            </div>
             
         </div>
     </header>
@@ -236,5 +248,9 @@
     </div>
 
     <script type="module" src="script.js"></script>
+    <!-- Botão Flutuante: Voltar ao Topo -->
+    <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; transition: 0.3s;">
+        <i class="ph ph-caret-up"></i>
+    </button>
 </body>
 </html>

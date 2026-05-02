@@ -610,3 +610,48 @@ window.fecharModalFormPeloFundo = (event) => {
         window.fecharModalForm();
     }
 };
+// ==========================================
+// MELHORIAS DE INTERFACE (BUSCA E SCROLL)
+// ==========================================
+
+// 1. Botão Limpar Busca
+window.limparBusca = () => {
+    const inputBusca = document.getElementById('barra-pesquisa');
+    if (inputBusca) {
+        inputBusca.value = ''; // Limpa o texto
+        document.getElementById('btn-limpar-busca').style.display = 'none'; // Esconde o botão X
+        
+        // Simula que você apagou o texto para o filtro ser aplicado automaticamente
+        inputBusca.dispatchEvent(new Event('input')); 
+    }
+};
+
+// 2. Lógica para mostrar/esconder o "X" enquanto você digita
+const inputBuscaEvent = document.getElementById('barra-pesquisa');
+if (inputBuscaEvent) {
+    inputBuscaEvent.addEventListener('input', (e) => {
+        const btnLimpar = document.getElementById('btn-limpar-busca');
+        if (e.target.value.length > 0) {
+            btnLimpar.style.display = 'flex'; // Mostra o X se tiver texto
+        } else {
+            btnLimpar.style.display = 'none'; // Esconde se estiver vazio
+        }
+    });
+}
+
+// 3. Função para Voltar ao Topo com animação suave
+window.voltarAoTopo = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// 4. Lógica para mostrar o botão de Topo só quando rolar para baixo
+window.addEventListener('scroll', () => {
+    const btnTopo = document.getElementById('btn-topo');
+    if (btnTopo) {
+        if (window.scrollY > 300) {
+            btnTopo.style.display = 'flex'; // Mostra quando descer 300px
+        } else {
+            btnTopo.style.display = 'none'; // Esconde quando estiver lá no alto
+        }
+    }
+});
