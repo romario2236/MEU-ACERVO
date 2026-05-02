@@ -366,6 +366,7 @@ window.prepararAdicao = function() {
 // local das edições e dados do formulario de edição
 
 window.prepararEdicao = function() {
+    renderizarTagsSelecao(o.listaPersonalizada || "Geral");
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
         // Preenche os campos básicos
@@ -652,6 +653,7 @@ window.importarDados = (e) => {
 
 // Função para ABRIR a janela
 window.abrirModalForm = () => {
+    renderizarTagsSelecao("Geral");
     const modalForm = document.getElementById('modal-form-fundo');
     const form = document.getElementById('form-nova-obra');
     const tituloForm = document.getElementById('titulo-form');
@@ -848,4 +850,55 @@ window.renderizarTagsSelecao = function(valorAtual = "Geral") {
 
         container.appendChild(tag);
     });
+};
+
+window.renderizarTagsSelecao = function(valorAtual = "Geral") {
+    const container = document.getElementById("container-tags-selecao");
+    if (!container) return;
+
+    const listasUnicas = [...new Set(acervo
+        .map(o => (o.listaPersonalizada || "").trim())
+        .filter(l => l !== "" && l !== "_LIST_MARKER_" && l !== "Geral")
+    )].sort();
+
+    listasUnicas.unshift("Geral");
+    container.innerHTML = "";
+
+    listasUnicas.forEach(nome => {
+        const tag = document.createElement("span");
+        tag.innerText = nome;
+        // Estilo da tag (azul se selecionada, cinza se não)
+        tag.style.cssText = `
+            padding: 6px 12px; border-radius: 20px; border: 1px solid #333;
+            cursor: pointer; font-size: 0.85rem; transition: 0.2s;
+            background: ${valorAtual === nome ? '#3b82f6' : '#1a1a1a'};
+            color: ${valorAtual === nome ? '#fff' : '#aaa'};
+        `;
+
+        tag.onclick = () => {
+            document.getElementById("input-lista").value = nome;
+            renderizarTagsSelecao(nome); 
+        };
+        container.appendChild(tag);
+    });
+};
+
+window.deletarListaCompleta = async function(nomeLista) {
+    if (!confirm(`Deseja excluir a lista "${nomeLista}"? As obras serão movidas para "Geral".`)) return;
+
+    const obrasDaLista = acervo.filter(o => o.listaPersonalizada === nomeLista);
+    
+    try {
+        for (const obra of obrasDaLista) {
+            const docRef = doc(db, "mangas", obra.idFirebase);
+            if (obra.titulo === "_LIST_MARKER_") {
+                await deleteDoc(docRef); 
+            } else {
+                await updateDoc(docRef, { listaPersonalizada: "Geral" });
+            }
+        }
+        alert("Lista removida!");
+    } catch (err) {
+        console.error("Erro ao deletar:", err);
+    }
 };

@@ -226,15 +226,15 @@
                     <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
                 </div>
 
-                <div class="grupo-input">
-    <label>Selecionar Listas</label>
-    <!-- Campo invisível que guardará o valor final para o Firebase -->
+                <!-- Localize onde estava o input de lista e substitua por este bloco -->
+<div class="grupo-input">
+    <label>Lista Personalizada</label>
+    <!-- Este input fica escondido, ele apenas guarda o valor para o Firebase -->
     <input type="hidden" id="input-lista" value="Geral">
     
-    <!-- Container onde as tags aparecerão -->
-    <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
-        <!-- As tags serão geradas aqui pelo JavaScript -->
-    </div>
+    <!-- É aqui que o JavaScript vai "desenhar" as tags clicáveis -->
+    <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
+</div>
 </div>
 
                 <div class="grupo-input">

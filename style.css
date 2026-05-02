@@ -359,3 +359,14 @@ main { width: 100%; margin: 0; padding: 0; }
     opacity: 1;
     color: #3b82f6; /* Cor azul suave no ícone ao passar o mouse */
 }
+
+#container-listas-personalizadas div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+#container-listas-personalizadas .sidebar-btn {
+    flex: 1; /* Faz o botão do nome ocupar o espaço disponível */
+}
