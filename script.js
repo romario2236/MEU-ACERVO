@@ -136,7 +136,7 @@ window.filtrarPorLista = (nome, botaoClicado) => {
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroListaAtiva = nome;
-    filtroTipo = "Todos"; 
+    filtroTipo = "Todos"; // Limpa o tipo para focar na lista
     window.aplicarFiltros();
 };
 
