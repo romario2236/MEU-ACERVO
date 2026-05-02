@@ -281,7 +281,14 @@ function carregarMaisItens() {
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
                     <div class="info-flutuante">
-                        <span><i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${obra.capitulo}</span>
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${obra.capitulo}
+                            <!-- Botoes Rapidos -->
+                            <div style="margin-left: auto; display: flex; gap: 4px;">
+                                <button class="btn-mini-cap" onclick="alterarCapituloRapido('${obra.idFirebase}', -1, event)"><i class="ph ph-minus"></i></button>
+                                <button class="btn-mini-cap" onclick="alterarCapituloRapido('${obra.idFirebase}', 1, event)"><i class="ph ph-plus"></i></button>
+                            </div>
+                        </span>
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
                         <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> ${obra.status}</span>
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
@@ -800,4 +807,50 @@ window.renderizarTagsSelecao = function(valoresAtuais) {
 
     // Garante que o input escondido sempre atualize quando a janela abre
     document.getElementById("input-lista").value = JSON.stringify(selecionadas);
+};
+
+// ============================================================================
+// 8. NOTIFICAÇÕES TOAST E ATUALIZAÇÃO RÁPIDA
+// ============================================================================
+window.mostrarToast = function(mensagem, tipo = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    
+    // Define o ícone de acordo com o tipo (sucesso, erro ou normal)
+    let icone = '<i class="ph-fill ph-check-circle" style="color: #10b981; font-size: 1.5rem;"></i>';
+    if (tipo === 'error') icone = '<i class="ph-fill ph-warning-circle" style="color: #ef4444; font-size: 1.5rem;"></i>';
+    else if (tipo === 'info') icone = '<i class="ph-fill ph-info" style="color: #3b82f6; font-size: 1.5rem;"></i>';
+
+    toast.innerHTML = `${icone} <span>${mensagem}</span>`;
+    container.appendChild(toast);
+
+    // Entrada animada
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Saída animada após 3 segundos
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400); // Remove o elemento do HTML depois de sumir
+    }, 3000);
+};
+
+window.alterarCapituloRapido = async function(id, val, event) {
+    event.stopPropagation(); // Impede de abrir a janela grande da obra
+    
+    const obra = acervo.find(i => i.idFirebase === id);
+    if (!obra) return;
+    
+    let novo = (parseInt(obra.capitulo) || 0) + val;
+    if (novo < 0) novo = 0;
+    
+    try {
+        await updateDoc(doc(db, "mangas", id), { capitulo: novo.toString() });
+        window.mostrarToast(`Capítulo de ${obra.titulo} atualizado para ${novo}!`, 'success');
+    } catch(err) {
+        window.mostrarToast('Erro ao atualizar capítulo!', 'error');
+        console.error(err);
+    }
 };

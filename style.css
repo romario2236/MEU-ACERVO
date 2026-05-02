@@ -483,3 +483,71 @@ main { width: 100%; margin: 0; padding: 0; }
     font-weight: bold;
 }
 #modal-capitulo-editavel:focus { outline: none; }
+
+/* =========================================
+   SISTEMA DE NOTIFICAÇÕES (TOAST)
+========================================= */
+#toast-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* Deixa você clicar nas coisas através da área invisível */
+}
+
+.toast {
+    background: #252525;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border-left: 5px solid #3b82f6;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Animação elástica */
+    pointer-events: auto;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success { border-left-color: #10b981; }
+.toast.error { border-left-color: #ef4444; }
+
+/* =========================================
+   BOTÕES DE ATUALIZAÇÃO RÁPIDA (CARD)
+========================================= */
+.btn-mini-cap {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-mini-cap:hover { background: #3b82f6; transform: scale(1.1); }
+
+/* IMPORTANTE: Permite que você clique dentro do card flutuante */
+.cartao-poster:hover .card-flutuante {
+    opacity: 1;
+    visibility: visible;
+    left: 105%;
+    pointer-events: auto; 
+}
