@@ -366,9 +366,14 @@ window.prepararAdicao = function() {
 // local das edições e dados do formulario de edição
 
 window.prepararEdicao = function() {
-    renderizarTagsSelecao(o.listaPersonalizada || "Geral");
+    // 1. PRIMEIRO: Encontramos a obra no banco de dados e salvamos na variável 'o'
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
+    
+    // 2. DEPOIS: Se a obra existir, executamos o resto
     if (o) {
+        // Agora sim a variável 'o' existe e podemos usá-la!
+        renderizarTagsSelecao(o.listaPersonalizada || "Geral");
+        
         // Preenche os campos básicos
         document.getElementById("input-titulo").value = o.titulo || "";
         document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
@@ -378,14 +383,12 @@ window.prepararEdicao = function() {
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
         
-        // CORREÇÃO: Preenche o novo campo de lista (que agora tem o datalist)
-        // CORREÇÃO SEGURA: Só tenta preencher se o campo realmente existir na tela
-const campoLista = document.getElementById('input-lista');
-if (campoLista) {
-    campoLista.value = o.listaPersonalizada || '';
-} else {
-    console.warn("Aviso: O campo 'input-lista' não foi encontrado no HTML.");
-}
+        const campoLista = document.getElementById('input-lista');
+        if (campoLista) {
+            campoLista.value = o.listaPersonalizada || '';
+        } else {
+            console.warn("Aviso: O campo 'input-lista' não foi encontrado no HTML.");
+        }
         
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
@@ -411,6 +414,7 @@ if (campoLista) {
         
         // Fecha o modal de detalhes e abre o de edição
         fecharModal(); 
+        document.getElementById('titulo-form').innerText = "Editar Obra"; // Muda o título visualmente
         modalFormFundo.style.display = "flex"; 
     }
 }
