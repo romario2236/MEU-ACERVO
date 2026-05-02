@@ -98,34 +98,32 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. INTERFACE, BUSCA AVANÇADA E FILTROS
+// 4. INTERFACE, BUSCA AVANÇADA E FILTROS (Versão Final Corrigida)
 // ============================================================================
 let filtroTexto = "";
 let filtroTipo = "Todos";
-let filtroListaAtiva = "Todas"; // Nova variável de controle
+let filtroListaAtiva = "Todas"; 
 
-// Variáveis de Controle do Scroll Infinito
 let itensPorPagina = 24; 
 let itensCarregados = 0;
 let listaAtualFiltrada = [];
 let carregandoScroll = false;
 
-// Função para atualizar os botões da barra lateral dinamicamente
+// Função que desenha os botões das suas listas na barra lateral
 function atualizarBotoesListas() {
     const container = document.getElementById("container-listas-personalizadas");
     if (!container) return;
 
-    // Descobre as listas únicas criadas por você no acervo
     const listasUnicas = [...new Set(acervo
         .map(o => o.listaPersonalizada)
         .filter(l => l && l !== "Geral" && l !== "")
     )].sort();
 
-    // Limpa o container e reconstrói os botões
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
         btn.className = "btn-filter sidebar-btn";
+        // Mantém o botão aceso se for a lista ativa
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         btn.innerText = nomeLista;
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.target);
@@ -133,34 +131,36 @@ function atualizarBotoesListas() {
     });
 }
 
-// Filtro por Lista Personalizada
+// Filtro para quando você clica em uma lista (ex: "Favoritos")
 window.filtrarPorLista = (nome, botaoClicado) => {
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroListaAtiva = nome;
-    filtroTipo = "Todos"; // Reseta o filtro de tipo para não conflitar
+    filtroTipo = "Todos"; // Reseta Mangá/Manhwa para mostrar tudo daquela lista
     window.aplicarFiltros();
 };
 
-// Evento dos botões de tipo (Mangá, Manhwa, etc)
+// Filtro para quando você clica em Mangá, Manhwa ou "Todos"
 window.filtrarPorTipo = (t, botaoClicado) => {
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroTipo = t;
-    filtroListaAtiva = "Todas"; // Reseta a lista ao escolher um tipo geral
+    
+    // CORREÇÃO: Se clicou em "Todos" ou em um Tipo, a lista personalizada é resetada
+    filtroListaAtiva = "Todas"; 
+    
     window.aplicarFiltros();
 };
 
-// O CÉREBRO: Analisa todos os filtros de uma vez
+// O CÉREBRO: Processa todas as regras de exibição
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo;
 
-    // Atualiza a lateral com as listas existentes
     atualizarBotoesListas();
 
-    // Filtro de Texto (Busca)
+    // 1. Busca por texto
     if (filtroTexto) {
         listaFiltrada = listaFiltrada.filter(o => 
             (o.titulo || "").toLowerCase().includes(filtroTexto) || 
@@ -168,23 +168,23 @@ window.aplicarFiltros = () => {
         );
     }
 
-    // Filtro de Tipo
+    // 2. Filtro de Categorias (Tipo)
     if (filtroTipo !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
     }
 
-    // Filtro de Lista Personalizada
+    // 3. Filtro de Listas Personalizadas
     if (filtroListaAtiva !== "Todas") {
         listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
     }
 
-    // Filtro de Status
+    // 4. Filtro de Status (Select)
     const statusSelect = document.getElementById("select-status");
     if (statusSelect && statusSelect.value !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
     }
 
-    // Ordenação
+    // 5. Ordenação
     const ordemSelect = document.getElementById("select-ordem");
     if (ordemSelect) {
         const ordem = ordemSelect.value;
@@ -198,11 +198,14 @@ window.aplicarFiltros = () => {
         });
     }
 
-    // Atualiza a grade
+    // Reinicia a grade com o resultado final
     listaAtualFiltrada = listaFiltrada;
     itensCarregados = 0;
-    conteinerMangas.innerHTML = ""; 
-    document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras`;
+    const conteinerMangas = document.getElementById("lista-mangas");
+    if(conteinerMangas) conteinerMangas.innerHTML = ""; 
+    
+    const contador = document.getElementById("contador-total");
+    if(contador) contador.innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras`;
     
     carregarMaisItens();
 };
