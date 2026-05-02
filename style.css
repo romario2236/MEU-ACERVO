@@ -123,19 +123,24 @@ main { width: 100%; margin: 0; padding: 0; }
 /* ==========================================
    A MÁGICA DO HOVER (Quando passa o mouse)
    ========================================== */
+.cartao-poster {
+    z-index: 1; /* Define uma base */
+}
+
 .cartao-poster:hover {
-    z-index: 200; /* Traz o mangá para a frente de todos */
+    z-index: 999; /* Garante que o card passe por cima de todas as outras capas do site */
 }
 
 .cartao-poster:hover .capa-bg {
-    transform: scale(1.05); /* Zoom suave */
-    box-shadow: 0 0 0 3px #3b82f6; /* Borda azul de destaque */
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px #3b82f6;
 }
 
 .cartao-poster:hover .card-flutuante {
-    opacity: 1; /* Revela o card */
+    opacity: 1;
     visibility: visible;
-    left: 105%; /* Desliza o card para o lado de fora da capa */
+    left: 95%; /* 95% faz ele sobrepor a capa de leve. Acaba o buraco fantasma! */
+    pointer-events: auto;
 }
 /* ==========================================
    5. MODAL: DETALHES DA OBRA

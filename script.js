@@ -36,6 +36,8 @@ const formulario = document.getElementById("form-nova-obra");
 // ============================================================================
 // 3. COMUNICAÇÃO COM O BANCO DE DADOS (CRUD)
 // ============================================================================
+let pausarRedraw = false; // A nossa nova trava de segurança
+
 function carregarAcervo() {
     onSnapshot(collection(db, "mangas"), (snapshot) => {
         acervo = [];
@@ -44,6 +46,13 @@ function carregarAcervo() {
             obra.idFirebase = doc.id;
             acervo.push(obra);
         });
+        
+        // Se foi um clique rápido de capítulo, atualiza o sistema mas NÃO apaga a tela
+        if (pausarRedraw) {
+            pausarRedraw = false;
+            return; 
+        }
+
         aplicarFiltros(); 
         if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
     });
@@ -281,14 +290,17 @@ function carregarMaisItens() {
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
                     <div class="info-flutuante">
-                        <span style="display: flex; align-items: center; gap: 6px;">
-                            <i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${obra.capitulo}
-                            <!-- Botoes Rapidos -->
-                            <div style="margin-left: auto; display: flex; gap: 4px;">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="cap-rapido-${obra.idFirebase}" style="display: flex; align-items: center; gap: 6px;">
+                                <i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${obra.capitulo}
+                            </span>
+                            <div style="display: flex; gap: 4px;">
                                 <button class="btn-mini-cap" onclick="alterarCapituloRapido('${obra.idFirebase}', -1, event)"><i class="ph ph-minus"></i></button>
                                 <button class="btn-mini-cap" onclick="alterarCapituloRapido('${obra.idFirebase}', 1, event)"><i class="ph ph-plus"></i></button>
                             </div>
-                        </span>
+                        </div>
+
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
                         <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> ${obra.status}</span>
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
@@ -838,7 +850,7 @@ window.mostrarToast = function(mensagem, tipo = 'success') {
 };
 
 window.alterarCapituloRapido = async function(id, val, event) {
-    event.stopPropagation(); // Impede de abrir a janela grande da obra
+    event.stopPropagation(); 
     
     const obra = acervo.find(i => i.idFirebase === id);
     if (!obra) return;
@@ -846,9 +858,18 @@ window.alterarCapituloRapido = async function(id, val, event) {
     let novo = (parseInt(obra.capitulo) || 0) + val;
     if (novo < 0) novo = 0;
     
+    // 1. Atualiza visualmente na MESMA HORA na tela do usuário (Sem piscar)
+    const spanCapitulo = document.getElementById(`cap-rapido-${id}`);
+    if (spanCapitulo) {
+        spanCapitulo.innerHTML = `<i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${novo}`;
+    }
+    
+    // 2. Aciona a trava para o Firebase não destruir o card flutuante
+    pausarRedraw = true;
+    
     try {
         await updateDoc(doc(db, "mangas", id), { capitulo: novo.toString() });
-        window.mostrarToast(`Capítulo de ${obra.titulo} atualizado para ${novo}!`, 'success');
+        window.mostrarToast(`Capítulo atualizado para ${novo}!`, 'success');
     } catch(err) {
         window.mostrarToast('Erro ao atualizar capítulo!', 'error');
         console.error(err);
