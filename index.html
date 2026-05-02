@@ -226,16 +226,14 @@
                     <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
                 </div>
 
-                <!-- Localize onde estava o input de lista e substitua por este bloco -->
-<div class="grupo-input">
-    <label>Lista Personalizada</label>
-    <!-- Este input fica escondido, ele apenas guarda o valor para o Firebase -->
-    <input type="hidden" id="input-lista" value="Geral">
-    
-    <!-- É aqui que o JavaScript vai "desenhar" as tags clicáveis -->
-    <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
-</div>
-</div>
+                <div class="grupo-input">
+                    <label>Lista Personalizada</label>
+                    <!-- Este input fica escondido, ele apenas guarda o valor para o Firebase -->
+                    <input type="hidden" id="input-lista" value="Geral">
+                    
+                    <!-- É aqui que o JavaScript vai "desenhar" as tags clicáveis -->
+                    <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
+                </div>
 
                 <div class="grupo-input">
                     <label>Títulos Alternativos</label>
