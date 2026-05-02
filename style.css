@@ -359,3 +359,102 @@ main { width: 100%; margin: 0; padding: 0; }
     color: white;
     border-color: #3b82f6;
 }
+
+/* =========================================
+   NOVO LAYOUT DE LISTA (MODAL DE DETALHES)
+========================================= */
+.info-tabela {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-linha {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.info-linha-col {
+    display: flex;
+    flex-direction: column;
+    padding: 15px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.info-linha:last-child, .info-linha-col:last-child {
+    border-bottom: none; /* Tira a linha do último item */
+}
+
+.info-label {
+    width: 140px; /* Largura fixa para alinhar tudo perfeito */
+    color: #888;
+    font-weight: bold;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.info-valor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    align-items: center;
+}
+
+/* Formato das Tags de Status e Lista */
+.tag-moderna {
+    background: #252525;
+    color: #666;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+/* Status Ativo (Fundo vazio, borda branca) */
+.tag-moderna.active-status {
+    background: transparent;
+    color: #fff;
+    border-color: #fff;
+}
+
+/* Lista Ativa (Fundo Azul) */
+.tag-moderna.active-lista {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* Botões de Aumentar/Diminuir Capítulo */
+.contador-moderno {
+    display: flex;
+    align-items: center;
+}
+
+.btn-cont {
+    background: #333;
+    color: #fff;
+    border: none;
+    width: 32px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-cont:hover { background: #444; }
+
+#modal-capitulo-editavel {
+    width: 50px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+#modal-capitulo-editavel:focus { outline: none; }

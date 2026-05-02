@@ -282,21 +282,32 @@ window.abrirModal = function(id) {
         idAbertoNoModal = id;
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
-        document.getElementById("modal-tipo").innerText = obra.tipo || "Mangá";
-        document.getElementById("modal-titulos-alt").innerText = obra.titulosAlternativos || "Nenhum";
-        document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "";
-        document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
-        document.getElementById("modal-status").innerText = obra.status || "Em Andamento";
-        document.getElementById("modal-nota-texto").innerText = (obra.nota || 5).toFixed(1);
         
-        const areaGeneros = document.getElementById("modal-generos");
-        areaGeneros.innerHTML = "";
-        if (obra.generos) {
-            obra.generos.split(',').forEach(g => {
-                if(g.trim()) areaGeneros.innerHTML += `<span class="tag-genero">${g.trim()}</span>`;
-            });
+        // 1. Gera as tags de Status (Destaca a que está selecionada)
+        const statuses = ["Em Andamento", "Finalizado", "Hiato"];
+        const statusContainer = document.getElementById("modal-status-tags");
+        if (statusContainer) {
+            statusContainer.innerHTML = statuses.map(s => 
+                `<span class="tag-moderna ${obra.status === s ? 'active-status' : ''}">${s}</span>`
+            ).join('');
         }
-        
+
+        // 2. Gera as tags das Listas Personalizadas (em azul)
+        const listasContainer = document.getElementById("modal-listas-tags");
+        if (listasContainer) {
+            const listasArray = Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
+            listasContainer.innerHTML = listasArray.map(l => 
+                `<span class="tag-moderna active-lista">${l}</span>`
+            ).join('');
+        }
+
+        // 3. Preenche os campos de texto
+        document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
+        document.getElementById("modal-generos-texto").innerText = obra.generos || "N/A";
+        document.getElementById("modal-titulos-alt").innerText = obra.titulosAlternativos || "Nenhum";
+        document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
+
+        // 4. Constrói os links de leitura
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         if (obra.linksLeitura && Array.isArray(obra.linksLeitura)) {
