@@ -176,7 +176,7 @@ window.filtrarPorTipo = (t, botaoClicado) => {
 
 // 4. O CÉREBRO: Aplica todos os filtros
 window.aplicarFiltros = () => {
-    let listaFiltrada = acervo;
+    let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");;
 
     atualizarBotoesListas();
 
@@ -790,4 +790,24 @@ window.gerarPDF = () => {
     html2pdf().set(opcoes).from(elemento).save().then(() => {
         console.log("PDF gerado com sucesso!");
     });
+};
+
+window.criarListaVazia = async function() {
+    const input = document.getElementById("input-nova-lista-sidebar");
+    const nomeLista = input.value.trim();
+    
+    if (!nomeLista) return;
+
+    try {
+        // Cria um documento técnico para registrar a existência da lista
+        await addDoc(collection(db, "mangas"), {
+            titulo: "_LIST_MARKER_", 
+            listaPersonalizada: nomeLista,
+            tipo: "Sistema"
+        });
+        
+        input.value = ""; // Limpa o campo após criar
+    } catch (err) {
+        console.error("Erro ao criar lista:", err);
+    }
 };
