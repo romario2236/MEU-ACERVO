@@ -266,22 +266,7 @@ barraPesquisa.addEventListener("input", (e) => {
     aplicarFiltros();
 });
 
-// Evento dos botões de tipo
-window.filtrarPorTipo = (t, botaoClicado) => {
-    // 1. Apaga a luz (tira a classe active) de todos os botões da barra lateral
-    document.querySelectorAll('.sidebar-btn').forEach(b => {
-        b.classList.remove('active');
-    });
-    
-    // 2. Acende a luz apenas no botão que você acabou de clicar
-    if (botaoClicado) {
-        botaoClicado.classList.add('active');
-    }
-    
-    // 3. Aplica o filtro na lista de mangás
-    filtroTipo = t;
-    aplicarFiltros();
-};
+
 // ============================================================================
 // 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
 // ============================================================================
