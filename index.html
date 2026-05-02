@@ -6,6 +6,10 @@
     <title>Meu Acervo</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 </head>
 <body>
 
@@ -25,6 +29,11 @@
             
            <!-- Botões de Ação -->
             <div style="display: flex; gap: 10px;">
+                <!-- Botão Gerar PDF (NOVO) -->
+                <button onclick="gerarPDF()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+                    <i class="ph ph-file-pdf" style="font-size: 1.2rem;"></i> Baixar PDF
+                </button>
+
                 <!-- O input invisível que faz a leitura do arquivo JSON -->
                 <input type="file" id="input-importar" accept=".json" style="display: none;" onchange="importarDados(event)">
                 

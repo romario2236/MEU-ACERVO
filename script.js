@@ -659,3 +659,73 @@ window.addEventListener('scroll', () => {
         }
     }
 });
+
+// ==========================================
+// GERADOR DE PDF (EXPORTAÇÃO DO ACERVO)
+// ==========================================
+window.gerarPDF = () => {
+    // Verifica se existem obras no acervo
+    if (!acervo || acervo.length === 0) {
+        alert("Seu acervo está vazio! Adicione algumas obras antes de gerar o PDF.");
+        return;
+    }
+
+    alert("Preparando o seu PDF... Isso pode levar alguns segundos.");
+
+    // 1. Cria um contêiner invisível na memória para desenhar o documento
+    const elemento = document.createElement('div');
+    elemento.style.padding = '20px';
+    elemento.style.fontFamily = 'Arial, sans-serif';
+    elemento.style.color = '#000'; // Letra preta para o PDF
+    elemento.style.background = '#fff'; // Fundo branco estilo papel
+
+    // 2. Monta o cabeçalho do documento
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    let html = `
+        <h1 style="text-align: center; color: #111; margin-bottom: 5px;">Meu Acervo de Obras</h1>
+        <p style="text-align: center; color: #555; margin-bottom: 30px;">Gerado em: ${dataHoje} | Total de Obras: ${acervo.length}</p>
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 40%;">Título</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Tipo</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Status</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Capítulo</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Nota</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // 3. Preenche a tabela com as suas obras organizadas em ordem alfabética
+    const acervoOrdenado = [...acervo].sort((a, b) => a.titulo.localeCompare(b.titulo));
+    
+    acervoOrdenado.forEach(obra => {
+        html += `
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>${obra.titulo}</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${obra.tipo || '-'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${obra.status || '-'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${obra.capitulo || '0'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">⭐ ${obra.nota || '5'}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    elemento.innerHTML = html;
+
+    // 4. Configurações da biblioteca PDF
+    const opcoes = {
+        margin:       10,
+        filename:     `Meu_Acervo_${dataHoje.replace(/\//g, '-')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 }, // Melhora a resolução do texto
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // 5. Gera o arquivo e força o download
+    html2pdf().set(opcoes).from(elemento).save().then(() => {
+        console.log("PDF gerado com sucesso!");
+    });
+};
