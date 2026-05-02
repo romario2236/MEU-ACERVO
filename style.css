@@ -61,29 +61,82 @@ body {
 /* ==========================================
    4. GRID DE OBRAS E CARTÕES ESTILO NETFLIX
    ========================================== */
+/* Mantendo o topo que você já tinha */
 main { width: 100%; margin: 0; padding: 0; }
 .stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
 .grid-mangas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
 
-.cartao-poster { background: #111; border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border: 1px solid #2a2a2a; aspect-ratio: 2 / 3; display: flex; flex-direction: column;}
-.cartao-poster:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0,0,0,0.7); border-color: #444;}
+/* ==========================================
+   CARTÃO BASE E CAPA
+   ========================================== */
+.cartao-poster { 
+    background: transparent; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    position: relative; 
+    aspect-ratio: 2 / 3; 
+    /* MUITO IMPORTANTE: overflow: visible para o card não ser cortado! */
+    overflow: visible; 
+}
 
-.capa-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;}
-.cartao-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 35%, transparent 100%); z-index: 2; pointer-events: none;}
+.capa-bg { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    border-radius: 8px; 
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 1;
+}
 
-.cartao-tags-topo { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 3;}
-.tag-tipo-poster { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);}
-.tag-tipo-poster.tipo-manga { border-left: 3px solid #0984e3; }
-.tag-tipo-poster.tipo-manhwa { border-left: 3px solid #e84393; }
-.tag-tipo-poster.tipo-novel { border-left: 3px solid #6c5ce7; }
-.tag-status-poster { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; color: #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.3);}
+/* ==========================================
+   O CARD FLUTUANTE (Ao Lado)
+   ========================================== */
+.card-flutuante {
+    position: absolute;
+    top: 10px;
+    left: 90%; /* Fica um pouco escondido atrás da capa */
+    width: 220px;
+    background: #1e1e24; /* Fundo escuro elegante */
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    box-shadow: 10px 10px 30px rgba(0,0,0,0.9);
+    
+    /* Configurações de invisibilidade iniciais */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Ignora o mouse para não piscar */
+    transition: all 0.3s ease; 
+    z-index: 100;
+}
 
-.cartao-info-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px 12px; z-index: 3; display: flex; flex-direction: column; gap: 6px;}
-.titulo-poster { font-size: 1.1rem; font-weight: 800; color: white; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 6px rgba(0,0,0,0.9);}
-.cartao-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px;}
-.tag-capitulo-poster { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; text-shadow: 0 1px 3px rgba(0,0,0,0.9);}
-.tag-nota-poster { font-size: 0.8rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.9);}
+.titulo-flutuante { margin: 0 0 10px 0; font-size: 1.1rem; color: #fff; line-height: 1.3; }
+.info-flutuante { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #ccc; font-weight: bold; }
 
+/* As cores dinâmicas das tags que vêm do JavaScript */
+.tipo-manga { border-left: 3px solid #0984e3; background: rgba(0,0,0,0.3); }
+.tipo-manhwa { border-left: 3px solid #e84393; background: rgba(0,0,0,0.3); }
+.tipo-novel { border-left: 3px solid #6c5ce7; background: rgba(0,0,0,0.3); }
+
+/* ==========================================
+   A MÁGICA DO HOVER (Quando passa o mouse)
+   ========================================== */
+.cartao-poster:hover {
+    z-index: 200; /* Traz o mangá para a frente de todos */
+}
+
+.cartao-poster:hover .capa-bg {
+    transform: scale(1.05); /* Zoom suave */
+    box-shadow: 0 0 0 3px #3b82f6; /* Borda azul de destaque */
+}
+
+.cartao-poster:hover .card-flutuante {
+    opacity: 1; /* Revela o card */
+    visibility: visible;
+    left: 105%; /* Desliza o card para o lado de fora da capa */
+}
 /* ==========================================
    5. MODAL: DETALHES DA OBRA
    ========================================== */

@@ -179,17 +179,21 @@ function carregarMaisItens() {
         // Adicionamos o atributo loading="lazy" nativo para economizar ainda mais a rede
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
+                <!-- 1. Apenas a imagem limpa -->
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
-                <div class="cartao-overlay"></div>
-                <div class="cartao-tags-topo">
-                    <span class="tag-tipo-poster ${classeTipo}">${obra.tipo}</span>
-                    <span class="tag-status-poster">${iconeStatus}</span>
+                
+                <!-- 2. O Card Flutuante (invisível por padrão) -->
+                <div class="card-flutuante">
+                    <h4 class="titulo-flutuante">${obra.titulo}</h4>
+                    <div class="info-flutuante">
+                        <span><i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${obra.capitulo}</span>
+                        <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
+                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> ${obra.status}</span>
+                        <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
+                    </div>
                 </div>
-                <div class="cartao-info-bottom">
-                    <h3 class="titulo-poster">${obra.titulo}</h3>
-                    <div class="cartao-meta"><span>Cap. ${obra.capitulo}</span><span><i class="ph-fill ph-star"></i> ${(obra.nota || 5).toFixed(1)}</span></div>
-                </div>
-            </div>`;
+            </div>
+        `;
     });
 
     // Atualiza a contagem de quantos já desenhamos na tela
