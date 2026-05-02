@@ -142,11 +142,20 @@ window.filtrarPorLista = (nome, botaoClicado) => {
 
 // 3. Filtro por Tipo (Mangá, Manhwa, Todos)
 window.filtrarPorTipo = (t, botaoClicado) => {
+    // 1. Remove o 'active' de todos os botões (Categorias e Listas)
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    
+    // 2. Destaca o botão clicado
     if (botaoClicado) botaoClicado.classList.add('active');
     
+    // 3. Define o tipo (Mangá, Manhwa, etc)
     filtroTipo = t;
+    
+    // 4. RESET TOTAL: Independente se clicou em 'Todos' ou 'Mangá', 
+    // a gente limpa a lista personalizada para não haver conflito.
     filtroListaAtiva = "Todas"; 
+    
+    // 5. Executa a filtragem
     window.aplicarFiltros();
 };
 
