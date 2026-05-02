@@ -143,14 +143,27 @@ window.filtrarPorLista = (nome, botaoClicado) => {
 
 // Filtro para quando você clica em Mangá, Manhwa ou "Todos"
 window.filtrarPorTipo = (t, botaoClicado) => {
-    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-    if (botaoClicado) botaoClicado.classList.add('active');
+    // 1. Remove a classe 'active' de ABSOLUTAMENTE TODOS os botões da lateral
+    // (Tanto das categorias quanto das suas listas novas)
+    document.querySelectorAll('.sidebar-btn').forEach(b => {
+        b.classList.remove('active');
+    });
     
-    filtroTipo = t;
+    // 2. Se o botão existir, acende ele
+    if (botaoClicado) {
+        botaoClicado.classList.add('active');
+    }
     
-    // CORREÇÃO: Se clicou em "Todos" ou em um Tipo, a lista personalizada é resetada
-    filtroListaAtiva = "Todas"; 
+    // 3. O PULO DO GATO: Se clicou em 'Todos', resetamos as duas variáveis
+    if (t === 'Todos') {
+        filtroTipo = "Todos";
+        filtroListaAtiva = "Todas"; // Aqui ele para de travar na lista antiga
+    } else {
+        filtroTipo = t;
+        filtroListaAtiva = "Todas"; // Se clicou em 'Mangá', também esquece a lista
+    }
     
+    // 4. Avisa o cérebro para redesenhar a tela do zero
     window.aplicarFiltros();
 };
 
@@ -168,14 +181,17 @@ window.aplicarFiltros = () => {
         );
     }
 
-    // 2. Filtro de Categorias (Tipo)
-    if (filtroTipo !== "Todos") {
-        listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
+    // Dentro de aplicarFiltros...
+
+    // Filtro de Tipo (Mangá, Manhwa...)
+     if (filtroTipo !== "Todos") {
+         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
     }
 
-    // 3. Filtro de Listas Personalizadas
-    if (filtroListaAtiva !== "Todas") {
-        listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
+    // Filtro de Lista (Favoritos, Top 10...)
+    // Note que aqui ele SÓ filtra se a variável não for "Todas"
+     if (filtroListaAtiva !== "Todas") {
+         listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
     }
 
     // 4. Filtro de Status (Select)
