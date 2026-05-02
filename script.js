@@ -320,6 +320,8 @@ window.prepararAdicao = function() {
     modalFormFundo.style.display = "flex";
 }
 
+// local das edições e dados do formulario de edição
+
 window.prepararEdicao = function() {
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
@@ -330,7 +332,10 @@ window.prepararEdicao = function() {
         document.getElementById("input-capitulo").value = o.capitulo || 0;
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
-        document.getElementById('input-lista').value = obraParaEditar.listaPersonalizada || '';
+        
+        // CORRIGIDO: Agora usando a letra "o" que é o nome da sua variável
+        document.getElementById('input-lista').value = o.listaPersonalizada || '';
+        
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
