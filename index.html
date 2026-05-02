@@ -130,14 +130,13 @@
     </div>
 
    <!-- ==========================================
-         3. MODAL DA OBRA (Redesenhado Lado a Lado)
+         3. MODAL DA OBRA (Layout em Lista Moderno)
     =========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo" style="background: #1a1a1a; border-radius: 12px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid #333; margin: 20px auto;">
             
             <button class="botao-fechar" onclick="fecharModal()" style="position: absolute; top: 15px; right: 15px; background: #333; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: 0.2s;"><i class="ph ph-x"></i></button>
             
-            <!-- Usando Flexbox para criar duas colunas -->
             <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
                 
                 <!-- Coluna da Esquerda: Capa Isolada -->
@@ -145,7 +144,7 @@
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
                 </div>
                 
-                <!-- Coluna da Direita: Informações e Botões (Novo Layout em Lista) -->
+                <!-- Coluna da Direita: Informações em Lista -->
                 <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
                     
                     <h2 id="modal-titulo" style="margin: 0 0 20px 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título</h2>
@@ -196,37 +195,6 @@
 
                     <!-- Botões Finais -->
                     <div class="acoes-modal" style="margin-top: auto; padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div id="container-links-leitura" class="container-links" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
-                        <div class="acoes-secundarias" style="display: flex; gap: 10px;">
-                            <button id="btn-editar-obra" onclick="prepararEdicao()" style="background: transparent; border: 1px solid #555; color: #ddd; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-pencil-simple"></i> Editar</button>
-                            <button id="btn-excluir-obra" onclick="excluirObra()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-trash"></i> Excluir</button>
-                        </div>
-                    </div>
-                </div>
-                    
-                    <p class="titulos-alt" style="margin: 0; font-size: 0.9rem; color: #aaa;"><strong>Alts:</strong> <span id="modal-titulos-alt">...</span></p>
-                    <div id="modal-generos" class="modal-generos" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
-                    
-                    <!-- Contador isolado em um card -->
-                    <div class="controle-leitura" style="background: #252525; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 5px;">
-                        <div class="leitura-label" style="margin-bottom: 10px; color: #bbb; display: flex; align-items: center; gap: 6px;">
-                            <i class="ph ph-bookmark-simple"></i>
-                            <strong>Progresso de Leitura</strong>
-                        </div>
-                        <div class="contador" style="display: flex; align-items: center; gap: 10px;">
-                            <button class="btn-contador" onclick="alterarCapitulo(-1)" style="background: #3b82f6; border: none; color: white; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="ph ph-minus"></i></button>
-                            <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()" style="width: 70px; height: 35px; text-align: center; background: #111; border: 1px solid #444; color: white; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">
-                            <button class="btn-contador" onclick="alterarCapitulo(1)" style="background: #3b82f6; border: none; color: white; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="ph ph-plus"></i></button>
-                        </div>
-                    </div>
-                    
-                    <!-- Sinopse com barra de rolagem se for muito grande -->
-                    <div class="modal-sinopse" style="margin-top: 5px;">
-                        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 5px;">Sinopse</h3>
-                        <p id="modal-texto-sinopse" style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #ccc; max-height: 150px; overflow-y: auto; padding-right: 10px;">...</p>
-                    </div>
-                    
-                    <div class="acoes-modal" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                         <div id="container-links-leitura" class="container-links" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
                         <div class="acoes-secundarias" style="display: flex; gap: 10px;">
                             <button id="btn-editar-obra" onclick="prepararEdicao()" style="background: transparent; border: 1px solid #555; color: #ddd; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-pencil-simple"></i> Editar</button>
