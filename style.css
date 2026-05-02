@@ -556,3 +556,10 @@ main { width: 100%; margin: 0; padding: 0; }
     left: 105%;
     pointer-events: auto; 
 }
+
+/* ==========================================
+   CORREÇÃO DO VAZAMENTO DE Z-INDEX
+========================================== */
+.modal-fundo {
+    z-index: 2000 !important; /* Blinda o modal contra os hovers dos mangás no fundo */
+}
