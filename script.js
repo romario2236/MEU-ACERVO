@@ -44,9 +44,7 @@ function carregarAcervo() {
             obra.idFirebase = doc.id;
             acervo.push(obra);
         });
-        // Removido o sort e renderizarMangas daqui. O cérebro faz isso agora:
         aplicarFiltros(); 
-        
         if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
     });
 }
@@ -58,7 +56,6 @@ formulario.addEventListener("submit", async (e) => {
     const btn = formulario.querySelector('.btn-salvar');
     btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
     
-    // Lê os links dinâmicos
     const linksArray = [];
     document.querySelectorAll('.link-row').forEach(row => {
         const nome = row.querySelector('.link-name-input').value.trim();
@@ -66,11 +63,23 @@ formulario.addEventListener("submit", async (e) => {
         if (url) linksArray.push(nome ? `${nome} | ${url}` : url);
     });
 
+    // LÓGICA NOVA: Lendo o array de listas do input escondido
+    let listasArray = ["Geral"];
+    try {
+        listasArray = JSON.parse(document.getElementById("input-lista").value);
+    } catch(err) {
+        listasArray = [document.getElementById("input-lista").value || "Geral"];
+    }
+
     const obra = {
         titulo: document.getElementById("input-titulo").value || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
         generos: document.getElementById("input-generos").value || "",
-        listaPersonalizada: document.getElementById("input-lista").value || "Geral", // LINHA NOVA!
+        
+        // Salvamos como Array (novo padrão) e a primeira lista como String (para não quebrar códigos antigos)
+        listasPersonalizadas: listasArray, 
+        listaPersonalizada: listasArray[0] || "Geral", 
+        
         tipo: document.getElementById("input-tipo").value || "Mangá",
         capitulo: document.getElementById("input-capitulo").value || "0",
         status: document.getElementById("input-status").value || "Em Andamento",
@@ -109,74 +118,53 @@ let itensCarregados = 0;
 let listaAtualFiltrada = [];
 let carregandoScroll = false;
 
-// 1. Função para desenhar os botões das listas
+// Função auxiliar para coletar todas as listas do banco (Arrays e Strings)
+function obterTodasAsListas() {
+    let todas = [];
+    acervo.forEach(o => {
+        if (Array.isArray(o.listasPersonalizadas)) todas.push(...o.listasPersonalizadas);
+        else if (typeof o.listaPersonalizada === 'string') todas.push(o.listaPersonalizada);
+    });
+    return [...new Set(todas.map(l => l.trim()).filter(l => l !== "" && l !== "Geral" && l !== "_LIST_MARKER_"))].sort();
+}
+
 function atualizarBotoesListas() {
     const container = document.getElementById("container-listas-personalizadas");
-    const datalist = document.getElementById("sugestoes-listas");
     if (!container) return;
 
-    // Pega as listas, remove espaços e ignora vazias ou "Geral"
-    const listasUnicas = [...new Set(acervo
-        .map(o => (o.listaPersonalizada || "").trim())
-        .filter(l => l !== "" && l !== "Geral")
-    )].sort();
+    const listasUnicas = obterTodasAsListas();
 
-    // 1. Atualiza os Botões da Barra Lateral
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
         btn.className = "btn-filter sidebar-btn";
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         
-        // Adiciona um ícone de pasta para ficar mais bonito
         btn.innerHTML = `<i class="ph ph-folder-simple"></i> ${nomeLista}`;
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.currentTarget);
         container.appendChild(btn);
     });
-
-    // 2. Atualiza as Sugestões no Formulário (Datalist)
-    if (datalist) {
-        datalist.innerHTML = "";
-        listasUnicas.forEach(nomeLista => {
-            const option = document.createElement("option");
-            option.value = nomeLista;
-            datalist.appendChild(option);
-        });
-    }
 }
 
-// 2. Filtro por Lista
 window.filtrarPorLista = (nome, botaoClicado) => {
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroListaAtiva = nome;
-    filtroTipo = "Todos"; // Limpa o tipo para focar na lista
+    filtroTipo = "Todos"; 
     window.aplicarFiltros();
 };
 
-// 3. Filtro por Tipo (Mangá, Manhwa, Todos)
 window.filtrarPorTipo = (t, botaoClicado) => {
-    // 1. Remove o 'active' de todos os botões (Categorias e Listas)
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-    
-    // 2. Destaca o botão clicado
     if (botaoClicado) botaoClicado.classList.add('active');
-    
-    // 3. Define o tipo (Mangá, Manhwa, etc)
     filtroTipo = t;
-    
-    // 4. RESET TOTAL: Independente se clicou em 'Todos' ou 'Mangá', 
-    // a gente limpa a lista personalizada para não haver conflito.
     filtroListaAtiva = "Todas"; 
-    
-    // 5. Executa a filtragem
     window.aplicarFiltros();
 };
 
-// 4. O CÉREBRO: Aplica todos os filtros
 window.aplicarFiltros = () => {
-    let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");;
+    let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");
 
     atualizarBotoesListas();
 
@@ -191,8 +179,12 @@ window.aplicarFiltros = () => {
         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
     }
 
+    // LÓGICA NOVA: Verifica se a lista clicada está dentro do Array de listas do mangá
     if (filtroListaAtiva !== "Todas") {
-        listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
+        listaFiltrada = listaFiltrada.filter(o => {
+            const listasDoManga = Array.isArray(o.listasPersonalizadas) ? o.listasPersonalizadas : [o.listaPersonalizada || "Geral"];
+            return listasDoManga.includes(filtroListaAtiva);
+        });
     }
 
     const statusSelect = document.getElementById("select-status");
@@ -224,24 +216,16 @@ window.aplicarFiltros = () => {
     carregarMaisItens();
 };
 
-// FUNÇÃO QUE DESENHA AS CAPAS AOS POUCOS
 function carregarMaisItens() {
-    // Recorta apenas o próximo lote de obras da lista filtrada
     const proximosItens = listaAtualFiltrada.slice(itensCarregados, itensCarregados + itensPorPagina);
-    
-    if (proximosItens.length === 0) return; // Se não tem mais nada, ignora
+    if (proximosItens.length === 0) return; 
 
     proximosItens.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
-        let iconeStatus = (obra.status === 'Em Andamento') ? "▶" : (obra.status === 'Finalizado' ? "✔" : "⏸");
         
-        // Adicionamos o atributo loading="lazy" nativo para economizar ainda mais a rede
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
-                <!-- 1. Apenas a imagem limpa -->
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
-                
-                <!-- 2. O Card Flutuante (invisível por padrão) -->
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
                     <div class="info-flutuante">
@@ -254,33 +238,22 @@ function carregarMaisItens() {
             </div>
         `;
     });
-
-    // Atualiza a contagem de quantos já desenhamos na tela
     itensCarregados += proximosItens.length;
 }
 
-// O VIGIA DA BARRA DE ROLAGEM
 window.addEventListener('scroll', () => {
-    if (carregandoScroll) return; // Evita que o navegador chame a função dezenas de vezes seguidas
-    
-    // Calcula se o usuário chegou perto (200px) do fim da página
+    if (carregandoScroll) return; 
     if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
         carregandoScroll = true;
         carregarMaisItens();
-        
-        // Libera o vigia após 100 milissegundos
-        setTimeout(() => {
-            carregandoScroll = false;
-        }, 100);
+        setTimeout(() => { carregandoScroll = false; }, 100);
     }
 });
 
-// Eventos dos inputs e botões
 barraPesquisa.addEventListener("input", (e) => {
     filtroTexto = e.target.value.toLowerCase();
     aplicarFiltros();
 });
-
 
 // ============================================================================
 // 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
@@ -363,18 +336,13 @@ window.prepararAdicao = function() {
     modalFormFundo.style.display = "flex";
 }
 
-// local das edições e dados do formulario de edição
-
 window.prepararEdicao = function() {
-    // 1. PRIMEIRO: Encontramos a obra no banco de dados e salvamos na variável 'o'
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
-    
-    // 2. DEPOIS: Se a obra existir, executamos o resto
     if (o) {
-        // Agora sim a variável 'o' existe e podemos usá-la!
-        renderizarTagsSelecao(o.listaPersonalizada || "Geral");
+        // LÓGICA NOVA: Puxa o array de listas
+        const listasDoManga = o.listasPersonalizadas || (o.listaPersonalizada ? [o.listaPersonalizada] : ["Geral"]);
+        renderizarTagsSelecao(listasDoManga);
         
-        // Preenche os campos básicos
         document.getElementById("input-titulo").value = o.titulo || "";
         document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
         document.getElementById("input-generos").value = o.generos || "";
@@ -382,19 +350,10 @@ window.prepararEdicao = function() {
         document.getElementById("input-capitulo").value = o.capitulo || 0;
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
-        
-        const campoLista = document.getElementById('input-lista');
-        if (campoLista) {
-            campoLista.value = o.listaPersonalizada || '';
-        } else {
-            console.warn("Aviso: O campo 'input-lista' não foi encontrado no HTML.");
-        }
-        
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
         
-        // Reconstrói os links de leitura
         const containerLinks = document.getElementById("container-links-inputs");
         containerLinks.innerHTML = "";
         if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
@@ -412,9 +371,8 @@ window.prepararEdicao = function() {
             window.adicionarCampoLink(); 
         }
         
-        // Fecha o modal de detalhes e abre o de edição
         fecharModal(); 
-        document.getElementById('titulo-form').innerText = "Editar Obra"; // Muda o título visualmente
+        document.getElementById('titulo-form').innerText = "Editar Obra"; 
         modalFormFundo.style.display = "flex"; 
     }
 }
@@ -432,7 +390,7 @@ window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecha
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
 // ============================================================================
-// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (Jikan, MangaDex e Kitsu)
+// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
@@ -452,20 +410,16 @@ window.buscarNaAPI = async function() {
         div.innerHTML = "";
         resultadosAPI = [];
 
-        // --- BUSCA KITSU (Acesso Direto, Rápido e Sem Erros) ---
         if (fonte === 'kitsu') {
             const res = await fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`);
             if(!res.ok) throw new Error("Kitsu fora do ar");
             const d = await res.json();
             resultadosAPI = d.data || [];
-
             if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no Kitsu.</p>";
-
             resultadosAPI.forEach((m, i) => {
                 const t = m.attributes?.canonicalTitle || "Sem Título";
                 const c = m.attributes?.posterImage?.small || m.attributes?.posterImage?.original || "";
                 const ano = m.attributes?.startDate ? m.attributes.startDate.substring(0,4) : "N/A";
-                
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
                         <img src="${c}">
@@ -473,27 +427,20 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-       // --- BUSCA MANGADEX (REST com Nova Ponte Proxy) ---
         else if (fonte === 'mangadex') {
             const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-            
-            // Trocamos o 'allorigins' (que caiu) pelo 'corsproxy.io' (mais estável)
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
-            
             const res = await fetch(proxyUrl);
             if (!res.ok) throw new Error("A ponte de conexão falhou ao acessar o MangaDex.");
             const d = await res.json();
             resultadosAPI = d.data || [];
-
             if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MangaDex.</p>";
-
             resultadosAPI.forEach((m, i) => {
                 const titles = m.attributes?.title || {};
                 const t = titles.en || titles['pt-br'] || Object.values(titles)[0] || "Sem Título";
                 const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
                 const capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
                 m.minhaCapaMangaDex = capa;
-                
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
                         <img src="${capa}">
@@ -501,15 +448,12 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-        // --- BUSCA MYANIMELIST (Jikan Direto) ---
         else {
             const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`);
             if (!res.ok) throw new Error("Jikan fora do ar");
             const d = await res.json();
             resultadosAPI = d.data || [];
-
             if(resultadosAPI.length === 0) div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado no MyAnimeList.</p>";
-            
             resultadosAPI.forEach((m, i) => {
                 const t = m.title || "Sem Título";
                 const c = m.images?.jpg?.image_url || "";
@@ -521,9 +465,7 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-
         div.style.display = "block";
-
     } catch(err) {
         console.error("Erro na API:", err);
         div.innerHTML = `<p style='padding:15px; color:#ef4444;'>Erro na conexão: ${err.message}</p>`;
@@ -543,7 +485,6 @@ window.preencherComAPI = function(i) {
     try {
         if (fonteAtualAPI === 'kitsu') {
             t = m.attributes?.canonicalTitle || "";
-            
             let altArr = [];
             if(m.attributes?.titles) {
                 Object.values(m.attributes.titles).forEach(val => {
@@ -551,16 +492,11 @@ window.preencherComAPI = function(i) {
                 });
             }
             alts = altArr.join(", ");
-            
             capa = m.attributes?.posterImage?.original || "";
             sin = m.attributes?.synopsis || "";
-            
-            // O Kitsu pede uma busca extra só para gêneros, então deixamos para o usuário digitar
             gen = ""; 
-            
             cap = m.attributes?.chapterCount || 0;
             nota = m.attributes?.averageRating ? (m.attributes.averageRating / 20).toFixed(1) : 5;
-            
             if (m.attributes?.status === "finished") st = "Finalizado";
             else if (m.attributes?.status === "current") st = "Em Andamento";
             else st = "Hiato";
@@ -579,17 +515,10 @@ window.preencherComAPI = function(i) {
                 if(val) altArr.push(val);
             });
             alts = altArr.join(", ");
-            
             capa = m.minhaCapaMangaDex || "";
             const descriptions = m.attributes?.description || {};
             sin = descriptions.en || descriptions['pt-br'] || Object.values(descriptions)[0] || "";
-            
-            gen = (m.attributes?.tags || [])
-                .filter(tg => tg.attributes?.group === 'genre')
-                .map(tg => tg.attributes?.name?.en)
-                .filter(Boolean)
-                .join(", ");
-            
+            gen = (m.attributes?.tags || []).filter(tg => tg.attributes?.group === 'genre').map(tg => tg.attributes?.name?.en).filter(Boolean).join(", ");
             cap = m.attributes?.lastChapter || 0;
             if(m.attributes?.status === "completed") st = "Finalizado";
             else if (m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") st = "Hiato";
@@ -601,18 +530,15 @@ window.preencherComAPI = function(i) {
             if(m.title_japanese && m.title_japanese !== t) altArr.push(m.title_japanese);
             if(m.title_synonyms) altArr = altArr.concat(m.title_synonyms);
             alts = altArr.join(", ");
-            
             capa = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
             sin = (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim();
             gen = (m.genres || []).map(g => g.name).join(", ");
             cap = m.chapters || 0;
             nota = m.score ? (m.score / 2).toFixed(1) : 5;
-            
             if(m.status === "Finished") st = "Finalizado";
             else if (m.status === "On Hiatus" || m.status === "Discontinued") st = "Hiato";
         }
 
-        // Preenchendo a tela
         document.getElementById("input-titulo").value = t;
         document.getElementById("input-titulos-alt").value = alts;
         document.getElementById("input-capa").value = capa;
@@ -630,8 +556,9 @@ window.preencherComAPI = function(i) {
         console.error("Erro ao jogar os dados na tela:", e);
     }
 }
+
 // ============================================================================
-// 7. BACKUP JSON
+// 7. BACKUP JSON, PDF E EXTRAS
 // ============================================================================
 window.exportarDados = () => {
     const blob = new Blob([JSON.stringify(acervo.map(({idFirebase, ...r}) => r), null, 2)], {type: "application/json"});
@@ -651,103 +578,55 @@ window.importarDados = (e) => {
     reader.readAsText(e.target.files[0]);
 };
 
-// ==========================================
-// CONTROLE DO MODAL DE FORMULÁRIO (NOVA OBRA)
-// ==========================================
-
-// Função para ABRIR a janela
 window.abrirModalForm = () => {
-    renderizarTagsSelecao("Geral");
+    renderizarTagsSelecao(["Geral"]);
     const modalForm = document.getElementById('modal-form-fundo');
     const form = document.getElementById('form-nova-obra');
-    const tituloForm = document.getElementById('titulo-form');
-    const inputId = document.getElementById('input-id-firebase');
-
-    if (form) form.reset(); // Limpa os campos de texto
-    if (inputId) inputId.value = ""; // Garante que é uma obra nova (não edição)
-    if (tituloForm) tituloForm.innerText = "Nova Obra"; // Reseta o título principal
-
-    if (modalForm) modalForm.style.display = 'flex'; // Exibe a tela preta de fundo
+    if (form) form.reset(); 
+    document.getElementById('input-id-firebase').value = ""; 
+    document.getElementById('titulo-form').innerText = "Nova Obra"; 
+    if (modalForm) modalForm.style.display = 'flex'; 
 };
 
-// Função para FECHAR a janela no botão X
-window.fecharModalForm = () => {
-    const modalForm = document.getElementById('modal-form-fundo');
-    if (modalForm) modalForm.style.display = 'none';
-};
-
-// Função para FECHAR a janela clicando fora dela (no fundo preto)
-window.fecharModalFormPeloFundo = (event) => {
-    if (event.target.id === 'modal-form-fundo') {
-        window.fecharModalForm();
-    }
-};
-// ==========================================
-// MELHORIAS DE INTERFACE (BUSCA E SCROLL)
-// ==========================================
-
-// 1. Botão Limpar Busca
 window.limparBusca = () => {
     const inputBusca = document.getElementById('barra-pesquisa');
     if (inputBusca) {
-        inputBusca.value = ''; // Limpa o texto
-        document.getElementById('btn-limpar-busca').style.display = 'none'; // Esconde o botão X
-        
-        // Simula que você apagou o texto para o filtro ser aplicado automaticamente
+        inputBusca.value = ''; 
+        document.getElementById('btn-limpar-busca').style.display = 'none'; 
         inputBusca.dispatchEvent(new Event('input')); 
     }
 };
 
-// 2. Lógica para mostrar/esconder o "X" enquanto você digita
 const inputBuscaEvent = document.getElementById('barra-pesquisa');
 if (inputBuscaEvent) {
     inputBuscaEvent.addEventListener('input', (e) => {
         const btnLimpar = document.getElementById('btn-limpar-busca');
-        if (e.target.value.length > 0) {
-            btnLimpar.style.display = 'flex'; // Mostra o X se tiver texto
-        } else {
-            btnLimpar.style.display = 'none'; // Esconde se estiver vazio
-        }
+        if (e.target.value.length > 0) btnLimpar.style.display = 'flex';
+        else btnLimpar.style.display = 'none';
     });
 }
 
-// 3. Função para Voltar ao Topo com animação suave
-window.voltarAoTopo = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+window.voltarAoTopo = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-// 4. Lógica para mostrar o botão de Topo só quando rolar para baixo
 window.addEventListener('scroll', () => {
     const btnTopo = document.getElementById('btn-topo');
     if (btnTopo) {
-        if (window.scrollY > 300) {
-            btnTopo.style.display = 'flex'; // Mostra quando descer 300px
-        } else {
-            btnTopo.style.display = 'none'; // Esconde quando estiver lá no alto
-        }
+        if (window.scrollY > 300) btnTopo.style.display = 'flex';
+        else btnTopo.style.display = 'none';
     }
 });
 
-// ==========================================
-// GERADOR DE PDF (EXPORTAÇÃO DO ACERVO)
-// ==========================================
 window.gerarPDF = () => {
-    // Verifica se existem obras no acervo
     if (!acervo || acervo.length === 0) {
         alert("Seu acervo está vazio! Adicione algumas obras antes de gerar o PDF.");
         return;
     }
-
     alert("Preparando o seu PDF... Isso pode levar alguns segundos.");
-
-    // 1. Cria um contêiner invisível na memória para desenhar o documento
     const elemento = document.createElement('div');
     elemento.style.padding = '20px';
     elemento.style.fontFamily = 'Arial, sans-serif';
-    elemento.style.color = '#000'; // Letra preta para o PDF
-    elemento.style.background = '#fff'; // Fundo branco estilo papel
-
-    // 2. Monta o cabeçalho do documento
+    elemento.style.color = '#000'; 
+    elemento.style.background = '#fff'; 
     const dataHoje = new Date().toLocaleDateString('pt-BR');
     let html = `
         <h1 style="text-align: center; color: #111; margin-bottom: 5px;">Meu Acervo de Obras</h1>
@@ -764,10 +643,7 @@ window.gerarPDF = () => {
             </thead>
             <tbody>
     `;
-
-    // 3. Preenche a tabela com as suas obras organizadas em ordem alfabética
     const acervoOrdenado = [...acervo].sort((a, b) => a.titulo.localeCompare(b.titulo));
-    
     acervoOrdenado.forEach(obra => {
         html += `
             <tr>
@@ -779,20 +655,15 @@ window.gerarPDF = () => {
             </tr>
         `;
     });
-
     html += `</tbody></table>`;
     elemento.innerHTML = html;
-
-    // 4. Configurações da biblioteca PDF
     const opcoes = {
         margin:       10,
         filename:     `Meu_Acervo_${dataHoje.replace(/\//g, '-')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 }, // Melhora a resolução do texto
+        html2canvas:  { scale: 2 }, 
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
-    // 5. Gera o arquivo e força o download
     html2pdf().set(opcoes).from(elemento).save().then(() => {
         console.log("PDF gerado com sucesso!");
     });
@@ -801,108 +672,69 @@ window.gerarPDF = () => {
 window.criarListaVazia = async function() {
     const input = document.getElementById("input-nova-lista-sidebar");
     const nomeLista = input.value.trim();
-    
     if (!nomeLista) return;
-
     try {
-        // Cria um documento técnico para registrar a existência da lista
         await addDoc(collection(db, "mangas"), {
             titulo: "_LIST_MARKER_", 
             listaPersonalizada: nomeLista,
+            listasPersonalizadas: [nomeLista],
             tipo: "Sistema"
         });
-        
-        input.value = ""; // Limpa o campo após criar
+        input.value = ""; 
     } catch (err) {
         console.error("Erro ao criar lista:", err);
     }
 };
 
-// Função para gerar as tags selecionáveis no formulário
-window.renderizarTagsSelecao = function(valorAtual = "Geral") {
+// LÓGICA NOVA: Gerencia a seleção de múltiplas tags
+window.renderizarTagsSelecao = function(valoresAtuais) {
     const container = document.getElementById("container-tags-selecao");
     if (!container) return;
 
-    // Pega todas as listas únicas do acervo
-    const listasUnicas = [...new Set(acervo
-        .map(o => (o.listaPersonalizada || "").trim())
-        .filter(l => l !== "" && l !== "Geral")
-    )].sort();
+    // Transforma a entrada em um Array válido
+    let selecionadas = Array.isArray(valoresAtuais) ? [...valoresAtuais] : (valoresAtuais ? [valoresAtuais] : ["Geral"]);
+    if (selecionadas.length === 0) selecionadas = ["Geral"];
 
-    // Sempre adiciona "Geral" como opção padrão
+    const listasUnicas = obterTodasAsListas();
     listasUnicas.unshift("Geral");
 
-    container.innerHTML = "";
-    listasUnicas.forEach(nome => {
-        const tag = document.createElement("span");
-        tag.innerText = nome;
-        tag.style.cssText = `
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.2s;
-            background: ${valorAtual === nome ? '#3b82f6' : '#1a1a1a'};
-            color: ${valorAtual === nome ? '#fff' : '#aaa'};
-        `;
-
-        tag.onclick = () => {
-            document.getElementById("input-lista").value = nome;
-            renderizarTagsSelecao(nome); // Atualiza o visual das tags
-        };
-
-        container.appendChild(tag);
-    });
-};
-
-window.renderizarTagsSelecao = function(valorAtual = "Geral") {
-    const container = document.getElementById("container-tags-selecao");
-    if (!container) return;
-
-    const listasUnicas = [...new Set(acervo
-        .map(o => (o.listaPersonalizada || "").trim())
-        .filter(l => l !== "" && l !== "_LIST_MARKER_" && l !== "Geral")
-    )].sort();
-
-    listasUnicas.unshift("Geral");
     container.innerHTML = "";
 
     listasUnicas.forEach(nome => {
         const tag = document.createElement("span");
         tag.innerText = nome;
-        // Estilo da tag (azul se selecionada, cinza se não)
+        
+        const isSelecionada = selecionadas.includes(nome);
+
         tag.style.cssText = `
             padding: 6px 12px; border-radius: 20px; border: 1px solid #333;
             cursor: pointer; font-size: 0.85rem; transition: 0.2s;
-            background: ${valorAtual === nome ? '#3b82f6' : '#1a1a1a'};
-            color: ${valorAtual === nome ? '#fff' : '#aaa'};
+            background: ${isSelecionada ? '#3b82f6' : '#1a1a1a'};
+            color: ${isSelecionada ? '#fff' : '#aaa'};
         `;
 
         tag.onclick = () => {
-            document.getElementById("input-lista").value = nome;
-            renderizarTagsSelecao(nome); 
+            if (nome === "Geral") {
+                selecionadas = ["Geral"];
+            } else {
+                selecionadas = selecionadas.filter(l => l !== "Geral"); // Remove "Geral"
+                if (selecionadas.includes(nome)) {
+                    selecionadas = selecionadas.filter(l => l !== nome); // Desmarca se já estiver clicada
+                } else {
+                    selecionadas.push(nome); // Marca a nova lista
+                }
+                // Se desmarcou todas as tags, volta o "Geral" automaticamente
+                if (selecionadas.length === 0) selecionadas = ["Geral"]; 
+            }
+            
+            // Salva o Array transformado em texto escondido no input
+            document.getElementById("input-lista").value = JSON.stringify(selecionadas);
+            renderizarTagsSelecao(selecionadas); 
         };
+
         container.appendChild(tag);
     });
-};
 
-window.deletarListaCompleta = async function(nomeLista) {
-    if (!confirm(`Deseja excluir a lista "${nomeLista}"? As obras serão movidas para "Geral".`)) return;
-
-    const obrasDaLista = acervo.filter(o => o.listaPersonalizada === nomeLista);
-    
-    try {
-        for (const obra of obrasDaLista) {
-            const docRef = doc(db, "mangas", obra.idFirebase);
-            if (obra.titulo === "_LIST_MARKER_") {
-                await deleteDoc(docRef); 
-            } else {
-                await updateDoc(docRef, { listaPersonalizada: "Geral" });
-            }
-        }
-        alert("Lista removida!");
-    } catch (err) {
-        console.error("Erro ao deletar:", err);
-    }
+    // Garante que o input escondido sempre atualize quando a janela abre
+    document.getElementById("input-lista").value = JSON.stringify(selecionadas);
 };
