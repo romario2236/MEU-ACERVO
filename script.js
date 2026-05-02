@@ -98,18 +98,18 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. INTERFACE, BUSCA AVANÇADA E FILTROS (Versão Final Corrigida)
+// 4. INTERFACE, BUSCA AVANÇADA E FILTROS
 // ============================================================================
 let filtroTexto = "";
 let filtroTipo = "Todos";
-let filtroListaAtiva = "Todas"; 
+let filtroListaAtiva = "Todas";
 
 let itensPorPagina = 24; 
 let itensCarregados = 0;
 let listaAtualFiltrada = [];
 let carregandoScroll = false;
 
-// Função que desenha os botões das suas listas na barra lateral
+// 1. Função para desenhar os botões das listas
 function atualizarBotoesListas() {
     const container = document.getElementById("container-listas-personalizadas");
     if (!container) return;
@@ -123,7 +123,6 @@ function atualizarBotoesListas() {
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
         btn.className = "btn-filter sidebar-btn";
-        // Mantém o botão aceso se for a lista ativa
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         btn.innerText = nomeLista;
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.target);
@@ -131,49 +130,32 @@ function atualizarBotoesListas() {
     });
 }
 
-// Filtro para quando você clica em uma lista (ex: "Favoritos")
+// 2. Filtro por Lista
 window.filtrarPorLista = (nome, botaoClicado) => {
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroListaAtiva = nome;
-    filtroTipo = "Todos"; // Reseta Mangá/Manhwa para mostrar tudo daquela lista
+    filtroTipo = "Todos"; 
     window.aplicarFiltros();
 };
 
-// Filtro para quando você clica em Mangá, Manhwa ou "Todos"
+// 3. Filtro por Tipo (Mangá, Manhwa, Todos)
 window.filtrarPorTipo = (t, botaoClicado) => {
-    // 1. Remove a classe 'active' de ABSOLUTAMENTE TODOS os botões da lateral
-    // (Tanto das categorias quanto das suas listas novas)
-    document.querySelectorAll('.sidebar-btn').forEach(b => {
-        b.classList.remove('active');
-    });
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    if (botaoClicado) botaoClicado.classList.add('active');
     
-    // 2. Se o botão existir, acende ele
-    if (botaoClicado) {
-        botaoClicado.classList.add('active');
-    }
-    
-    // 3. O PULO DO GATO: Se clicou em 'Todos', resetamos as duas variáveis
-    if (t === 'Todos') {
-        filtroTipo = "Todos";
-        filtroListaAtiva = "Todas"; // Aqui ele para de travar na lista antiga
-    } else {
-        filtroTipo = t;
-        filtroListaAtiva = "Todas"; // Se clicou em 'Mangá', também esquece a lista
-    }
-    
-    // 4. Avisa o cérebro para redesenhar a tela do zero
+    filtroTipo = t;
+    filtroListaAtiva = "Todas"; 
     window.aplicarFiltros();
 };
 
-// O CÉREBRO: Processa todas as regras de exibição
+// 4. O CÉREBRO: Aplica todos os filtros
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo;
 
     atualizarBotoesListas();
 
-    // 1. Busca por texto
     if (filtroTexto) {
         listaFiltrada = listaFiltrada.filter(o => 
             (o.titulo || "").toLowerCase().includes(filtroTexto) || 
@@ -181,26 +163,19 @@ window.aplicarFiltros = () => {
         );
     }
 
-    // Dentro de aplicarFiltros...
-
-    // Filtro de Tipo (Mangá, Manhwa...)
-     if (filtroTipo !== "Todos") {
-         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
+    if (filtroTipo !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
     }
 
-    // Filtro de Lista (Favoritos, Top 10...)
-    // Note que aqui ele SÓ filtra se a variável não for "Todas"
-     if (filtroListaAtiva !== "Todas") {
-         listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
+    if (filtroListaAtiva !== "Todas") {
+        listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
     }
 
-    // 4. Filtro de Status (Select)
     const statusSelect = document.getElementById("select-status");
     if (statusSelect && statusSelect.value !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
     }
 
-    // 5. Ordenação
     const ordemSelect = document.getElementById("select-ordem");
     if (ordemSelect) {
         const ordem = ordemSelect.value;
@@ -214,7 +189,6 @@ window.aplicarFiltros = () => {
         });
     }
 
-    // Reinicia a grade com o resultado final
     listaAtualFiltrada = listaFiltrada;
     itensCarregados = 0;
     const conteinerMangas = document.getElementById("lista-mangas");
