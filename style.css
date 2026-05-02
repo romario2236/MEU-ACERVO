@@ -322,51 +322,40 @@ main { width: 100%; margin: 0; padding: 0; }
 }
 
 /* =========================================
-   ESTILIZAÇÃO DAS LISTAS PERSONALIZADAS
+   ESTILIZAÇÃO DAS LISTAS PERSONALIZADAS (TAGS)
 ========================================= */
-
-/* Adiciona um recuo e uma linha sutil para separar as listas das categorias */
 #container-listas-personalizadas {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Coloca os itens lado a lado */
+    flex-wrap: wrap; /* Permite quebrar a linha quando não couber mais */
     gap: 8px;
     margin-bottom: 30px;
-    border-left: 2px solid #222; /* Linha lateral de organização */
+    border-left: 2px solid #222;
     padding-left: 12px;
     margin-left: 5px;
 }
 
-/* Ajusta os ícones dentro dos botões da sidebar */
-.sidebar-btn i {
-    margin-right: 8px;
-    font-size: 1.1rem;
-    vertical-align: middle;
-    opacity: 0.7;
-}
-
-/* Deixa o ícone totalmente visível quando a lista estiver ativa */
-.sidebar-btn.active i {
-    opacity: 1;
-}
-
-/* Estilização para o input de texto que agora tem um datalist */
-#input-lista {
+/* Novo estilo em formato de pílula (Tag) */
+.sidebar-tag {
+    background: #1a1a1a;
+    color: #aaa;
+    border: 1px solid #333;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.80rem;
     cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
 }
 
-/* Melhora o visual do botão quando passar o mouse */
-.sidebar-btn:hover i {
-    opacity: 1;
-    color: #3b82f6; /* Cor azul suave no ícone ao passar o mouse */
+.sidebar-tag:hover {
+    border-color: #666;
+    color: #fff;
 }
 
-#container-listas-personalizadas div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-#container-listas-personalizadas .sidebar-btn {
-    flex: 1; /* Faz o botão do nome ocupar o espaço disponível */
+/* Cor quando a tag está selecionada */
+.sidebar-tag.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
 }

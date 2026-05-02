@@ -137,17 +137,20 @@ function atualizarBotoesListas() {
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
-        btn.className = "btn-filter sidebar-btn";
+        // Usamos a nova classe que criamos no CSS
+        btn.className = "sidebar-tag";
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         
-        btn.innerHTML = `<i class="ph ph-folder-simple"></i> ${nomeLista}`;
+        // Removemos o ícone de pasta e deixamos apenas o texto da tag
+        btn.innerHTML = nomeLista;
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.currentTarget);
         container.appendChild(btn);
     });
 }
 
 window.filtrarPorLista = (nome, botaoClicado) => {
-    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    // Limpa o 'active' tanto das categorias principais quanto das tags
+    document.querySelectorAll('.sidebar-btn, .sidebar-tag').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
     
     filtroListaAtiva = nome;
@@ -156,8 +159,10 @@ window.filtrarPorLista = (nome, botaoClicado) => {
 };
 
 window.filtrarPorTipo = (t, botaoClicado) => {
-    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    // Limpa o 'active' tanto das categorias principais quanto das tags
+    document.querySelectorAll('.sidebar-btn, .sidebar-tag').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
+    
     filtroTipo = t;
     filtroListaAtiva = "Todas"; 
     window.aplicarFiltros();
