@@ -23,11 +23,22 @@
                 </button>
             </div>
             
-            <!-- Botões de Ação -->
+           <!-- Botões de Ação -->
             <div style="display: flex; gap: 10px;">
+                <!-- O input invisível que faz a leitura do arquivo JSON -->
+                <input type="file" id="input-importar" accept=".json" style="display: none;" onchange="importarDados(event)">
+                
+                <!-- Botão de Importar -->
+                <button onclick="document.getElementById('input-importar').click()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+                    <i class="ph ph-upload-simple" style="font-size: 1.2rem;"></i> Importar
+                </button>
+
+                <!-- Botão de Backup -->
                 <button onclick="exportarDados()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-download-simple" style="font-size: 1.2rem;"></i> Backup
                 </button>
+
+                <!-- Botão Adicionar -->
                 <button onclick="abrirModalForm()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
                     <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
                 </button>
