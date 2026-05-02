@@ -210,8 +210,13 @@
                 <input type="hidden" id="input-id-firebase" value="">
 
                 <div class="grupo-input">
-                    <label>Título Principal</label>
-                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
+                    <label>Lista Personalizada</label>
+                    <div class="select-wrapper">
+                        <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Selecione ou digite uma nova lista...">
+                        <datalist id="sugestoes-listas">
+                            <!-- O JS vai preencher as opções aqui automaticamente -->
+                        </datalist>
+                   </div>
                 </div>
 
                 <div class="grupo-input">

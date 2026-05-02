@@ -320,3 +320,42 @@ main { width: 100%; margin: 0; padding: 0; }
     background: #2563eb !important; 
     color: white !important;
 }
+
+/* =========================================
+   ESTILIZAÇÃO DAS LISTAS PERSONALIZADAS
+========================================= */
+
+/* Adiciona um recuo e uma linha sutil para separar as listas das categorias */
+#container-listas-personalizadas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 30px;
+    border-left: 2px solid #222; /* Linha lateral de organização */
+    padding-left: 12px;
+    margin-left: 5px;
+}
+
+/* Ajusta os ícones dentro dos botões da sidebar */
+.sidebar-btn i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+    vertical-align: middle;
+    opacity: 0.7;
+}
+
+/* Deixa o ícone totalmente visível quando a lista estiver ativa */
+.sidebar-btn.active i {
+    opacity: 1;
+}
+
+/* Estilização para o input de texto que agora tem um datalist */
+#input-lista {
+    cursor: pointer;
+}
+
+/* Melhora o visual do botão quando passar o mouse */
+.sidebar-btn:hover i {
+    opacity: 1;
+    color: #3b82f6; /* Cor azul suave no ícone ao passar o mouse */
+}

@@ -112,22 +112,37 @@ let carregandoScroll = false;
 // 1. Função para desenhar os botões das listas
 function atualizarBotoesListas() {
     const container = document.getElementById("container-listas-personalizadas");
+    const datalist = document.getElementById("sugestoes-listas");
     if (!container) return;
 
+    // Pega as listas, remove espaços e ignora vazias ou "Geral"
     const listasUnicas = [...new Set(acervo
-        .map(o => o.listaPersonalizada)
-        .filter(l => l && l !== "Geral" && l !== "")
+        .map(o => (o.listaPersonalizada || "").trim())
+        .filter(l => l !== "" && l !== "Geral")
     )].sort();
 
+    // 1. Atualiza os Botões da Barra Lateral
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
         btn.className = "btn-filter sidebar-btn";
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
-        btn.innerText = nomeLista;
-        btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.target);
+        
+        // Adiciona um ícone de pasta para ficar mais bonito
+        btn.innerHTML = `<i class="ph ph-folder-simple"></i> ${nomeLista}`;
+        btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.currentTarget);
         container.appendChild(btn);
     });
+
+    // 2. Atualiza as Sugestões no Formulário (Datalist)
+    if (datalist) {
+        datalist.innerHTML = "";
+        listasUnicas.forEach(nomeLista => {
+            const option = document.createElement("option");
+            option.value = nomeLista;
+            datalist.appendChild(option);
+        });
+    }
 }
 
 // 2. Filtro por Lista
