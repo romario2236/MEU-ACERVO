@@ -368,6 +368,7 @@ window.prepararAdicao = function() {
 window.prepararEdicao = function() {
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
+        // Preenche os campos básicos
         document.getElementById("input-titulo").value = o.titulo || "";
         document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
         document.getElementById("input-generos").value = o.generos || "";
@@ -376,13 +377,17 @@ window.prepararEdicao = function() {
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
         
-        // Preenche o campo da lista personalizada
-        document.getElementById('input-lista').value = o.listaPersonalizada || '';
+        // CORREÇÃO: Preenche o novo campo de lista (que agora tem o datalist)
+        const campoLista = document.getElementById('input-lista');
+        if (campoLista) {
+            campoLista.value = o.listaPersonalizada || '';
+        }
         
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
         
+        // Reconstrói os links de leitura
         const containerLinks = document.getElementById("container-links-inputs");
         containerLinks.innerHTML = "";
         if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
@@ -396,8 +401,11 @@ window.prepararEdicao = function() {
                     window.adicionarCampoLink(nome, url);
                 }
             });
-        } else { window.adicionarCampoLink(); }
+        } else { 
+            window.adicionarCampoLink(); 
+        }
         
+        // Fecha o modal de detalhes e abre o de edição
         fecharModal(); 
         modalFormFundo.style.display = "flex"; 
     }
