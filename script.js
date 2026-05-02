@@ -3,6 +3,7 @@
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAH-7clKFuTdisyN4fNxGd1JTicX3ZWJnw",
@@ -16,6 +17,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativado."));
 
@@ -57,7 +59,55 @@ function carregarAcervo() {
         if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
     });
 }
-carregarAcervo();
+// ============================================================================
+// CONTROLE DE AUTENTICAÇÃO (O "Porteiro")
+// ============================================================================
+const telaLogin = document.getElementById("tela-login");
+const formLogin = document.getElementById("form-login");
+const loginErro = document.getElementById("login-erro");
+
+// Fica escutando para ver se você tem a chave ou não
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // Logado: A tela preta some e o banco de dados é acionado!
+        if(telaLogin) telaLogin.style.display = "none";
+        carregarAcervo(); 
+    } else {
+        // Deslogado: A tela preta aparece e os dados são apagados da memória
+        if(telaLogin) telaLogin.style.display = "flex";
+        acervo = []; 
+        aplicarFiltros();
+    }
+});
+
+// Ação de clicar em "Entrar"
+if(formLogin) {
+    formLogin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("login-email").value;
+        const senha = document.getElementById("login-senha").value;
+        const btn = document.getElementById("btn-entrar");
+        
+        btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Entrando...';
+        loginErro.style.display = "none";
+
+        try {
+            await signInWithEmailAndPassword(auth, email, senha);
+            // Se der certo, o onAuthStateChanged ali em cima detecta e libera a tela automaticamente!
+        } catch (error) {
+            loginErro.innerText = "E-mail ou senha incorretos.";
+            loginErro.style.display = "block";
+            console.error(error);
+        } finally {
+            btn.innerHTML = '<i class="ph ph-sign-in"></i> Entrar';
+        }
+    });
+}
+
+// Função para o botão de Deslogar
+window.fazerLogout = () => {
+    signOut(auth);
+};
 
 formulario.addEventListener("submit", async (e) => {
     e.preventDefault();

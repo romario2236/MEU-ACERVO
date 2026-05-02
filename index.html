@@ -13,6 +13,31 @@
 </head>
 <body>
 
+    <!-- ==========================================
+         TELA DE LOGIN (Fechadura do Sistema)
+    =========================================== -->
+    <div id="tela-login" style="display: flex;">
+        <div class="login-caixa">
+            <h2><i class="ph-fill ph-lock-key"></i> Acesso Restrito</h2>
+            <p style="color: #aaa; margin-bottom: 25px; font-size: 0.9rem;">Faça login para acessar o painel do acervo.</p>
+            
+            <form id="form-login">
+                <div class="grupo-input">
+                    <label>E-mail</label>
+                    <input type="email" id="login-email" required placeholder="seu@email.com">
+                </div>
+                <div class="grupo-input">
+                    <label>Senha</label>
+                    <input type="password" id="login-senha" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="btn-entrar" class="btn-salvar" style="width: 100%; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <i class="ph ph-sign-in"></i> Entrar
+                </button>
+            </form>
+            
+            <div id="login-erro" style="color: #ef4444; margin-top: 15px; text-align: center; font-size: 0.9rem; display: none;"></div>
+        </div>
+    </div>
    <!-- ==========================================
          1. CABEÇALHO (Busca, Backup e Adicionar)
     =========================================== -->

@@ -563,3 +563,54 @@ main { width: 100%; margin: 0; padding: 0; }
 .modal-fundo {
     z-index: 2000 !important; /* Blinda o modal contra os hovers dos mangás no fundo */
 }
+/* =========================================
+   TELA DE LOGIN
+========================================= */
+#tela-login {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a; /* Fundo mais escuro para focar no login */
+    z-index: 10000; /* Prioridade máxima, acima de TUDO no site */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-caixa {
+    background: #1a1a1a;
+    padding: 40px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+}
+
+.login-caixa h2 {
+    color: #fff;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-sair {
+    background: transparent;
+    border: 1px solid #555;
+    color: #ddd;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s;
+}
+.btn-sair:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
