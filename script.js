@@ -378,10 +378,13 @@ window.prepararEdicao = function() {
         document.getElementById("input-nota").value = o.nota || 5;
         
         // CORREÇÃO: Preenche o novo campo de lista (que agora tem o datalist)
-        const campoLista = document.getElementById('input-lista');
-        if (campoLista) {
-            campoLista.value = o.listaPersonalizada || '';
-        }
+        // CORREÇÃO SEGURA: Só tenta preencher se o campo realmente existir na tela
+const campoLista = document.getElementById('input-lista');
+if (campoLista) {
+    campoLista.value = o.listaPersonalizada || '';
+} else {
+    console.warn("Aviso: O campo 'input-lista' não foi encontrado no HTML.");
+}
         
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
