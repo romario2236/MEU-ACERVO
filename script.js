@@ -98,32 +98,69 @@ formulario.addEventListener("submit", async (e) => {
 });
 
 // ============================================================================
-// 4. INTERFACE, BUSCA AVANÇADA E PAGINAÇÃO (Scroll Infinito)
+// 4. INTERFACE, BUSCA AVANÇADA E FILTROS
 // ============================================================================
 let filtroTexto = "";
 let filtroTipo = "Todos";
+let filtroListaAtiva = "Todas"; // Nova variável de controle
 
 // Variáveis de Controle do Scroll Infinito
-let itensPorPagina = 24; // Quantidade de obras carregadas por vez
+let itensPorPagina = 24; 
 let itensCarregados = 0;
 let listaAtualFiltrada = [];
 let carregandoScroll = false;
+
+// Função para atualizar os botões da barra lateral dinamicamente
+function atualizarBotoesListas() {
+    const container = document.getElementById("container-listas-personalizadas");
+    if (!container) return;
+
+    // Descobre as listas únicas criadas por você no acervo
+    const listasUnicas = [...new Set(acervo
+        .map(o => o.listaPersonalizada)
+        .filter(l => l && l !== "Geral" && l !== "")
+    )].sort();
+
+    // Limpa o container e reconstrói os botões
+    container.innerHTML = "";
+    listasUnicas.forEach(nomeLista => {
+        const btn = document.createElement("button");
+        btn.className = "btn-filter sidebar-btn";
+        if (filtroListaAtiva === nomeLista) btn.classList.add('active');
+        btn.innerText = nomeLista;
+        btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.target);
+        container.appendChild(btn);
+    });
+}
+
+// Filtro por Lista Personalizada
+window.filtrarPorLista = (nome, botaoClicado) => {
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    if (botaoClicado) botaoClicado.classList.add('active');
+    
+    filtroListaAtiva = nome;
+    filtroTipo = "Todos"; // Reseta o filtro de tipo para não conflitar
+    window.aplicarFiltros();
+};
+
+// Evento dos botões de tipo (Mangá, Manhwa, etc)
+window.filtrarPorTipo = (t, botaoClicado) => {
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    if (botaoClicado) botaoClicado.classList.add('active');
+    
+    filtroTipo = t;
+    filtroListaAtiva = "Todas"; // Reseta a lista ao escolher um tipo geral
+    window.aplicarFiltros();
+};
 
 // O CÉREBRO: Analisa todos os filtros de uma vez
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo;
 
-    // Função para mostrar/esconder a caixa de filtros extras
-window.toggleFiltros = () => {
-    const caixa = document.getElementById("caixa-filtros");
-    if (caixa.style.display === "none") {
-        caixa.style.display = "flex"; // Mostra os filtros
-    } else {
-        caixa.style.display = "none"; // Esconde os filtros
-    }
-};
+    // Atualiza a lateral com as listas existentes
+    atualizarBotoesListas();
 
-    // Filtro de Texto
+    // Filtro de Texto (Busca)
     if (filtroTexto) {
         listaFiltrada = listaFiltrada.filter(o => 
             (o.titulo || "").toLowerCase().includes(filtroTexto) || 
@@ -134,6 +171,11 @@ window.toggleFiltros = () => {
     // Filtro de Tipo
     if (filtroTipo !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
+    }
+
+    // Filtro de Lista Personalizada
+    if (filtroListaAtiva !== "Todas") {
+        listaFiltrada = listaFiltrada.filter(o => o.listaPersonalizada === filtroListaAtiva);
     }
 
     // Filtro de Status
@@ -156,13 +198,12 @@ window.toggleFiltros = () => {
         });
     }
 
-    // Prepara os dados para o Scroll Infinito
+    // Atualiza a grade
     listaAtualFiltrada = listaFiltrada;
     itensCarregados = 0;
-    conteinerMangas.innerHTML = ""; // Limpa a tela para aplicar o novo filtro do zero
+    conteinerMangas.innerHTML = ""; 
     document.getElementById("contador-total").innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras`;
     
-    // Chama o primeiro lote de capas
     carregarMaisItens();
 };
 
@@ -333,7 +374,7 @@ window.prepararEdicao = function() {
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
         
-        // CORRIGIDO: Agora usando a letra "o" que é o nome da sua variável
+        // Preenche o campo da lista personalizada
         document.getElementById('input-lista').value = o.listaPersonalizada || '';
         
         document.getElementById("input-capa").value = o.capa || "";
@@ -354,6 +395,7 @@ window.prepararEdicao = function() {
                 }
             });
         } else { window.adicionarCampoLink(); }
+        
         fecharModal(); 
         modalFormFundo.style.display = "flex"; 
     }

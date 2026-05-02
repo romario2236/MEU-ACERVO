@@ -62,6 +62,7 @@
     <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
         <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
+        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
             
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
@@ -71,6 +72,12 @@
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Manhwa', this)">Manhwas</button>
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Manhua', this)">Manhua</button>
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Novel', this)">Novels</button>
+            </div>
+
+            <!-- NOVO ESPAÇO: Minhas Listas -->
+            <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Minhas Listas</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;" id="container-listas-personalizadas">
+                <!-- Os botões das listas vão aparecer aqui magicamente pelo JavaScript -->
             </div>
 
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
