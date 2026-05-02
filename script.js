@@ -811,3 +811,41 @@ window.criarListaVazia = async function() {
         console.error("Erro ao criar lista:", err);
     }
 };
+
+// Função para gerar as tags selecionáveis no formulário
+window.renderizarTagsSelecao = function(valorAtual = "Geral") {
+    const container = document.getElementById("container-tags-selecao");
+    if (!container) return;
+
+    // Pega todas as listas únicas do acervo
+    const listasUnicas = [...new Set(acervo
+        .map(o => (o.listaPersonalizada || "").trim())
+        .filter(l => l !== "" && l !== "Geral")
+    )].sort();
+
+    // Sempre adiciona "Geral" como opção padrão
+    listasUnicas.unshift("Geral");
+
+    container.innerHTML = "";
+    listasUnicas.forEach(nome => {
+        const tag = document.createElement("span");
+        tag.innerText = nome;
+        tag.style.cssText = `
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            background: ${valorAtual === nome ? '#3b82f6' : '#1a1a1a'};
+            color: ${valorAtual === nome ? '#fff' : '#aaa'};
+        `;
+
+        tag.onclick = () => {
+            document.getElementById("input-lista").value = nome;
+            renderizarTagsSelecao(nome); // Atualiza o visual das tags
+        };
+
+        container.appendChild(tag);
+    });
+};

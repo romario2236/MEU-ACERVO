@@ -227,10 +227,15 @@
                 </div>
 
                 <div class="grupo-input">
-                    <label>Lista Personalizada (Opcional)</label>
-                    <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Selecione ou digite...">
-                    <datalist id="sugestoes-listas"></datalist>
-                </div>
+    <label>Selecionar Listas</label>
+    <!-- Campo invisível que guardará o valor final para o Firebase -->
+    <input type="hidden" id="input-lista" value="Geral">
+    
+    <!-- Container onde as tags aparecerão -->
+    <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+        <!-- As tags serão geradas aqui pelo JavaScript -->
+    </div>
+</div>
 
                 <div class="grupo-input">
                     <label>Títulos Alternativos</label>
