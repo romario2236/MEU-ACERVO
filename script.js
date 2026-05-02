@@ -70,6 +70,7 @@ formulario.addEventListener("submit", async (e) => {
         titulo: document.getElementById("input-titulo").value || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
         generos: document.getElementById("input-generos").value || "",
+        listaPersonalizada: document.getElementById("input-lista").value || "Geral", // LINHA NOVA!
         tipo: document.getElementById("input-tipo").value || "Mangá",
         capitulo: document.getElementById("input-capitulo").value || "0",
         status: document.getElementById("input-status").value || "Em Andamento",
@@ -329,6 +330,7 @@ window.prepararEdicao = function() {
         document.getElementById("input-capitulo").value = o.capitulo || 0;
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
+        document.getElementById('input-lista').value = obraParaEditar.listaPersonalizada || '';
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
