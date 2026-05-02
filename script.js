@@ -137,16 +137,63 @@ function atualizarBotoesListas() {
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
-        // Usamos a nova classe que criamos no CSS
         btn.className = "sidebar-tag";
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         
-        // Removemos o ícone de pasta e deixamos apenas o texto da tag
-        btn.innerHTML = nomeLista;
+        // Desenhamos o nome da tag e o botão de excluir
+        btn.innerHTML = `
+            ${nomeLista}
+            <span class="btn-excluir-lista" onclick="excluirLista('${nomeLista}', event)" title="Excluir Lista">
+                <i class="ph ph-x"></i>
+            </span>
+        `;
+        
+        // O clique na tag em si (fora do X) faz o filtro
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.currentTarget);
         container.appendChild(btn);
     });
 }
+
+// O NOVO MOTOR DE EXCLUSÃO DE LISTAS
+window.excluirLista = async function(nomeLista, event) {
+    // Impede que o clique ative o filtro da lista sem querer
+    event.stopPropagation(); 
+    
+    if (!confirm(`Tem certeza que deseja excluir a lista "${nomeLista}"?\nAs obras não serão apagadas, apenas removidas desta lista.`)) return;
+
+    try {
+        // Varredura: Acha todos os mangás que têm essa lista salva
+        const obrasAfetadas = acervo.filter(o => {
+            const listas = Array.isArray(o.listasPersonalizadas) ? o.listasPersonalizadas : [o.listaPersonalizada || "Geral"];
+            return listas.includes(nomeLista);
+        });
+
+        // Loop de atualização no banco de dados
+        for (const obra of obrasAfetadas) {
+            const docRef = doc(db, "mangas", obra.idFirebase);
+            
+            if (obra.titulo === "_LIST_MARKER_") {
+                await deleteDoc(docRef); // É uma lista vazia, apaga direto
+            } else {
+                // É um mangá real, tira a lista da matriz (array) dele
+                let novasListas = (Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : [obra.listaPersonalizada]).filter(l => l !== nomeLista);
+                if (novasListas.length === 0) novasListas = ["Geral"]; // Proteção: se ficar sem lista, vai pro Geral
+                
+                await updateDoc(docRef, { 
+                    listasPersonalizadas: novasListas,
+                    listaPersonalizada: novasListas[0]
+                });
+            }
+        }
+        
+        // Volta pro filtro "Geral" se você apagou a lista que estava aberta
+        if (filtroListaAtiva === nomeLista) window.filtrarPorLista("Geral");
+        
+    } catch (err) {
+        console.error("Erro ao deletar lista:", err);
+        alert("Erro ao excluir a lista.");
+    }
+};
 
 window.filtrarPorLista = (nome, botaoClicado) => {
     // Limpa o 'active' tanto das categorias principais quanto das tags

@@ -335,7 +335,7 @@ main { width: 100%; margin: 0; padding: 0; }
     margin-left: 5px;
 }
 
-/* Novo estilo em formato de pílula (Tag) */
+/* Estilo da Tag com o botão de excluir dentro */
 .sidebar-tag {
     background: #1a1a1a;
     color: #aaa;
@@ -346,6 +346,8 @@ main { width: 100%; margin: 0; padding: 0; }
     cursor: pointer;
     transition: 0.2s;
     font-weight: 500;
+    display: inline-flex; /* Permite colocar o X do lado do nome */
+    align-items: center;
 }
 
 .sidebar-tag:hover {
@@ -353,11 +355,31 @@ main { width: 100%; margin: 0; padding: 0; }
     color: #fff;
 }
 
-/* Cor quando a tag está selecionada */
 .sidebar-tag.active {
     background: #3b82f6;
     color: white;
     border-color: #3b82f6;
+}
+
+/* O pequeno X vermelho para excluir a lista */
+.btn-excluir-lista {
+    margin-left: 8px;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 50%;
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    opacity: 0.5; /* Fica discreto */
+}
+
+.btn-excluir-lista:hover {
+    background: #ef4444;
+    color: white;
+    opacity: 1; /* Acende quando passa o mouse */
+    transform: scale(1.1);
 }
 
 /* =========================================
