@@ -3,70 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Acervo</title>
+    <title>Meu Acervo - Mangás & Comics</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
-
     <!-- Biblioteca para gerar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
 </head>
 <body>
 
-   <!-- ==========================================
-         1. CABEÇALHO (Busca, Backup e Adicionar)
+    <!-- ==========================================
+         1. CABEÇALHO (Busca e Ações)
     =========================================== -->
     <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
         <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
             
-            <!-- Barra de Pesquisa com Botão Limpar -->
             <div style="position: relative; width: 100%; max-width: 400px; display: flex; align-items: center;">
-                <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
-                <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none; padding: 5px; align-items: center; justify-content: center;">
+                <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff;">
+                <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none;">
                     <i class="ph ph-x-circle" style="font-size: 1.2rem;"></i>
                 </button>
             </div>
             
-           <!-- Botões de Ação -->
             <div style="display: flex; gap: 10px;">
-                <!-- Botão Gerar PDF (NOVO) -->
-                <button onclick="gerarPDF()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
-                    <i class="ph ph-file-pdf" style="font-size: 1.2rem;"></i> Baixar PDF
+                <button onclick="gerarPDF()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                    <i class="ph ph-file-pdf"></i> PDF
                 </button>
-
-                <!-- O input invisível que faz a leitura do arquivo JSON -->
                 <input type="file" id="input-importar" accept=".json" style="display: none;" onchange="importarDados(event)">
-                
-                <!-- Botão de Importar -->
-                <button onclick="document.getElementById('input-importar').click()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
-                    <i class="ph ph-upload-simple" style="font-size: 1.2rem;"></i> Importar
+                <button onclick="document.getElementById('input-importar').click()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer;">
+                    <i class="ph ph-upload-simple"></i>
                 </button>
-
-                <!-- Botão de Backup -->
-                <button onclick="exportarDados()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
-                    <i class="ph ph-download-simple" style="font-size: 1.2rem;"></i> Backup
+                <button onclick="exportarDados()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer;">
+                    <i class="ph ph-download-simple"></i>
                 </button>
-
-                <!-- Botão Adicionar -->
                 <button onclick="abrirModalForm()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                    <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
+                    <i class="ph ph-plus-circle"></i> Novo
                 </button>
             </div>
-            
         </div>
     </header>
 
     <!-- ==========================================
-         2. LAYOUT PRINCIPAL (Lateral + Grade)
+         2. LAYOUT PRINCIPAL (Sidebar + Grid)
     =========================================== -->
     <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
-        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
-        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
-            
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;" id="botoes-categoria">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;">
                 <button class="btn-filter sidebar-btn active" onclick="filtrarPorTipo('Todos', this)">Todos</button>
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Mangá', this)">Mangás</button>
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Manhwa', this)">Manhwas</button>
@@ -74,104 +57,67 @@
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Novel', this)">Novels</button>
             </div>
 
-            <!-- NOVO ESPAÇO: Minhas Listas -->
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Minhas Listas</h3>
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;" id="container-listas-personalizadas">
-                <!-- Os botões das listas vão aparecer aqui magicamente pelo JavaScript -->
+                <!-- Preenchido pelo JS -->
             </div>
 
-            <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
+            <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros</h3>
             <div style="display: flex; flex-direction: column; gap: 15px;">
-                
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Status da Obra</label>
-                    <select id="select-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
-                        <option value="Todos">Todos</option>
-                        <option value="Em Andamento">Em Andamento</option>
-                        <option value="Finalizado">Finalizado</option>
-                        <option value="Hiato">Hiato</option>
-                    </select>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Ordenar por</label>
-                    <select id="select-ordem" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
-                        <option value="az">A - Z</option>
-                        <option value="za">Z - A</option>
-                        <option value="nota-alta">Maior Nota</option>
-                        <option value="nota-baixa">Menor Nota</option>
-                        <option value="cap-alto">Mais Capítulos</option>
-                    </select>
-                </div>
-
+                <select id="select-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%;">
+                    <option value="Todos">Todos os Status</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Finalizado">Finalizado</option>
+                    <option value="Hiato">Hiato</option>
+                </select>
+                <select id="select-ordem" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%;">
+                    <option value="az">Título (A-Z)</option>
+                    <option value="za">Título (Z-A)</option>
+                    <option value="nota-alta">Melhor Nota</option>
+                    <option value="cap-alto">Mais Capítulos</option>
+                </select>
             </div>
         </aside>
 
-        <!-- LADO DIREITO (Grade de Capas) -->
         <main style="min-width: 0;">
             <div id="contador-total" style="color: #888; margin-bottom: 20px; font-weight: 500;"></div>
-            
-            <div id="lista-mangas" class="grid-mangas">
-                <!-- As capas serão desenhadas pelo JavaScript aqui -->
-            </div>
+            <div id="lista-mangas" class="grid-mangas"></div>
         </main>
-
     </div>
 
-   <!-- ==========================================
-         3. MODAL DA OBRA (Redesenhado Lado a Lado)
+    <!-- ==========================================
+         3. MODAL DE DETALHES
     =========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
-        <div class="modal-conteudo" style="background: #1a1a1a; border-radius: 12px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid #333; margin: 20px auto;">
-            
-            <button class="botao-fechar" onclick="fecharModal()" style="position: absolute; top: 15px; right: 15px; background: #333; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: 0.2s;"><i class="ph ph-x"></i></button>
-            
-            <!-- Usando Flexbox para criar duas colunas -->
-            <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
-                
-                <!-- Coluna da Esquerda: Capa Isolada -->
-                <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto;">
-                    <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
+        <div class="modal-conteudo">
+            <button class="botao-fechar" onclick="fecharModal()"><i class="ph ph-x"></i></button>
+            <div class="modal-corpo">
+                <div style="flex: 0 0 auto; width: 100%; max-width: 250px;">
+                    <img id="modal-capa" src="" style="width: 100%; border-radius: 8px;">
                 </div>
-                
-                <!-- Coluna da Direita: Informações e Botões -->
-                <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
-                    
-                    <h2 id="modal-titulo" style="margin: 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título</h2>
-                    
-                    <div class="meta-badges" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <span id="modal-tipo" class="badge badge-tipo" style="background: #3b82f6; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: white;">Tipo</span>
-                        <span id="modal-status" class="badge badge-status" style="background: #10b981; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; color: white;">Status</span>
-                        <span class="badge badge-nota" style="background: #f59e0b; color: #000; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-star"></i> <span id="modal-nota-texto">5.0</span></span>
+                <div class="modal-info">
+                    <h2 id="modal-titulo" style="font-size: 2rem; color: #fff;">Título</h2>
+                    <div class="meta-badges" style="display: flex; gap: 10px; margin: 15px 0;">
+                        <span id="modal-tipo" class="badge-tipo">Tipo</span>
+                        <span id="modal-status" class="badge-status">Status</span>
+                        <span class="badge-nota"><i class="ph-fill ph-star"></i> <span id="modal-nota-texto">5.0</span></span>
                     </div>
-                    
-                    <p class="titulos-alt" style="margin: 0; font-size: 0.9rem; color: #aaa;"><strong>Alts:</strong> <span id="modal-titulos-alt">...</span></p>
-                    <div id="modal-generos" class="modal-generos" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
-                    
-                    <!-- Contador isolado em um card -->
-                    <div class="controle-leitura" style="background: #252525; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 5px;">
-                        <div class="leitura-label" style="margin-bottom: 10px; color: #bbb; display: flex; align-items: center; gap: 6px;">
-                            <i class="ph ph-bookmark-simple"></i>
-                            <strong>Progresso de Leitura</strong>
-                        </div>
-                        <div class="contador" style="display: flex; align-items: center; gap: 10px;">
-                            <button class="btn-contador" onclick="alterarCapitulo(-1)" style="background: #3b82f6; border: none; color: white; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="ph ph-minus"></i></button>
-                            <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()" style="width: 70px; height: 35px; text-align: center; background: #111; border: 1px solid #444; color: white; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">
-                            <button class="btn-contador" onclick="alterarCapitulo(1)" style="background: #3b82f6; border: none; color: white; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="ph ph-plus"></i></button>
+                    <p style="font-size: 0.9rem; color: #aaa;">Alts: <span id="modal-titulos-alt"></span></p>
+                    <div id="modal-generos" style="display: flex; gap: 8px; flex-wrap: wrap; margin: 15px 0;"></div>
+                    <div class="controle-leitura">
+                        <span>Progresso:</span>
+                        <div class="contador">
+                            <button onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
+                            <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
+                            <button onclick="alterarCapitulo(1)"><i class="ph ph-plus"></i></button>
                         </div>
                     </div>
-                    
-                    <!-- Sinopse com barra de rolagem se for muito grande -->
-                    <div class="modal-sinopse" style="margin-top: 5px;">
-                        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 5px;">Sinopse</h3>
-                        <p id="modal-texto-sinopse" style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #ccc; max-height: 150px; overflow-y: auto; padding-right: 10px;">...</p>
-                    </div>
-                    
-                    <div class="acoes-modal" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div id="container-links-leitura" class="container-links" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
-                        <div class="acoes-secundarias" style="display: flex; gap: 10px;">
-                            <button id="btn-editar-obra" onclick="prepararEdicao()" style="background: transparent; border: 1px solid #555; color: #ddd; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-pencil-simple"></i> Editar</button>
-                            <button id="btn-excluir-obra" onclick="excluirObra()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-trash"></i> Excluir</button>
+                    <p id="modal-texto-sinopse" style="color: #ccc; line-height: 1.6; margin-bottom: 20px;"></p>
+                    <div class="acoes-modal">
+                        <div id="container-links-leitura"></div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="prepararEdicao()"><i class="ph ph-pencil"></i></button>
+                            <button onclick="excluirObra()" style="color: #ef4444;"><i class="ph ph-trash"></i></button>
                         </div>
                     </div>
                 </div>
@@ -179,58 +125,39 @@
         </div>
     </div>
 
-   <!-- ==========================================
-         4. MODAL DE CADASTRO (ESTRUTURA COMPLETA)
+    <!-- ==========================================
+         4. MODAL DE CADASTRO / EDIÇÃO
     =========================================== -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
-            <h2 id="titulo-form">Nova Obra</h2>
+            <h2 id="titulo-form">Cadastrar Obra</h2>
             
-            <!-- BLOCO DE BUSCA API -->
             <div class="busca-api-container">
-                <div class="busca-api-header">
-                    <i class="ph ph-magic-wand"></i>
-                    <label>Busca Automática</label>
-                </div>
+                <div class="busca-api-header"><i class="ph ph-magic-wand"></i> Busca Automática</div>
                 <div class="busca-api-controles">
                     <select id="select-fonte-api" class="select-api">
                         <option value="jikan">MyAnimeList</option>
                         <option value="mangadex">MangaDex</option>
                         <option value="kitsu">Kitsu</option>
                     </select>
-                    <input type="text" id="input-busca-api" placeholder="Digite o título...">
-                    <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
-                        <i class="ph ph-magnifying-glass"></i> Buscar
-                    </button>
+                    <input type="text" id="input-busca-api" placeholder="Pesquisar título...">
+                    <button type="button" class="btn-buscar" onclick="buscarNaAPI()"><i class="ph ph-magnifying-glass"></i></button>
                 </div>
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
             <form id="form-nova-obra">
-                <input type="hidden" id="input-id-firebase" value="">
-
+                <input type="hidden" id="input-id-firebase">
                 <div class="grupo-input">
                     <label>Título Principal</label>
-                    <input type="text" id="input-titulo" required placeholder="Ex: Solo Leveling">
+                    <input type="text" id="input-titulo" required>
                 </div>
-
                 <div class="grupo-input">
-                    <label>Lista Personalizada (Opcional)</label>
-                    <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Selecione ou digite...">
+                    <label>Lista Personalizada</label>
+                    <input type="text" id="input-lista" list="sugestoes-listas" placeholder="Ex: Favoritos, Ler Depois...">
                     <datalist id="sugestoes-listas"></datalist>
                 </div>
-
-                <div class="grupo-input">
-                    <label>Títulos Alternativos</label>
-                    <input type="text" id="input-titulos-alt" placeholder="Ex: Na Honjaman Rebeleop">
-                </div>
-                
-                <div class="grupo-input">
-                    <label>Gêneros (separados por vírgula)</label>
-                    <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia">
-                </div>
-                
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Tipo</label>
@@ -243,10 +170,9 @@
                     </div>
                     <div class="grupo-input">
                         <label>Capítulo Atual</label>
-                        <input type="number" id="input-capitulo" required placeholder="0">
+                        <input type="number" id="input-capitulo" value="0">
                     </div>
                 </div>
-
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Status</label>
@@ -257,40 +183,23 @@
                         </select>
                     </div>
                     <div class="grupo-input">
-                        <label>Nota (1 a 5)</label>
-                        <input type="number" id="input-nota" step="0.1" min="1" max="5" required>
+                        <label>Nota</label>
+                        <input type="number" id="input-nota" step="0.1" min="0" max="5">
                     </div>
                 </div>
-                
+                <div class="grupo-input"><label>Sinopse</label><textarea id="input-sinopse" rows="4"></textarea></div>
+                <div class="grupo-input"><label>URL da Capa</label><input type="url" id="input-capa"></div>
                 <div class="grupo-input">
-                    <label>Link da Capa (URL)</label>
-                    <input type="url" id="input-capa" required>
-                </div>
-                
-                <div class="grupo-input">
-                    <label>Links para Leitura</label>
+                    <label>Links de Leitura</label>
                     <div id="container-links-inputs"></div>
-                    <button type="button" class="btn-add-link" onclick="adicionarCampoLink()">
-                        <i class="ph ph-plus"></i> Adicionar Link
-                    </button>
+                    <button type="button" class="btn-add-link" onclick="adicionarCampoLink()"><i class="ph ph-plus"></i></button>
                 </div>
-                
-                <div class="grupo-input">
-                    <label>Sinopse</label>
-                    <textarea id="input-sinopse" rows="4" required></textarea>
-                </div>
-                
-                <button type="submit" class="btn-salvar">
-                    <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
-                </button>
+                <button type="submit" class="btn-salvar">Salvar no Acervo</button>
             </form>
         </div>
     </div>
 
     <script type="module" src="script.js"></script>
-    <!-- Botão Flutuante: Voltar ao Topo -->
-    <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; transition: 0.3s;">
-        <i class="ph ph-caret-up"></i>
-    </button>
+    <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; display: none; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; z-index: 1000;"><i class="ph ph-caret-up"></i></button>
 </body>
 </html>
