@@ -517,7 +517,24 @@ window.excluirObra = async function() {
 }
 
 window.fecharModal = () => { modalFundo.style.display = "none"; idAbertoNoModal = ""; };
-window.fecharModalForm = () => { modalFormFundo.style.display = "none"; };
+window.fecharModalForm = () => { 
+    // 1. Esconde a janela do formulário
+    modalFormFundo.style.display = "none"; 
+    
+    // 2. Limpa o texto que foi digitado na barra de busca da API
+    const inputBuscaApi = document.getElementById("input-busca-api");
+    if (inputBuscaApi) inputBuscaApi.value = "";
+    
+    // 3. Apaga a lista de resultados e esconde a caixa preta
+    const divResultadosApi = document.getElementById("resultado-busca-api");
+    if (divResultadosApi) {
+        divResultadosApi.style.display = "none";
+        divResultadosApi.innerHTML = "";
+    }
+    
+    // 4. Zera a memória do sistema para não misturar dados
+    resultadosAPI = [];
+};
 window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
