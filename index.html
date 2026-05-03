@@ -166,9 +166,12 @@
             
             <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
                 
-                <!-- Coluna da Esquerda: Capa Isolada -->
-                <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto;">
+                <!-- Coluna da Esquerda: Capa e Links (Modificada) -->
+                <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
+                    
+                    <!-- Bloco 4: Links de Leitura (Movido para debaixo da capa) -->
+                    <div id="container-links-leitura" class="container-links" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;"></div>
                 </div>
                 
                 <!-- Coluna da Direita: Informações Modernizadas -->
@@ -213,11 +216,6 @@
                     <div class="caixa-sinopse">
                         <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px;"><i class="ph ph-text-align-left"></i> Sinopse</h4>
                         <div id="modal-texto-sinopse" style="color: #aaa; font-size: 0.95rem; line-height: 1.6; max-height: 180px; overflow-y: auto; padding-right: 10px;"></div>
-                    </div>
-
-                    <!-- Bloco 4: Links de Leitura -->
-                    <div style="margin-top: auto; padding-top: 10px;">
-                        <div id="container-links-leitura" class="container-links" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
                     </div>
 
                 </div>
