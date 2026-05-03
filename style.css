@@ -371,7 +371,7 @@ main { width: 100%; margin: 0; padding: 0; }
 
 /* O pequeno X vermelho com tamanho exato para ser um círculo perfeito */
 .btn-excluir-lista {
-    color: #ef4444;
+    color: #f70000;
     background: rgba(239, 68, 68, 0.1);
     border-radius: 50%;
     width: 22px; /* Trava a largura */
