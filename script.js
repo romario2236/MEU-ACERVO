@@ -7,6 +7,7 @@ import {
     collection, 
     addDoc, 
     getDocs, 
+    onSnapshot,
     // ... (suas outras importações)
     initializeFirestore, 
     persistentLocalCache, 
