@@ -166,22 +166,60 @@ formulario.addEventListener("submit", async (e) => {
     };
 
     // ====================================================================
-    // LÓGICA NOVA: PREVENÇÃO DE DUPLICATAS (CLONES)
+    // LÓGICA NOVA: PREVENÇÃO DE DUPLICATAS (COM AVISO INTELIGENTE)
     // ====================================================================
-    // Compara o título digitado com os do acervo (ignorando maiúsculas/minúsculas)
-    if (obra.titulo !== "") {
-        const tituloDigitado = obra.titulo.toLowerCase();
-        
-        const obraDuplicada = acervo.some(item => 
-            (item.titulo || "").toLowerCase() === tituloDigitado && 
-            item.idFirebase !== id // Se estiver editando, ignora a própria obra para não dar falso positivo
+    // 1. Reúne todos os nomes (principal e alternativos) que você está tentando salvar
+    let nomesDigitados = [obra.titulo.toLowerCase().trim()];
+    if (obra.titulosAlternativos) {
+        const altsDigitados = obra.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
+        nomesDigitados = nomesDigitados.concat(altsDigitados);
+    }
+    nomesDigitados = nomesDigitados.filter(Boolean); // Limpa espaços vazios
+
+    // 2. Varre o acervo procurando conflitos
+    let nomeConflitante = "";
+    let obraOriginalConflitante = "";
+
+    const existeConflito = acervo.some(item => {
+        if (id && item.idFirebase === id) return false; // Se estiver editando, ignora a si mesmo
+
+        // Reúne todos os nomes da obra atual do loop
+        let nomesDoItem = [(item.titulo || "").toLowerCase().trim()];
+        if (item.titulosAlternativos) {
+            const altsItem = item.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
+            nomesDoItem = nomesDoItem.concat(altsItem);
+        }
+
+        // Verifica se algum nome que você digitou bate com algum nome do item do banco
+        const achouBatida = nomesDigitados.some(nomeDig => {
+            if (nomesDoItem.includes(nomeDig)) {
+                nomeConflitante = nomeDig; // Salva a palavra exata que causou o conflito
+                return true;
+            }
+            return false;
+        });
+
+        if (achouBatida) {
+            obraOriginalConflitante = item.titulo; // Salva o nome da obra que já tem esse nome
+            return true;
+        }
+        return false;
+    });
+
+    // 3. O Porteiro: Avisa e pergunta o que você quer fazer
+    if (existeConflito) {
+        const querSalvarMesmoAssim = confirm(
+            `⚠️ AVISO DE DUPLICATA!\n\n` +
+            `O nome "${nomeConflitante}" já está registrado nos títulos da obra "${obraOriginalConflitante}".\n\n` +
+            `Deseja adicionar esta obra mesmo assim?`
         );
 
-        if (obraDuplicada) {
-            window.mostrarToast("Você já tem uma obra com esse título no acervo!", "error");
+        if (!querSalvarMesmoAssim) {
+            // Se clicar em Cancelar, aborta a missão e volta o botão ao normal
             btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
-            return; // 🛑 INTERROMPE TUDO AQUI! Não deixa passar pro Firebase
+            return; 
         }
+        // Se clicar em OK, o código simplesmente ignora o return e vai pro try/catch salvar!
     }
     // ====================================================================
     
