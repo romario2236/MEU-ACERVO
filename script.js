@@ -164,15 +164,22 @@ formulario.addEventListener("submit", async (e) => {
     
     try {
         if (id) {
+            // Editando uma obra existente
             await updateDoc(doc(db, "mangas", id), obra);
+            window.mostrarToast("Obra atualizada com sucesso!", "success");
             fecharModalForm();
-            window.abrirModal(id); 
+            // Dá um milissegundo pro modal do formulário fechar e abre o de detalhes com as novidades
+            setTimeout(() => { window.abrirModal(id); }, 100); 
         } else {
-            await addDoc(collection(db, "mangas"), obra);
+            // Criando uma obra nova
+            const docRef = await addDoc(collection(db, "mangas"), obra);
+            window.mostrarToast("Obra adicionada com sucesso!", "success");
             fecharModalForm();
+            // Ao criar uma obra nova, abre ela imediatamente para você ver como ficou
+            setTimeout(() => { window.abrirModal(docRef.id); }, 100);
         }
     } catch(err) {
-        alert("Erro ao salvar no banco!");
+        window.mostrarToast("Erro ao salvar no banco!", "error");
         console.error(err);
     } finally {
         btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
