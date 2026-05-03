@@ -8,6 +8,9 @@ import {
     addDoc, 
     getDocs, 
     onSnapshot,
+    updateDoc,  // <-- ADICIONADO
+    doc,        // <-- ADICIONADO
+    deleteDoc,  // <-- ADICIONADO
     // ... (suas outras importações)
     initializeFirestore, 
     persistentLocalCache, 
