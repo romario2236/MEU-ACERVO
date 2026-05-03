@@ -533,13 +533,15 @@ window.buscarNaAPI = async function() {
     
     btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i>';
     btn.disabled = true;
-    div.innerHTML = "<p style='padding:15px; color:#aaa; text-align:center;'>Consultando bases de dados...</p>";
+    div.innerHTML = "<p style='padding:15px; color:#aaa; text-align:center;'>Consultando 4 bases de dados...</p>";
     div.style.display = "block";
     
     try {
         resultadosAPI = []; 
 
-        // 1. KITSU API
+        // ---------------------------------------------------------
+        // ⚙️ 1. KITSU API
+        // ---------------------------------------------------------
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Kitsu falhou"))
             .then(d => {
@@ -568,7 +570,9 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // 2. MANGADEX API
+        // ---------------------------------------------------------
+        // ⚙️ 2. MANGADEX API
+        // ---------------------------------------------------------
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
         const mangadexPromise = fetch(proxyUrl)
@@ -598,7 +602,9 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // 3. JIKAN API
+        // ---------------------------------------------------------
+        // ⚙️ 3. JIKAN API (MYANIMELIST)
+        // ---------------------------------------------------------
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
             .then(d => {
@@ -622,13 +628,74 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise]);
+        // ---------------------------------------------------------
+        // ⚙️ 4. ANILIST API (Nova Gigante)
+        // ---------------------------------------------------------
+        const queryAniList = `
+        query ($search: String) {
+          Page(page: 1, perPage: 5) {
+            media(search: $search, type: MANGA) {
+              title { romaji english native }
+              synonyms
+              startDate { year }
+              coverImage { extraLarge }
+              description(asHtml: false)
+              genres
+              chapters
+              averageScore
+              status
+              countryOfOrigin
+              format
+            }
+          }
+        }`;
+
+        const anilistPromise = fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ query: queryAniList, variables: { search: q } })
+        })
+        .then(res => res.ok ? res.json() : Promise.reject("AniList falhou"))
+        .then(d => {
+            return (d.data?.Page?.media || []).map(m => {
+                const t = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
+                let altArr = [];
+                if (m.title?.english && m.title.english !== t) altArr.push(m.title.english);
+                if (m.title?.native && m.title.native !== t) altArr.push(m.title.native);
+                if (m.synonyms) altArr = altArr.concat(m.synonyms);
+                
+                let st = "Em Andamento";
+                if(m.status === "FINISHED") st = "Finalizado";
+                else if(m.status === "HIATUS" || m.status === "CANCELLED") st = "Hiato";
+
+                // AniList sabe exatamente de onde veio a obra (Coreia, China, Japão)
+                let tipo = "Mangá";
+                if (m.format === "NOVEL") tipo = "Novel";
+                else if (m.countryOfOrigin === "KR") tipo = "Manhwa";
+                else if (m.countryOfOrigin === "CN") tipo = "Manhua";
+
+                // Limpa marcações HTML que a AniList às vezes joga na sinopse
+                let sinopseLimpa = (m.description || "").replace(/<[^>]*>?/gm, '').trim();
+
+                return {
+                    fonteNome: "AniList", ano: m.startDate?.year || "N/A",
+                    t: t, alts: altArr.join(", "), capa: m.coverImage?.extraLarge || "",
+                    sin: sinopseLimpa, gen: (m.genres || []).join(", "), cap: m.chapters || 0,
+                    nota: m.averageScore ? (m.averageScore / 20).toFixed(1) : 5, st: st, tipo: tipo
+                };
+            });
+        });
+
+        // =========================================================
+        // DISPARA AS 4 APIS AO MESMO TEMPO
+        // =========================================================
+        const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
             if (resposta.status === "fulfilled") resultadosAPI = resultadosAPI.concat(resposta.value);
         });
 
-        // DESENHANDO A NOVA INTERFACE MODULAR
+        // DESENHANDO A INTERFACE MODULAR
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2a2a2a; border-radius: 8px 8px 0 0;">
                 <span style="color: #ddd; font-size: 0.85rem; font-weight: bold;">Resultados (${resultadosAPI.length})</span>
@@ -640,9 +707,10 @@ window.buscarNaAPI = async function() {
             div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
-                let corFonte = "#3b82f6";
-                if (obra.fonteNome === "MangaDex") corFonte = "#f97316";
-                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899";
+                let corFonte = "#3b82f6"; // MyAnimeList (Azul)
+                if (obra.fonteNome === "MangaDex") corFonte = "#f97316"; // Laranja
+                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899"; // Rosa
+                if (obra.fonteNome === "AniList") corFonte = "#0284c7"; // Azul Escuro vibrante
 
                 div.innerHTML += `
                     <div class="item-api" style="position: relative; display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #333; gap: 10px;">
@@ -658,7 +726,6 @@ window.buscarNaAPI = async function() {
                             </div>
                         </div>
 
-                        <!-- OS NOVOS BOTÕES MODULARES -->
                         <div style="display: flex; gap: 8px; margin-top: 5px;">
                             <button type="button" onclick="preencherComAPI(${i}, 'tudo')" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: bold;"><i class="ph ph-check-square"></i> Tudo</button>
                             <button type="button" onclick="preencherComAPI(${i}, 'info')" style="flex: 1; background: #475569; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: bold;"><i class="ph ph-text-aa"></i> Textos</button>
