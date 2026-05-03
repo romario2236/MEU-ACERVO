@@ -571,10 +571,11 @@ window.buscarNaAPI = async function() {
                 const titles = m.attributes?.title || {};
                 const t = titles.en || titles['pt-br'] || Object.values(titles)[0] || "Sem Título";
                 const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
-                
+                const capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
+                m.minhaCapaMangaDex = capa;
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
-                        <img src="${capa}">
+                        
                         <div><h4>${t}</h4><p>MangaDex • ${m.attributes?.year || 'N/A'}</p></div>
                     </div>`;
             });
