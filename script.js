@@ -871,9 +871,22 @@ window.abrirModalForm = () => {
     renderizarTagsSelecao(["Geral"]);
     const modalForm = document.getElementById('modal-form-fundo');
     const form = document.getElementById('form-nova-obra');
+    
     if (form) form.reset(); 
     document.getElementById('input-id-firebase').value = ""; 
     document.getElementById('titulo-form').innerText = "Nova Obra"; 
+    
+    // --- LÓGICA NOVA: Destrói os links antigos e cria um limpo ---
+    const containerLinks = document.getElementById("container-links-inputs");
+    if (containerLinks) {
+        containerLinks.innerHTML = ""; // Apaga todo o histórico da div
+        window.adicionarCampoLink();   // Coloca apenas 1 caixinha nova e vazia
+    }
+    
+    // Prevenção: Garante que a caixa preta de busca da API também suma
+    const divResultadosApi = document.getElementById("resultado-busca-api");
+    if (divResultadosApi) divResultadosApi.style.display = "none";
+    
     if (modalForm) modalForm.style.display = 'flex'; 
 };
 
