@@ -739,3 +739,27 @@ main { width: 100%; margin: 0; padding: 0; }
     -moz-appearance: textfield;
     appearance: textfield;
 }
+/* =========================================================
+   ESTILO DOS NOMES ALTERNATIVOS (TAGS DISCRETAS)
+========================================================= */
+.container-tags-alt {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag-alt {
+    background: transparent;
+    color: #94a3b8; /* Cor cinza-azulado suave */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    border: 1px solid #334155; /* Borda bem discreta */
+    transition: 0.2s;
+}
+
+/* Um leve brilho ao passar o mouse por cima */
+.tag-alt:hover {
+    border-color: #64748b;
+    color: #cbd5e1;
+}

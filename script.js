@@ -433,7 +433,20 @@ window.abrirModal = function(id) {
                 generosContainer.innerHTML = `<span style="color: #666; font-size: 0.85rem;">Nenhum gênero cadastrado</span>`;
             }
         }
-        document.getElementById("modal-titulos-alt").innerText = obra.titulosAlternativos || "Nenhum";
+        // Transforma os Nomes Alternativos em tags discretas
+        const altContainer = document.getElementById("modal-titulos-alt");
+        if (altContainer) {
+            altContainer.innerHTML = "";
+            if (obra.titulosAlternativos) {
+                // Divide a string nas vírgulas, limpa os espaços e ignora vazios
+                const listaAlt = obra.titulosAlternativos.split(',').map(t => t.trim()).filter(t => t);
+                listaAlt.forEach(alt => {
+                    altContainer.innerHTML += `<span class="tag-alt">${alt}</span>`;
+                });
+            } else {
+                altContainer.innerHTML = `<span style="color: #555; font-size: 0.8rem; font-style: italic;">Nenhum nome alternativo</span>`;
+            }
+        }
         document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
 
         // 4. Constrói os links de leitura
