@@ -575,7 +575,7 @@ window.buscarNaAPI = async function() {
                 m.minhaCapaMangaDex = capa;
                 div.innerHTML += `
                     <div class="item-api" onclick="preencherComAPI(${i})">
-                        
+                        <img src="${capa}">
                         <div><h4>${t}</h4><p>MangaDex • ${m.attributes?.year || 'N/A'}</p></div>
                     </div>`;
             });
