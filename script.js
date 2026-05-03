@@ -32,6 +32,7 @@ const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
 });
+const auth = getAuth(app);
 
 // ============================================================================
 // 2. VARIÁVEIS DE ESTADO E REFERÊNCIAS DO DOM
