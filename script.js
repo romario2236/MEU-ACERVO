@@ -148,7 +148,7 @@ formulario.addEventListener("submit", async (e) => {
     }
 
     const obra = {
-        titulo: document.getElementById("input-titulo").value || "",
+        titulo: document.getElementById("input-titulo").value.trim() || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
         generos: document.getElementById("input-generos").value || "",
         
@@ -164,9 +164,30 @@ formulario.addEventListener("submit", async (e) => {
         sinopse: document.getElementById("input-sinopse").value || "",
         linksLeitura: linksArray
     };
+
+    // ====================================================================
+    // LÓGICA NOVA: PREVENÇÃO DE DUPLICATAS (CLONES)
+    // ====================================================================
+    // Compara o título digitado com os do acervo (ignorando maiúsculas/minúsculas)
+    if (obra.titulo !== "") {
+        const tituloDigitado = obra.titulo.toLowerCase();
+        
+        const obraDuplicada = acervo.some(item => 
+            (item.titulo || "").toLowerCase() === tituloDigitado && 
+            item.idFirebase !== id // Se estiver editando, ignora a própria obra para não dar falso positivo
+        );
+
+        if (obraDuplicada) {
+            window.mostrarToast("Você já tem uma obra com esse título no acervo!", "error");
+            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
+            return; // 🛑 INTERROMPE TUDO AQUI! Não deixa passar pro Firebase
+        }
+    }
+    // ====================================================================
     
     try {
         if (id) {
+            // Editando uma obra existente
             // Editando uma obra existente
             await updateDoc(doc(db, "mangas", id), obra);
             window.mostrarToast("Obra atualizada com sucesso!", "success");
