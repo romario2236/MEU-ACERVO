@@ -342,7 +342,7 @@ main { width: 100%; margin: 0; padding: 0; }
 
 /* Estilo da Tag ajustado para "abraçar" o texto */
 .sidebar-tag {
-    background: #1a1a1a;
+    background: #2472ca;
     color: #aaa;
     border: 1px solid #333;
     /* Padding ajustado: topo/baixo=6px, esquerda=14px, direita=6px para compensar o X */
