@@ -399,21 +399,22 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
-        // 1. Gera as tags de Status (Destaca a que está selecionada)
-        const statuses = ["Em Andamento", "Finalizado", "Hiato"];
+        // 1. Tag de Status (Mostra apenas o status atual com cor dinâmica)
         const statusContainer = document.getElementById("modal-status-tags");
         if (statusContainer) {
-            statusContainer.innerHTML = statuses.map(s => 
-                `<span class="tag-moderna ${obra.status === s ? 'active-status' : ''}">${s}</span>`
-            ).join('');
+            let corStatus = "#3b82f6"; // Azul para Em Andamento
+            if (obra.status === "Finalizado") corStatus = "#10b981"; // Verde
+            if (obra.status === "Hiato") corStatus = "#f59e0b"; // Laranja
+            
+            statusContainer.innerHTML = `<span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corStatus}40; display: inline-block;">${obra.status || 'N/A'}</span>`;
         }
 
-        // 2. Gera as tags das Listas Personalizadas (em azul)
+        // 2. Tags das Listas Personalizadas (Design limpo)
         const listasContainer = document.getElementById("modal-listas-tags");
         if (listasContainer) {
             const listasArray = Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
             listasContainer.innerHTML = listasArray.map(l => 
-                `<span class="tag-moderna active-lista">${l}</span>`
+                `<span style="background: #3b82f6; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: none; display: inline-block; margin: 2px;">${l}</span>`
             ).join('');
         }
 
