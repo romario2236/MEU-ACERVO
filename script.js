@@ -419,7 +419,7 @@ function carregarMaisItens() {
         
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
-                <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/250x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
+                <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
                     <div class="info-flutuante">
