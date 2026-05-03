@@ -522,7 +522,7 @@ window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecha
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
 // ============================================================================
-// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (BUSCA SIMULTÂNEA)
+// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (BUSCA SIMULTÂNEA E MODULAR)
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
@@ -537,11 +537,9 @@ window.buscarNaAPI = async function() {
     div.style.display = "block";
     
     try {
-        resultadosAPI = []; // Limpa os resultados antigos
+        resultadosAPI = []; 
 
-        // ---------------------------------------------------------
-        // ⚙️ 1. KITSU API
-        // ---------------------------------------------------------
+        // 1. KITSU API
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Kitsu falhou"))
             .then(d => {
@@ -561,24 +559,16 @@ window.buscarNaAPI = async function() {
                     else if (mangaType === "novel") tipo = "Novel";
 
                     return {
-                        fonteNome: "Kitsu",
-                        ano: m.attributes?.startDate ? m.attributes.startDate.substring(0,4) : "N/A",
-                        t: t,
-                        alts: altArr.join(", "),
-                        capa: m.attributes?.posterImage?.original || "",
-                        sin: m.attributes?.synopsis || "",
-                        gen: "", 
-                        cap: m.attributes?.chapterCount || 0,
+                        fonteNome: "Kitsu", ano: m.attributes?.startDate ? m.attributes.startDate.substring(0,4) : "N/A",
+                        t: t, alts: altArr.join(", "), capa: m.attributes?.posterImage?.original || "",
+                        sin: m.attributes?.synopsis || "", gen: "", cap: m.attributes?.chapterCount || 0,
                         nota: m.attributes?.averageRating ? (m.attributes.averageRating / 20).toFixed(1) : 5,
-                        st: st,
-                        tipo: tipo
+                        st: st, tipo: tipo
                     };
                 });
             });
 
-        // ---------------------------------------------------------
-        // ⚙️ 2. MANGADEX API
-        // ---------------------------------------------------------
+        // 2. MANGADEX API
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
         const mangadexPromise = fetch(proxyUrl)
@@ -589,8 +579,7 @@ window.buscarNaAPI = async function() {
                     const t = titles.en || titles['pt-br'] || Object.values(titles)[0] || "Sem Título";
                     let altArr = [];
                     (m.attributes?.altTitles || []).forEach(at => {
-                        let val = Object.values(at)[0];
-                        if(val) altArr.push(val);
+                        let val = Object.values(at)[0]; if(val) altArr.push(val);
                     });
                     const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
                     const capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
@@ -600,24 +589,16 @@ window.buscarNaAPI = async function() {
                     else if (m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") st = "Hiato";
 
                     return {
-                        fonteNome: "MangaDex",
-                        ano: m.attributes?.year || "N/A",
-                        t: t,
-                        alts: altArr.join(", "),
-                        capa: capa,
+                        fonteNome: "MangaDex", ano: m.attributes?.year || "N/A",
+                        t: t, alts: altArr.join(", "), capa: capa,
                         sin: descriptions.en || descriptions['pt-br'] || Object.values(descriptions)[0] || "",
                         gen: (m.attributes?.tags || []).filter(tg => tg.attributes?.group === 'genre').map(tg => tg.attributes?.name?.en).filter(Boolean).join(", "),
-                        cap: m.attributes?.lastChapter || 0,
-                        nota: 5, // MangaDex não manda nota fácil na rota de busca
-                        st: st,
-                        tipo: "Mangá" // MangaDex foca mais em mangá
+                        cap: m.attributes?.lastChapter || 0, nota: 5, st: st, tipo: "Mangá"
                     };
                 });
             });
 
-        // ---------------------------------------------------------
-        // ⚙️ 3. JIKAN (MYANIMELIST) API
-        // ---------------------------------------------------------
+        // 3. JIKAN API
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
             .then(d => {
@@ -632,56 +613,56 @@ window.buscarNaAPI = async function() {
                     else if (m.status === "On Hiatus" || m.status === "Discontinued") st = "Hiato";
 
                     return {
-                        fonteNome: "MyAnimeList",
-                        ano: m.published?.prop?.from?.year || "N/A",
-                        t: t,
-                        alts: altArr.join(", "),
-                        capa: m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "",
+                        fonteNome: "MyAnimeList", ano: m.published?.prop?.from?.year || "N/A",
+                        t: t, alts: altArr.join(", "), capa: m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "",
                         sin: (m.synopsis || "").replace("[Written by MAL Rewrite]", "").trim(),
-                        gen: (m.genres || []).map(g => g.name).join(", "),
-                        cap: m.chapters || 0,
-                        nota: m.score ? (m.score / 2).toFixed(1) : 5,
-                        st: st,
-                        tipo: "Mangá"
+                        gen: (m.genres || []).map(g => g.name).join(", "), cap: m.chapters || 0,
+                        nota: m.score ? (m.score / 2).toFixed(1) : 5, st: st, tipo: "Mangá"
                     };
                 });
             });
 
-        // =========================================================
-        // DISPARA AS 3 APIS AO MESMO TEMPO
-        // =========================================================
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise]);
         
-        // Junta todas as respostas que deram certo em uma lista só
         respostas.forEach(resposta => {
-            if (resposta.status === "fulfilled") {
-                resultadosAPI = resultadosAPI.concat(resposta.value);
-            } else {
-                console.warn("Uma das APIs demorou ou falhou:", resposta.reason);
-            }
+            if (resposta.status === "fulfilled") resultadosAPI = resultadosAPI.concat(resposta.value);
         });
 
-        // Desenha na tela
-        div.innerHTML = "";
+        // DESENHANDO A NOVA INTERFACE MODULAR
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2a2a2a; border-radius: 8px 8px 0 0;">
+                <span style="color: #ddd; font-size: 0.85rem; font-weight: bold;">Resultados (${resultadosAPI.length})</span>
+                <button type="button" onclick="document.getElementById('resultado-busca-api').style.display='none'" style="background: transparent; color: #ef4444; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold;"><i class="ph ph-x"></i> Fechar</button>
+            </div>
+        `;
+
         if(resultadosAPI.length === 0) {
-            div.innerHTML = "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado em nenhuma base.</p>";
+            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado.</p>";
         } else {
-            // Desenha a lista combinada
             resultadosAPI.forEach((obra, i) => {
-                // Cores diferentes para cada API para facilitar a leitura
-                let corFonte = "#3b82f6"; // Azul padrão (MyAnimeList)
-                if (obra.fonteNome === "MangaDex") corFonte = "#f97316"; // Laranja
-                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899"; // Rosa
+                let corFonte = "#3b82f6";
+                if (obra.fonteNome === "MangaDex") corFonte = "#f97316";
+                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899";
 
                 div.innerHTML += `
-                    <div class="item-api" onclick="preencherComAPI(${i})" style="position: relative;">
-                        <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/50x75/1a1a1a/60a5fa?text=Sem+Capa'">
-                        <div style="width: 100%;">
-                            <h4 style="margin-bottom: 4px; padding-right: 70px;">${obra.t}</h4>
-                            <p style="font-size: 0.75rem;">Ano: ${obra.ano}</p>
-                            <span style="position: absolute; top: 10px; right: 10px; background: ${corFonte}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold;">
-                                ${obra.fonteNome}
-                            </span>
+                    <div class="item-api" style="position: relative; display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #333; gap: 10px;">
+                        
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/50x75/1a1a1a/60a5fa?text=Sem+Capa'" style="width: 55px; height: 80px; object-fit: cover; border-radius: 4px;">
+                            <div style="width: 100%;">
+                                <h4 style="margin-bottom: 4px; padding-right: 70px; font-size: 1rem; color: #fff;">${obra.t}</h4>
+                                <p style="font-size: 0.75rem; color: #888;">Ano: ${obra.ano}</p>
+                                <span style="position: absolute; top: 12px; right: 12px; background: ${corFonte}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold;">
+                                    ${obra.fonteNome}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- OS NOVOS BOTÕES MODULARES -->
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            <button type="button" onclick="preencherComAPI(${i}, 'tudo')" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: bold;"><i class="ph ph-check-square"></i> Tudo</button>
+                            <button type="button" onclick="preencherComAPI(${i}, 'info')" style="flex: 1; background: #475569; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: bold;"><i class="ph ph-text-aa"></i> Textos</button>
+                            <button type="button" onclick="preencherComAPI(${i}, 'capa')" style="flex: 1; background: #10b981; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: bold;"><i class="ph ph-image"></i> Capa</button>
                         </div>
                     </div>`;
             });
@@ -696,23 +677,39 @@ window.buscarNaAPI = async function() {
     }
 }
 
-// Como os dados já foram tratados lá em cima, essa função fica minúscula!
-window.preencherComAPI = function(i) {
+// O NOVO PREENCHEDOR MODULAR
+window.preencherComAPI = function(i, modo = 'tudo') {
     const m = resultadosAPI[i];
     if(!m) return;
     
-    document.getElementById("input-titulo").value = m.t || "";
-    document.getElementById("input-titulos-alt").value = m.alts || "";
-    document.getElementById("input-capa").value = m.capa || "";
-    document.getElementById("input-sinopse").value = m.sin || "";
-    if(m.gen) document.getElementById("input-generos").value = m.gen;
-    document.getElementById("input-capitulo").value = m.cap || 0;
-    document.getElementById("input-nota").value = m.nota || 5;
-    document.getElementById("input-status").value = m.st || "Em Andamento";
-    document.getElementById("input-tipo").value = m.tipo || "Mangá";
+    // Se escolheu 'tudo' ou 'info', ele puxa os textos
+    if (modo === 'tudo' || modo === 'info') {
+        document.getElementById("input-titulo").value = m.t || "";
+        document.getElementById("input-titulos-alt").value = m.alts || "";
+        document.getElementById("input-sinopse").value = m.sin || "";
+        if(m.gen) document.getElementById("input-generos").value = m.gen;
+        document.getElementById("input-capitulo").value = m.cap || 0;
+        document.getElementById("input-nota").value = m.nota || 5;
+        document.getElementById("input-status").value = m.st || "Em Andamento";
+        document.getElementById("input-tipo").value = m.tipo || "Mangá";
+    }
     
-    document.getElementById("resultado-busca-api").style.display = "none";
-    document.getElementById("input-busca-api").value = "";
+    // Se escolheu 'tudo' ou 'capa', ele puxa a URL da imagem
+    if (modo === 'tudo' || modo === 'capa') {
+        document.getElementById("input-capa").value = m.capa || "";
+    }
+    
+    // Dispara a nossa notificação elegante verde (Toast) avisando o que ele fez
+    if (modo === 'capa') {
+        window.mostrarToast('Capa inserida com sucesso!', 'success');
+    } else if (modo === 'info') {
+        window.mostrarToast('Textos inseridos com sucesso!', 'success');
+    } else {
+        window.mostrarToast('Obra preenchida completamente!', 'success');
+        // Se o usuário clicar em "Tudo", a gente entende que ele já terminou, então fecha a janela automaticamente
+        document.getElementById("resultado-busca-api").style.display = "none";
+        document.getElementById("input-busca-api").value = "";
+    }
 }
 
 // ============================================================================
