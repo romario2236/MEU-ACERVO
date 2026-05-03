@@ -763,3 +763,31 @@ main { width: 100%; margin: 0; padding: 0; }
     border-color: #64748b;
     color: #cbd5e1;
 }
+/* =========================================================
+   ESTILO DOS BOTÕES DE LEITURA (EMBAIXO DA CAPA)
+========================================================= */
+.btn-ler-obra {
+    background: #3b82f6;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.2s;
+    width: 100%; /* Faz o botão esticar para preencher a grade */
+    box-sizing: border-box;
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+/* Efeito moderno ao passar o mouse */
+.btn-ler-obra:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+}
