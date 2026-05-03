@@ -139,23 +139,16 @@ formulario.addEventListener("submit", async (e) => {
         if (url) linksArray.push(nome ? `${nome} | ${url}` : url);
     });
 
-    // LÓGICA NOVA: Lendo o array de listas do input escondido
     let listasArray = ["Geral"];
-    try {
-        listasArray = JSON.parse(document.getElementById("input-lista").value);
-    } catch(err) {
-        listasArray = [document.getElementById("input-lista").value || "Geral"];
-    }
+    try { listasArray = JSON.parse(document.getElementById("input-lista").value); } 
+    catch(err) { listasArray = [document.getElementById("input-lista").value || "Geral"]; }
 
     const obra = {
         titulo: document.getElementById("input-titulo").value.trim() || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
         generos: document.getElementById("input-generos").value || "",
-        
-        // Salvamos como Array (novo padrão) e a primeira lista como String (para não quebrar códigos antigos)
         listasPersonalizadas: listasArray, 
         listaPersonalizada: listasArray[0] || "Geral", 
-        
         tipo: document.getElementById("input-tipo").value || "Mangá",
         capitulo: document.getElementById("input-capitulo").value || "0",
         status: document.getElementById("input-status").value || "Em Andamento",
@@ -165,87 +158,94 @@ formulario.addEventListener("submit", async (e) => {
         linksLeitura: linksArray
     };
 
-    // ====================================================================
-    // LÓGICA NOVA: PREVENÇÃO DE DUPLICATAS (COM AVISO INTELIGENTE)
-    // ====================================================================
-    // 1. Reúne todos os nomes (principal e alternativos) que você está tentando salvar
+    // ==========================================
+    // FUNÇÃO INTERNA QUE EXECUTA O SALVAMENTO REAL
+    // ==========================================
+    const executarSalvamento = async () => {
+        btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Salvando...';
+        try {
+            if (id) {
+                await updateDoc(doc(db, "mangas", id), obra);
+                window.mostrarToast("Obra atualizada com sucesso!", "success");
+                fecharModalForm();
+                setTimeout(() => { window.abrirModal(id); }, 100); 
+            } else {
+                const docRef = await addDoc(collection(db, "mangas"), obra);
+                window.mostrarToast("Obra adicionada com sucesso!", "success");
+                fecharModalForm();
+                setTimeout(() => { window.abrirModal(docRef.id); }, 100);
+            }
+        } catch(err) {
+            window.mostrarToast("Erro ao salvar no banco!", "error");
+            console.error(err);
+        } finally {
+            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
+        }
+    };
+
+    // ==========================================
+    // VERIFICAÇÃO DE DUPLICATAS COM INTERFACE MODAL
+    // ==========================================
     let nomesDigitados = [obra.titulo.toLowerCase().trim()];
     if (obra.titulosAlternativos) {
         const altsDigitados = obra.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
         nomesDigitados = nomesDigitados.concat(altsDigitados);
     }
-    nomesDigitados = nomesDigitados.filter(Boolean); // Limpa espaços vazios
+    nomesDigitados = nomesDigitados.filter(Boolean);
 
-    // 2. Varre o acervo procurando conflitos
     let nomeConflitante = "";
-    let obraOriginalConflitante = "";
+    let obraOriginal = null;
 
     const existeConflito = acervo.some(item => {
-        if (id && item.idFirebase === id) return false; // Se estiver editando, ignora a si mesmo
+        if (id && item.idFirebase === id) return false;
 
-        // Reúne todos os nomes da obra atual do loop
         let nomesDoItem = [(item.titulo || "").toLowerCase().trim()];
         if (item.titulosAlternativos) {
             const altsItem = item.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
             nomesDoItem = nomesDoItem.concat(altsItem);
         }
 
-        // Verifica se algum nome que você digitou bate com algum nome do item do banco
         const achouBatida = nomesDigitados.some(nomeDig => {
             if (nomesDoItem.includes(nomeDig)) {
-                nomeConflitante = nomeDig; // Salva a palavra exata que causou o conflito
+                nomeConflitante = nomeDig;
                 return true;
             }
             return false;
         });
 
         if (achouBatida) {
-            obraOriginalConflitante = item.titulo; // Salva o nome da obra que já tem esse nome
+            obraOriginal = item; // Guarda o objeto inteiro da obra conflitante para pegar a capa
             return true;
         }
         return false;
     });
 
-    // 3. O Porteiro: Avisa e pergunta o que você quer fazer
+    // Se achou conflito, abre a janela personalizada com a CAPA e aguarda
     if (existeConflito) {
-        const querSalvarMesmoAssim = confirm(
-            `⚠️ AVISO DE DUPLICATA!\n\n` +
-            `O nome "${nomeConflitante}" já está registrado nos títulos da obra "${obraOriginalConflitante}".\n\n` +
-            `Deseja adicionar esta obra mesmo assim?`
-        );
+        // Preenche os dados do modal
+        document.getElementById('texto-duplicata').innerHTML = `O nome <strong style="color: #ef4444;">"${nomeConflitante}"</strong> já está registrado na obra <strong style="color: #3b82f6;">"${obraOriginal.titulo}"</strong>.`;
+        document.getElementById('capa-duplicata').src = obraOriginal.capa || 'https://via.placeholder.com/140x200/1a1a1a/60a5fa?text=Sem+Capa';
+        
+        // Exibe o modal
+        const modalAviso = document.getElementById('modal-duplicata-fundo');
+        modalAviso.style.display = 'flex';
 
-        if (!querSalvarMesmoAssim) {
-            // Se clicar em Cancelar, aborta a missão e volta o botão ao normal
-            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
-            return; 
-        }
-        // Se clicar em OK, o código simplesmente ignora o return e vai pro try/catch salvar!
+        // Ouve os botões do modal
+        document.getElementById('btn-cancelar-duplicata').onclick = () => {
+            modalAviso.style.display = 'none';
+            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem'; // Devolve o botão de salvar ao normal
+        };
+
+        document.getElementById('btn-confirmar-duplicata').onclick = () => {
+            modalAviso.style.display = 'none';
+            executarSalvamento(); // Chama a função que manda pro banco de dados
+        };
+
+        return; // Pára a execução aqui, o resto do trabalho fica pros botões do modal!
     }
-    // ====================================================================
-    
-    try {
-        if (id) {
-            // Editando uma obra existente
-            // Editando uma obra existente
-            await updateDoc(doc(db, "mangas", id), obra);
-            window.mostrarToast("Obra atualizada com sucesso!", "success");
-            fecharModalForm();
-            // Dá um milissegundo pro modal do formulário fechar e abre o de detalhes com as novidades
-            setTimeout(() => { window.abrirModal(id); }, 100); 
-        } else {
-            // Criando uma obra nova
-            const docRef = await addDoc(collection(db, "mangas"), obra);
-            window.mostrarToast("Obra adicionada com sucesso!", "success");
-            fecharModalForm();
-            // Ao criar uma obra nova, abre ela imediatamente para você ver como ficou
-            setTimeout(() => { window.abrirModal(docRef.id); }, 100);
-        }
-    } catch(err) {
-        window.mostrarToast("Erro ao salvar no banco!", "error");
-        console.error(err);
-    } finally {
-        btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
-    }
+
+    // Se não achou conflito, salva direto e silenciosamente
+    executarSalvamento();
 });
 
 // ============================================================================
