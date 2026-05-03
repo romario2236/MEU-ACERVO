@@ -2,8 +2,18 @@
 // 1. IMPORTAÇÕES E CONFIGURAÇÕES DO FIREBASE
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    // ... (suas outras importações)
+    initializeFirestore, 
+    persistentLocalCache, 
+    persistentMultipleTabManager 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAH-7clKFuTdisyN4fNxGd1JTicX3ZWJnw",
@@ -15,11 +25,13 @@ const firebaseConfig = {
   measurementId: "G-CE6CSXTGMN"
 };
 
+// NOVO CÓDIGO ATUALIZADO:
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
-enableIndexedDbPersistence(db).catch(() => console.warn("Cache offline desativado."));
+// Inicializa o banco já com o cache offline ativado no padrão novo
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+});
 
 // ============================================================================
 // 2. VARIÁVEIS DE ESTADO E REFERÊNCIAS DO DOM
