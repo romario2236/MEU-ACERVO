@@ -1045,3 +1045,4 @@ window.alterarCapituloRapido = async function(id, val, event) {
         console.error(err);
     }
 };
+

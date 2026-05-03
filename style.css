@@ -727,3 +727,15 @@ main { width: 100%; margin: 0; padding: 0; }
     background: #ef4444;
     color: #fff;
 }
+/* Remove as setas nativas do input de número no Chrome, Safari, Edge e Opera */
+.contador-moderno input[type="number"]::-webkit-inner-spin-button,
+.contador-moderno input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Remove as setas nativas no Firefox */
+.contador-moderno input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
