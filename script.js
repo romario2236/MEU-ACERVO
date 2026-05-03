@@ -419,7 +419,19 @@ window.abrirModal = function(id) {
 
         // 3. Preenche os campos de texto
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
-        document.getElementById("modal-generos-texto").innerText = obra.generos || "N/A";
+        // Pega a string de gêneros e transforma em tags visuais
+        const generosContainer = document.getElementById("modal-generos-texto");
+        if (generosContainer) {
+            generosContainer.innerHTML = "";
+            if (obra.generos) {
+                const listaGeneros = obra.generos.split(',').map(g => g.trim()).filter(g => g);
+                listaGeneros.forEach(gen => {
+                    generosContainer.innerHTML += `<span class="tag-genero">${gen}</span>`;
+                });
+            } else {
+                generosContainer.innerHTML = `<span style="color: #666; font-size: 0.85rem;">Nenhum gênero cadastrado</span>`;
+            }
+        }
         document.getElementById("modal-titulos-alt").innerText = obra.titulosAlternativos || "Nenhum";
         document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
 

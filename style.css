@@ -614,3 +614,116 @@ main { width: 100%; margin: 0; padding: 0; }
     border-color: #ef4444;
     color: white;
 }
+
+/* =========================================================
+   NOVO ESTILO DO MODAL DE DETALHES
+========================================================= */
+
+/* Cards rápidos (Status, Lista, Progresso) */
+.info-card-rapido {
+    background: #222;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-card-label {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Novo visual do contador para não cortar números grandes */
+.contador-moderno {
+    display: flex;
+    align-items: center;
+    background: #111;
+    border-radius: 6px;
+    border: 1px solid #444;
+    overflow: hidden;
+}
+
+.contador-moderno input {
+    background: transparent;
+    color: #fff;
+    border: none;
+    text-align: center;
+    width: 60px; /* Mais espaço para o número! */
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 5px 0;
+}
+
+.contador-moderno input:focus {
+    outline: none;
+}
+
+/* Tags de Gêneros */
+.container-tags-genero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-genero {
+    background: #2a2a2a;
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    border: 1px solid #444;
+}
+
+/* Caixa da Sinopse */
+.caixa-sinopse {
+    background: #1a1a1e;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #3b82f6; /* Detalhe azul elegante na lateral */
+}
+
+/* Scrollbar personalizada para a sinopse */
+.caixa-sinopse #modal-texto-sinopse::-webkit-scrollbar {
+    width: 6px;
+}
+.caixa-sinopse #modal-texto-sinopse::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+/* Botões do Topo (Editar/Excluir apenas com ícones) */
+.btn-icone-outline, .btn-icone-red {
+    background: transparent;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-icone-outline {
+    border: 1px solid #555;
+    color: #ddd;
+}
+.btn-icone-outline:hover {
+    background: #333;
+    border-color: #fff;
+    color: #fff;
+}
+
+.btn-icone-red {
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+.btn-icone-red:hover {
+    background: #ef4444;
+    color: #fff;
+}

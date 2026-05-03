@@ -171,68 +171,59 @@
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
                 </div>
                 
-                <!-- Coluna da Direita: Informações em Lista -->
-                <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+                <!-- Coluna da Direita: Informações Modernizadas -->
+                <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
                     
-                    <h2 id="modal-titulo" style="margin: 0 0 20px 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título</h2>
-                    
-                    <div class="info-tabela">
-                        <!-- Linha: Status -->
-                        <div class="info-linha">
-                            <span class="info-label">Status:</span>
-                            <div class="info-valor" id="modal-status-tags"></div>
+                    <!-- Cabeçalho: Título e Botões de Ação -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <h2 id="modal-titulo" style="margin: 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título da Obra</h2>
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                            <button onclick="prepararEdicao()" class="btn-icone-outline" title="Editar"><i class="ph ph-pencil-simple"></i></button>
+                            <button onclick="excluirObra()" class="btn-icone-red" title="Excluir"><i class="ph ph-trash"></i></button>
                         </div>
+                    </div>
 
-                        <!-- Linha: Listas -->
-                        <div class="info-linha">
-                            <span class="info-label">Listas:</span>
-                            <div class="info-valor" id="modal-listas-tags"></div>
+                    <!-- Bloco 1: Informações Rápidas (Cards) -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+                        <div class="info-card-rapido">
+                            <span class="info-card-label">Status</span>
+                            <div id="modal-status-tags" style="margin-top: 5px;"></div>
                         </div>
-
-                        <!-- Linha: Capítulos Lidos -->
-                        <div class="info-linha">
-                            <span class="info-label">Capítulos Lidos:</span>
-                            <div class="info-valor">
-                                <div class="contador-moderno">
-                                    <button class="btn-cont" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
-                                    <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
-                                    <button class="btn-cont" onclick="alterarCapitulo(1)"><i class="ph ph-plus"></i></button>
-                                </div>
+                        <div class="info-card-rapido">
+                            <span class="info-card-label">Lista</span>
+                            <div id="modal-listas-tags" style="margin-top: 5px;"></div>
+                        </div>
+                        <div class="info-card-rapido">
+                            <span class="info-card-label">Progresso</span>
+                            <div class="contador-moderno" style="margin-top: 5px; width: fit-content;">
+                                <button class="btn-cont" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
+                                <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
+                                <button class="btn-cont" onclick="alterarCapitulo(1)"><i class="ph ph-plus"></i></button>
                             </div>
                         </div>
-
-                        <!-- Linha: Gêneros -->
-                        <div class="info-linha">
-                            <span class="info-label">Gêneros:</span>
-                            <div class="info-valor" id="modal-generos-texto" style="color: #ccc; font-size: 0.9rem;"></div>
-                        </div>
-
-                        <!-- Linha: Nomes Alternativos -->
-                        <div class="info-linha">
-                            <span class="info-label">Nomes Alternativos:</span>
-                            <div class="info-valor" id="modal-titulos-alt" style="color: #bbb; font-size: 0.9rem;"></div>
-                        </div>
-
-                        <!-- Linha: Sinopse -->
-                        <div class="info-linha-col">
-                            <span class="info-label">Sinopse:</span>
-                            <div class="info-valor" id="modal-texto-sinopse" style="color: #aaa; font-size: 0.9rem; line-height: 1.6; max-height: 150px; overflow-y: auto; margin-top: 5px;"></div>
-                        </div>
                     </div>
 
-                    <!-- Botões Finais -->
-                    <div class="acoes-modal" style="margin-top: auto; padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <!-- Bloco 2: Tags (Gêneros) e Nomes Alternativos -->
+                    <div>
+                        <div id="modal-generos-texto" class="container-tags-genero" style="margin-bottom: 15px;"></div>
+                        <p style="margin: 0; font-size: 0.85rem; color: #888;"><strong>Alternativos:</strong> <span id="modal-titulos-alt"></span></p>
+                    </div>
+
+                    <!-- Bloco 3: Sinopse -->
+                    <div class="caixa-sinopse">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px;"><i class="ph ph-text-align-left"></i> Sinopse</h4>
+                        <div id="modal-texto-sinopse" style="color: #aaa; font-size: 0.95rem; line-height: 1.6; max-height: 180px; overflow-y: auto; padding-right: 10px;"></div>
+                    </div>
+
+                    <!-- Bloco 4: Links de Leitura -->
+                    <div style="margin-top: auto; padding-top: 10px;">
                         <div id="container-links-leitura" class="container-links" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
-                        <div class="acoes-secundarias" style="display: flex; gap: 10px;">
-                            <button id="btn-editar-obra" onclick="prepararEdicao()" style="background: transparent; border: 1px solid #555; color: #ddd; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-pencil-simple"></i> Editar</button>
-                            <button id="btn-excluir-obra" onclick="excluirObra()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="ph ph-trash"></i> Excluir</button>
-                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
-
    <!-- ==========================================
          4. MODAL DE CADASTRO (ESTRUTURA COMPLETA)
     =========================================== -->
