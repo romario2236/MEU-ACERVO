@@ -241,19 +241,15 @@
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
-            <!-- BLOCO DE BUSCA API -->
+           <!-- BLOCO DE BUSCA API SIMULTÂNEA -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
-                    <label>Busca Automática</label>
+                    <label>Busca Automática Global</label>
                 </div>
-                <div class="busca-api-controles">
-                    <select id="select-fonte-api" class="select-api">
-                        <option value="jikan">MyAnimeList</option>
-                        <option value="mangadex">MangaDex</option>
-                        <option value="kitsu">Kitsu</option>
-                    </select>
-                    <input type="text" id="input-busca-api" placeholder="Digite o título...">
+                <div class="busca-api-controles" style="display: flex; gap: 10px;">
+                    <!-- Removemos o <select> daqui! -->
+                    <input type="text" id="input-busca-api" placeholder="Digite o título para buscar em todas as bases..." style="flex: 1;">
                     <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
                         <i class="ph ph-magnifying-glass"></i> Buscar
                     </button>
