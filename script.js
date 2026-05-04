@@ -669,13 +669,15 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // ---------------------------------------------------------
+       // ---------------------------------------------------------
         // ⚙️ 2. MANGADEX API
         // ---------------------------------------------------------
-        // Fazendo a requisição direto para o MangaDex (sem o corsproxy instável)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         
-        const mangadexPromise = fetch(urlMD)
+        // Usando o AllOrigins, um proxy muito mais robusto e estável para evitar bloqueios de CORS
+        const proxyMD = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMD)}`;
+        
+        const mangadexPromise = fetch(proxyMD)
             .then(res => {
                 if (!res.ok) throw new Error(`MangaDex respondeu com erro: ${res.status}`);
                 return res.json();
@@ -683,13 +685,18 @@ window.buscarNaAPI = async function() {
             .then(d => {
                 return (d.data || []).map(m => {
                     const titles = m.attributes?.title || {};
-                    const t = titles.en || titles['pt-br'] || Object.values(titles)[0] || "Sem Título";
+                    // Prioriza achar o nome em Inglês ou PT-BR
+                    const t = titles.en || titles['pt-br'] || titles['ja-ro'] || Object.values(titles)[0] || "Sem Título";
+                    
                     let altArr = [];
                     (m.attributes?.altTitles || []).forEach(at => {
                         let val = Object.values(at)[0]; if(val) altArr.push(val);
                     });
+                    
                     const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
-                    const capa = art ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes?.fileName}` : "";
+                    // Correção: Garante que o nome do arquivo da capa realmente existe antes de montar o link
+                    const capa = (art && art.attributes?.fileName) ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes.fileName}` : "";
+                    
                     const descriptions = m.attributes?.description || {};
                     let st = "Em Andamento";
                     if(m.attributes?.status === "completed") st = "Finalizado";
@@ -698,18 +705,18 @@ window.buscarNaAPI = async function() {
                     return {
                         fonteNome: "MangaDex", ano: m.attributes?.year || "N/A",
                         t: t, alts: altArr.join(", "), capa: capa,
-                        sin: descriptions.en || descriptions['pt-br'] || Object.values(descriptions)[0] || "",
+                        sin: descriptions['pt-br'] || descriptions.en || Object.values(descriptions)[0] || "",
                         gen: (m.attributes?.tags || []).filter(tg => tg.attributes?.group === 'genre').map(tg => tg.attributes?.name?.en).filter(Boolean).join(", "),
                         cap: m.attributes?.lastChapter || 0, nota: 5, st: st, tipo: "Mangá"
                     };
                 });
             })
             .catch(err => {
-                // Se der erro, avisa no console, mas não quebra as outras APIs
-                console.error("Falha no MangaDex:", err);
-                return Promise.reject("MangaDex falhou");
+                // Se der erro, avisa no console, mas retorna uma lista vazia para não travar as outras APIs!
+                console.error("Falha silenciosa no MangaDex:", err);
+                return []; 
             });
-
+            
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
             .then(d => {
