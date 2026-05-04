@@ -669,10 +669,17 @@ window.buscarNaAPI = async function() {
                 });
             });
 
+        // ---------------------------------------------------------
+        // ⚙️ 2. MANGADEX API
+        // ---------------------------------------------------------
+        // Fazendo a requisição direto para o MangaDex (sem o corsproxy instável)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
-        const mangadexPromise = fetch(proxyUrl)
-            .then(res => res.ok ? res.json() : Promise.reject("MangaDex falhou"))
+        
+        const mangadexPromise = fetch(urlMD)
+            .then(res => {
+                if (!res.ok) throw new Error(`MangaDex respondeu com erro: ${res.status}`);
+                return res.json();
+            })
             .then(d => {
                 return (d.data || []).map(m => {
                     const titles = m.attributes?.title || {};
@@ -696,6 +703,11 @@ window.buscarNaAPI = async function() {
                         cap: m.attributes?.lastChapter || 0, nota: 5, st: st, tipo: "Mangá"
                     };
                 });
+            })
+            .catch(err => {
+                // Se der erro, avisa no console, mas não quebra as outras APIs
+                console.error("Falha no MangaDex:", err);
+                return Promise.reject("MangaDex falhou");
             });
 
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
