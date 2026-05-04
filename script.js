@@ -8,16 +8,14 @@ import {
     addDoc, 
     getDocs, 
     onSnapshot,
-    updateDoc,  // <-- ADICIONADO
-    doc,        // <-- ADICIONADO
-    deleteDoc,  // <-- ADICIONADO
-    // ... (suas outras importações)
+    updateDoc,  
+    doc,        
+    deleteDoc,  
     initializeFirestore, 
     persistentLocalCache, 
     persistentMultipleTabManager 
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyAH-7clKFuTdisyN4fNxGd1JTicX3ZWJnw",
@@ -29,10 +27,7 @@ const firebaseConfig = {
   measurementId: "G-CE6CSXTGMN"
 };
 
-// NOVO CÓDIGO ATUALIZADO:
 const app = initializeApp(firebaseConfig);
-
-// Inicializa o banco já com o cache offline ativado no padrão novo
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
 });
@@ -46,6 +41,12 @@ let idAbertoNoModal = "";
 let resultadosAPI = [];
 let fonteAtualAPI = "jikan";
 
+// VARIÁVEIS DE FILTRO
+let filtroTexto = "";
+let filtroTipo = "Todos";
+let filtroListaAtiva = "Todas";
+let mostrarAdulto = false; // NOVO: Controla se as obras +18 estão visíveis ou não
+
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
 const modalFundo = document.getElementById("modal-fundo");
@@ -55,7 +56,7 @@ const formulario = document.getElementById("form-nova-obra");
 // ============================================================================
 // 3. COMUNICAÇÃO COM O BANCO DE DADOS (CRUD)
 // ============================================================================
-let pausarRedraw = false; // A nossa nova trava de segurança
+let pausarRedraw = false; 
 
 function carregarAcervo() {
     onSnapshot(collection(db, "mangas"), (snapshot) => {
@@ -66,7 +67,6 @@ function carregarAcervo() {
             acervo.push(obra);
         });
         
-        // Se foi um clique rápido de capítulo, atualiza o sistema mas NÃO apaga a tela
         if (pausarRedraw) {
             pausarRedraw = false;
             return; 
@@ -76,28 +76,25 @@ function carregarAcervo() {
         if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
     });
 }
+
 // ============================================================================
-// CONTROLE DE AUTENTICAÇÃO (O "Porteiro")
+// CONTROLE DE AUTENTICAÇÃO
 // ============================================================================
 const telaLogin = document.getElementById("tela-login");
 const formLogin = document.getElementById("form-login");
 const loginErro = document.getElementById("login-erro");
 
-// Fica escutando para ver se você tem a chave ou não
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Logado: A tela preta some e o banco de dados é acionado!
         if(telaLogin) telaLogin.style.display = "none";
         carregarAcervo(); 
     } else {
-        // Deslogado: A tela preta aparece e os dados são apagados da memória
         if(telaLogin) telaLogin.style.display = "flex";
         acervo = []; 
         aplicarFiltros();
     }
 });
 
-// Ação de clicar em "Entrar"
 if(formLogin) {
     formLogin.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -110,7 +107,6 @@ if(formLogin) {
 
         try {
             await signInWithEmailAndPassword(auth, email, senha);
-            // Se der certo, o onAuthStateChanged ali em cima detecta e libera a tela automaticamente!
         } catch (error) {
             loginErro.innerText = "E-mail ou senha incorretos.";
             loginErro.style.display = "block";
@@ -121,10 +117,7 @@ if(formLogin) {
     });
 }
 
-// Função para o botão de Deslogar
-window.fazerLogout = () => {
-    signOut(auth);
-};
+window.fazerLogout = () => { signOut(auth); };
 
 formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -143,6 +136,9 @@ formulario.addEventListener("submit", async (e) => {
     try { listasArray = JSON.parse(document.getElementById("input-lista").value); } 
     catch(err) { listasArray = [document.getElementById("input-lista").value || "Geral"]; }
 
+    // NOVO: Coleta a marcação do checkbox
+    const ehAdulto = document.getElementById("input-adulto") ? document.getElementById("input-adulto").checked : false;
+
     const obra = {
         titulo: document.getElementById("input-titulo").value.trim() || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
@@ -155,12 +151,10 @@ formulario.addEventListener("submit", async (e) => {
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
         capa: document.getElementById("input-capa").value || "",
         sinopse: document.getElementById("input-sinopse").value || "",
-        linksLeitura: linksArray
+        linksLeitura: linksArray,
+        adulto: ehAdulto // SALVA O STATUS +18 NO BANCO
     };
 
-    // ==========================================
-    // FUNÇÃO INTERNA QUE EXECUTA O SALVAMENTO REAL
-    // ==========================================
     const executarSalvamento = async () => {
         btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Salvando...';
         try {
@@ -183,9 +177,6 @@ formulario.addEventListener("submit", async (e) => {
         }
     };
 
-    // ==========================================
-    // VERIFICAÇÃO DE DUPLICATAS COM INTERFACE MODAL
-    // ==========================================
     let nomesDigitados = [obra.titulo.toLowerCase().trim()];
     if (obra.titulosAlternativos) {
         const altsDigitados = obra.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
@@ -214,53 +205,42 @@ formulario.addEventListener("submit", async (e) => {
         });
 
         if (achouBatida) {
-            obraOriginal = item; // Guarda o objeto inteiro da obra conflitante para pegar a capa
+            obraOriginal = item;
             return true;
         }
         return false;
     });
 
-    // Se achou conflito, abre a janela personalizada com a CAPA e aguarda
     if (existeConflito) {
-        // Preenche os dados do modal
         document.getElementById('texto-duplicata').innerHTML = `O nome <strong style="color: #ef4444;">"${nomeConflitante}"</strong> já está registrado na obra <strong style="color: #3b82f6;">"${obraOriginal.titulo}"</strong>.`;
         document.getElementById('capa-duplicata').src = obraOriginal.capa || 'https://via.placeholder.com/140x200/1a1a1a/60a5fa?text=Sem+Capa';
         
-        // Exibe o modal
         const modalAviso = document.getElementById('modal-duplicata-fundo');
         modalAviso.style.display = 'flex';
 
-        // Ouve os botões do modal
         document.getElementById('btn-cancelar-duplicata').onclick = () => {
             modalAviso.style.display = 'none';
-            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem'; // Devolve o botão de salvar ao normal
+            btn.innerHTML = '<i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem';
         };
 
         document.getElementById('btn-confirmar-duplicata').onclick = () => {
             modalAviso.style.display = 'none';
-            executarSalvamento(); // Chama a função que manda pro banco de dados
+            executarSalvamento(); 
         };
-
-        return; // Pára a execução aqui, o resto do trabalho fica pros botões do modal!
+        return; 
     }
 
-    // Se não achou conflito, salva direto e silenciosamente
     executarSalvamento();
 });
 
 // ============================================================================
 // 4. INTERFACE, BUSCA AVANÇADA E FILTROS
 // ============================================================================
-let filtroTexto = "";
-let filtroTipo = "Todos";
-let filtroListaAtiva = "Todas";
-
 let itensPorPagina = 24; 
 let itensCarregados = 0;
 let listaAtualFiltrada = [];
 let carregandoScroll = false;
 
-// Função auxiliar para coletar todas as listas do banco (Arrays e Strings)
 function obterTodasAsListas() {
     let todas = [];
     acervo.forEach(o => {
@@ -275,51 +255,35 @@ function atualizarBotoesListas() {
     if (!container) return;
 
     const listasUnicas = obterTodasAsListas();
-
     container.innerHTML = "";
     listasUnicas.forEach(nomeLista => {
         const btn = document.createElement("button");
         btn.className = "sidebar-tag";
         if (filtroListaAtiva === nomeLista) btn.classList.add('active');
         
-        // Desenhamos o nome da tag e o botão de excluir
-        btn.innerHTML = `
-            ${nomeLista}
-            <span class="btn-excluir-lista" onclick="excluirLista('${nomeLista}', event)" title="Excluir Lista">
-                <i class="ph ph-x"></i>
-            </span>
-        `;
-        
-        // O clique na tag em si (fora do X) faz o filtro
+        btn.innerHTML = `${nomeLista} <span class="btn-excluir-lista" onclick="excluirLista('${nomeLista}', event)" title="Excluir Lista"><i class="ph ph-x"></i></span>`;
         btn.onclick = (e) => window.filtrarPorLista(nomeLista, e.currentTarget);
         container.appendChild(btn);
     });
 }
 
-// O NOVO MOTOR DE EXCLUSÃO DE LISTAS
 window.excluirLista = async function(nomeLista, event) {
-    // Impede que o clique ative o filtro da lista sem querer
     event.stopPropagation(); 
-    
     if (!confirm(`Tem certeza que deseja excluir a lista "${nomeLista}"?\nAs obras não serão apagadas, apenas removidas desta lista.`)) return;
 
     try {
-        // Varredura: Acha todos os mangás que têm essa lista salva
         const obrasAfetadas = acervo.filter(o => {
             const listas = Array.isArray(o.listasPersonalizadas) ? o.listasPersonalizadas : [o.listaPersonalizada || "Geral"];
             return listas.includes(nomeLista);
         });
 
-        // Loop de atualização no banco de dados
         for (const obra of obrasAfetadas) {
             const docRef = doc(db, "mangas", obra.idFirebase);
-            
             if (obra.titulo === "_LIST_MARKER_") {
-                await deleteDoc(docRef); // É uma lista vazia, apaga direto
+                await deleteDoc(docRef); 
             } else {
-                // É um mangá real, tira a lista da matriz (array) dele
                 let novasListas = (Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : [obra.listaPersonalizada]).filter(l => l !== nomeLista);
-                if (novasListas.length === 0) novasListas = ["Geral"]; // Proteção: se ficar sem lista, vai pro Geral
+                if (novasListas.length === 0) novasListas = ["Geral"]; 
                 
                 await updateDoc(docRef, { 
                     listasPersonalizadas: novasListas,
@@ -327,10 +291,7 @@ window.excluirLista = async function(nomeLista, event) {
                 });
             }
         }
-        
-        // Volta pro filtro "Geral" se você apagou a lista que estava aberta
         if (filtroListaAtiva === nomeLista) window.filtrarPorLista("Geral");
-        
     } catch (err) {
         console.error("Erro ao deletar lista:", err);
         alert("Erro ao excluir a lista.");
@@ -338,27 +299,52 @@ window.excluirLista = async function(nomeLista, event) {
 };
 
 window.filtrarPorLista = (nome, botaoClicado) => {
-    // Limpa o 'active' tanto das categorias principais quanto das tags
     document.querySelectorAll('.sidebar-btn, .sidebar-tag').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
-    
     filtroListaAtiva = nome;
     filtroTipo = "Todos"; 
     window.aplicarFiltros();
 };
 
 window.filtrarPorTipo = (t, botaoClicado) => {
-    // Limpa o 'active' tanto das categorias principais quanto das tags
     document.querySelectorAll('.sidebar-btn, .sidebar-tag').forEach(b => b.classList.remove('active'));
     if (botaoClicado) botaoClicado.classList.add('active');
-    
     filtroTipo = t;
     filtroListaAtiva = "Todas"; 
     window.aplicarFiltros();
 };
 
+// NOVO: Função que liga e desliga as obras +18
+window.toggleAdulto = function() {
+    mostrarAdulto = !mostrarAdulto;
+    const btn = document.getElementById("btn-toggle-18");
+    const textoBtn = document.getElementById("texto-btn-18");
+    const icone = btn.querySelector('i');
+    
+    if (mostrarAdulto) {
+        icone.className = "ph ph-eye";
+        textoBtn.innerText = "Ocultar +18";
+        btn.style.background = '#ef4444';
+        btn.style.color = '#fff';
+        window.mostrarToast('Modo +18 Ativado', 'info');
+    } else {
+        icone.className = "ph ph-eye-slash";
+        textoBtn.innerText = "Mostrar +18";
+        btn.style.background = '#1f2937';
+        btn.style.color = '#ef4444';
+        window.mostrarToast('Modo +18 Desativado', 'info');
+    }
+    
+    window.aplicarFiltros(); 
+};
+
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");
+
+    // NOVO: Esconde as obras +18 se a chave estiver desligada
+    if (!mostrarAdulto) {
+        listaFiltrada = listaFiltrada.filter(o => o.adulto !== true);
+    }
 
     atualizarBotoesListas();
 
@@ -373,7 +359,6 @@ window.aplicarFiltros = () => {
         listaFiltrada = listaFiltrada.filter(o => o.tipo === filtroTipo);
     }
 
-    // LÓGICA NOVA: Verifica se a lista clicada está dentro do Array de listas do mangá
     if (filtroListaAtiva !== "Todas") {
         listaFiltrada = listaFiltrada.filter(o => {
             const listasDoManga = Array.isArray(o.listasPersonalizadas) ? o.listasPersonalizadas : [o.listaPersonalizada || "Geral"];
@@ -405,7 +390,7 @@ window.aplicarFiltros = () => {
     if(conteinerMangas) conteinerMangas.innerHTML = ""; 
     
     const contador = document.getElementById("contador-total");
-    if(contador) contador.innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras`;
+    if(contador) contador.innerHTML = `<i class="ph ph-books"></i> ${listaAtualFiltrada.length} obras visíveis`;
     
     carregarMaisItens();
 };
@@ -417,8 +402,12 @@ function carregarMaisItens() {
     proximosItens.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         
+        // NOVO: Adiciona uma etiqueta vermelha na miniatura se for +18
+        let tagAdulto = obra.adulto ? `<div style="position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;"><i class="ph-fill ph-warning"></i> +18</div>` : '';
+
         conteinerMangas.innerHTML += `
-            <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')">
+            <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
+                ${tagAdulto}
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
@@ -482,17 +471,14 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
-        // 1. Tag de Status (Mostra apenas o status atual com cor dinâmica)
         const statusContainer = document.getElementById("modal-status-tags");
         if (statusContainer) {
-            let corStatus = "#3b82f6"; // Azul para Em Andamento
-            if (obra.status === "Finalizado") corStatus = "#10b981"; // Verde
-            if (obra.status === "Hiato") corStatus = "#f59e0b"; // Laranja
-            
+            let corStatus = "#3b82f6"; 
+            if (obra.status === "Finalizado") corStatus = "#10b981"; 
+            if (obra.status === "Hiato") corStatus = "#f59e0b"; 
             statusContainer.innerHTML = `<span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corStatus}40; display: inline-block;">${obra.status || 'N/A'}</span>`;
         }
 
-        // 2. Tags das Listas Personalizadas (Design limpo)
         const listasContainer = document.getElementById("modal-listas-tags");
         if (listasContainer) {
             const listasArray = Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
@@ -501,38 +487,30 @@ window.abrirModal = function(id) {
             ).join('');
         }
 
-        // 3. Preenche os campos de texto
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
-        // Pega a string de gêneros e transforma em tags visuais
         const generosContainer = document.getElementById("modal-generos-texto");
         if (generosContainer) {
             generosContainer.innerHTML = "";
             if (obra.generos) {
                 const listaGeneros = obra.generos.split(',').map(g => g.trim()).filter(g => g);
-                listaGeneros.forEach(gen => {
-                    generosContainer.innerHTML += `<span class="tag-genero">${gen}</span>`;
-                });
+                listaGeneros.forEach(gen => { generosContainer.innerHTML += `<span class="tag-genero">${gen}</span>`; });
             } else {
                 generosContainer.innerHTML = `<span style="color: #666; font-size: 0.85rem;">Nenhum gênero cadastrado</span>`;
             }
         }
-        // Transforma os Nomes Alternativos em tags discretas
+        
         const altContainer = document.getElementById("modal-titulos-alt");
         if (altContainer) {
             altContainer.innerHTML = "";
             if (obra.titulosAlternativos) {
-                // Divide a string nas vírgulas, limpa os espaços e ignora vazios
                 const listaAlt = obra.titulosAlternativos.split(',').map(t => t.trim()).filter(t => t);
-                listaAlt.forEach(alt => {
-                    altContainer.innerHTML += `<span class="tag-alt">${alt}</span>`;
-                });
+                listaAlt.forEach(alt => { altContainer.innerHTML += `<span class="tag-alt">${alt}</span>`; });
             } else {
                 altContainer.innerHTML = `<span style="color: #555; font-size: 0.8rem; font-style: italic;">Nenhum nome alternativo</span>`;
             }
         }
         document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
 
-        // 4. Constrói os links de leitura
         const containerLinks = document.getElementById("container-links-leitura");
         containerLinks.innerHTML = "";
         if (obra.linksLeitura && Array.isArray(obra.linksLeitura)) {
@@ -580,7 +558,6 @@ window.prepararAdicao = function() {
 window.prepararEdicao = function() {
     const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
     if (o) {
-        // LÓGICA NOVA: Puxa o array de listas
         const listasDoManga = o.listasPersonalizadas || (o.listaPersonalizada ? [o.listaPersonalizada] : ["Geral"]);
         renderizarTagsSelecao(listasDoManga);
         
@@ -594,6 +571,11 @@ window.prepararEdicao = function() {
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
+        
+        // NOVO: Puxa do banco de dados se a obra era +18 e preenche a caixinha
+        if (document.getElementById("input-adulto")) {
+            document.getElementById("input-adulto").checked = o.adulto === true;
+        }
         
         const containerLinks = document.getElementById("container-links-inputs");
         containerLinks.innerHTML = "";
@@ -627,21 +609,15 @@ window.excluirObra = async function() {
 
 window.fecharModal = () => { modalFundo.style.display = "none"; idAbertoNoModal = ""; };
 window.fecharModalForm = () => { 
-    // 1. Esconde a janela do formulário
     modalFormFundo.style.display = "none"; 
-    
-    // 2. Limpa o texto que foi digitado na barra de busca da API
     const inputBuscaApi = document.getElementById("input-busca-api");
     if (inputBuscaApi) inputBuscaApi.value = "";
     
-    // 3. Apaga a lista de resultados e esconde a caixa preta
     const divResultadosApi = document.getElementById("resultado-busca-api");
     if (divResultadosApi) {
         divResultadosApi.style.display = "none";
         divResultadosApi.innerHTML = "";
     }
-    
-    // 4. Zera a memória do sistema para não misturar dados
     resultadosAPI = [];
 };
 window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
@@ -665,9 +641,6 @@ window.buscarNaAPI = async function() {
     try {
         resultadosAPI = []; 
 
-        // ---------------------------------------------------------
-        // ⚙️ 1. KITSU API
-        // ---------------------------------------------------------
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Kitsu falhou"))
             .then(d => {
@@ -696,9 +669,6 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // ---------------------------------------------------------
-        // ⚙️ 2. MANGADEX API
-        // ---------------------------------------------------------
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`;
         const mangadexPromise = fetch(proxyUrl)
@@ -728,9 +698,6 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // ---------------------------------------------------------
-        // ⚙️ 3. JIKAN API (MYANIMELIST)
-        // ---------------------------------------------------------
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
             .then(d => {
@@ -754,9 +721,6 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-        // ---------------------------------------------------------
-        // ⚙️ 4. ANILIST API (Nova Gigante)
-        // ---------------------------------------------------------
         const queryAniList = `
         query ($search: String) {
           Page(page: 1, perPage: 5) {
@@ -794,13 +758,11 @@ window.buscarNaAPI = async function() {
                 if(m.status === "FINISHED") st = "Finalizado";
                 else if(m.status === "HIATUS" || m.status === "CANCELLED") st = "Hiato";
 
-                // AniList sabe exatamente de onde veio a obra (Coreia, China, Japão)
                 let tipo = "Mangá";
                 if (m.format === "NOVEL") tipo = "Novel";
                 else if (m.countryOfOrigin === "KR") tipo = "Manhwa";
                 else if (m.countryOfOrigin === "CN") tipo = "Manhua";
 
-                // Limpa marcações HTML que a AniList às vezes joga na sinopse
                 let sinopseLimpa = (m.description || "").replace(/<[^>]*>?/gm, '').trim();
 
                 return {
@@ -812,16 +774,12 @@ window.buscarNaAPI = async function() {
             });
         });
 
-        // =========================================================
-        // DISPARA AS 4 APIS AO MESMO TEMPO
-        // =========================================================
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
             if (resposta.status === "fulfilled") resultadosAPI = resultadosAPI.concat(resposta.value);
         });
 
-        // DESENHANDO A INTERFACE MODULAR
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2a2a2a; border-radius: 8px 8px 0 0;">
                 <span style="color: #ddd; font-size: 0.85rem; font-weight: bold;">Resultados (${resultadosAPI.length})</span>
@@ -833,14 +791,13 @@ window.buscarNaAPI = async function() {
             div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
-                let corFonte = "#3b82f6"; // MyAnimeList (Azul)
-                if (obra.fonteNome === "MangaDex") corFonte = "#f97316"; // Laranja
-                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899"; // Rosa
-                if (obra.fonteNome === "AniList") corFonte = "#0284c7"; // Azul Escuro vibrante
+                let corFonte = "#3b82f6"; 
+                if (obra.fonteNome === "MangaDex") corFonte = "#f97316"; 
+                if (obra.fonteNome === "Kitsu") corFonte = "#ec4899"; 
+                if (obra.fonteNome === "AniList") corFonte = "#0284c7"; 
 
                 div.innerHTML += `
                     <div class="item-api" style="position: relative; display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #333; gap: 10px;">
-                        
                         <div style="display: flex; gap: 12px; align-items: flex-start;">
                             <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/50x75/1a1a1a/60a5fa?text=Sem+Capa'" style="width: 55px; height: 80px; object-fit: cover; border-radius: 4px;">
                             <div style="width: 100%;">
@@ -870,12 +827,10 @@ window.buscarNaAPI = async function() {
     }
 }
 
-// O NOVO PREENCHEDOR MODULAR
 window.preencherComAPI = function(i, modo = 'tudo') {
     const m = resultadosAPI[i];
     if(!m) return;
     
-    // Se escolheu 'tudo' ou 'info', ele puxa os textos
     if (modo === 'tudo' || modo === 'info') {
         document.getElementById("input-titulo").value = m.t || "";
         document.getElementById("input-titulos-alt").value = m.alts || "";
@@ -887,19 +842,16 @@ window.preencherComAPI = function(i, modo = 'tudo') {
         document.getElementById("input-tipo").value = m.tipo || "Mangá";
     }
     
-    // Se escolheu 'tudo' ou 'capa', ele puxa a URL da imagem
     if (modo === 'tudo' || modo === 'capa') {
         document.getElementById("input-capa").value = m.capa || "";
     }
     
-    // Dispara a nossa notificação elegante verde (Toast) avisando o que ele fez
     if (modo === 'capa') {
         window.mostrarToast('Capa inserida com sucesso!', 'success');
     } else if (modo === 'info') {
         window.mostrarToast('Textos inseridos com sucesso!', 'success');
     } else {
         window.mostrarToast('Obra preenchida completamente!', 'success');
-        // Se o usuário clicar em "Tudo", a gente entende que ele já terminou, então fecha a janela automaticamente
         document.getElementById("resultado-busca-api").style.display = "none";
         document.getElementById("input-busca-api").value = "";
     }
@@ -935,14 +887,12 @@ window.abrirModalForm = () => {
     document.getElementById('input-id-firebase').value = ""; 
     document.getElementById('titulo-form').innerText = "Nova Obra"; 
     
-    // --- LÓGICA NOVA: Destrói os links antigos e cria um limpo ---
     const containerLinks = document.getElementById("container-links-inputs");
     if (containerLinks) {
-        containerLinks.innerHTML = ""; // Apaga todo o histórico da div
-        window.adicionarCampoLink();   // Coloca apenas 1 caixinha nova e vazia
+        containerLinks.innerHTML = ""; 
+        window.adicionarCampoLink();   
     }
     
-    // Prevenção: Garante que a caixa preta de busca da API também suma
     const divResultadosApi = document.getElementById("resultado-busca-api");
     if (divResultadosApi) divResultadosApi.style.display = "none";
     
@@ -1047,12 +997,10 @@ window.criarListaVazia = async function() {
     }
 };
 
-// LÓGICA NOVA: Gerencia a seleção de múltiplas tags
 window.renderizarTagsSelecao = function(valoresAtuais) {
     const container = document.getElementById("container-tags-selecao");
     if (!container) return;
 
-    // Transforma a entrada em um Array válido
     let selecionadas = Array.isArray(valoresAtuais) ? [...valoresAtuais] : (valoresAtuais ? [valoresAtuais] : ["Geral"]);
     if (selecionadas.length === 0) selecionadas = ["Geral"];
 
@@ -1078,17 +1026,15 @@ window.renderizarTagsSelecao = function(valoresAtuais) {
             if (nome === "Geral") {
                 selecionadas = ["Geral"];
             } else {
-                selecionadas = selecionadas.filter(l => l !== "Geral"); // Remove "Geral"
+                selecionadas = selecionadas.filter(l => l !== "Geral"); 
                 if (selecionadas.includes(nome)) {
-                    selecionadas = selecionadas.filter(l => l !== nome); // Desmarca se já estiver clicada
+                    selecionadas = selecionadas.filter(l => l !== nome); 
                 } else {
-                    selecionadas.push(nome); // Marca a nova lista
+                    selecionadas.push(nome); 
                 }
-                // Se desmarcou todas as tags, volta o "Geral" automaticamente
                 if (selecionadas.length === 0) selecionadas = ["Geral"]; 
             }
             
-            // Salva o Array transformado em texto escondido no input
             document.getElementById("input-lista").value = JSON.stringify(selecionadas);
             renderizarTagsSelecao(selecionadas); 
         };
@@ -1096,7 +1042,6 @@ window.renderizarTagsSelecao = function(valoresAtuais) {
         container.appendChild(tag);
     });
 
-    // Garante que o input escondido sempre atualize quando a janela abre
     document.getElementById("input-lista").value = JSON.stringify(selecionadas);
 };
 
@@ -1110,7 +1055,6 @@ window.mostrarToast = function(mensagem, tipo = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${tipo}`;
     
-    // Define o ícone de acordo com o tipo (sucesso, erro ou normal)
     let icone = '<i class="ph-fill ph-check-circle" style="color: #10b981; font-size: 1.5rem;"></i>';
     if (tipo === 'error') icone = '<i class="ph-fill ph-warning-circle" style="color: #ef4444; font-size: 1.5rem;"></i>';
     else if (tipo === 'info') icone = '<i class="ph-fill ph-info" style="color: #3b82f6; font-size: 1.5rem;"></i>';
@@ -1118,13 +1062,11 @@ window.mostrarToast = function(mensagem, tipo = 'success') {
     toast.innerHTML = `${icone} <span>${mensagem}</span>`;
     container.appendChild(toast);
 
-    // Entrada animada
     setTimeout(() => toast.classList.add('show'), 10);
 
-    // Saída animada após 3 segundos
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400); // Remove o elemento do HTML depois de sumir
+        setTimeout(() => toast.remove(), 400); 
     }, 3000);
 };
 
@@ -1137,13 +1079,11 @@ window.alterarCapituloRapido = async function(id, val, event) {
     let novo = (parseInt(obra.capitulo) || 0) + val;
     if (novo < 0) novo = 0;
     
-    // 1. Atualiza visualmente na MESMA HORA na tela do usuário (Sem piscar)
     const spanCapitulo = document.getElementById(`cap-rapido-${id}`);
     if (spanCapitulo) {
         spanCapitulo.innerHTML = `<i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${novo}`;
     }
     
-    // 2. Aciona a trava para o Firebase não destruir o card flutuante
     pausarRedraw = true;
     
     try {
@@ -1154,4 +1094,3 @@ window.alterarCapituloRapido = async function(id, val, event) {
         console.error(err);
     }
 };
-
