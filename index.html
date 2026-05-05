@@ -11,7 +11,6 @@
 
     <!-- Biblioteca para gerar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
 </head>
 <body>
 
@@ -40,7 +39,8 @@
             <div id="login-erro" style="color: #ef4444; margin-top: 15px; text-align: center; font-size: 0.9rem; display: none;"></div>
         </div>
     </div>
-   <!-- ==========================================
+
+    <!-- ==========================================
          1. CABEÇALHO (Busca, Backup e Adicionar)
     =========================================== -->
     <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
@@ -54,9 +54,15 @@
                 </button>
             </div>
             
-           <!-- Botões de Ação -->
+            <!-- Botões de Ação -->
             <div style="display: flex; gap: 10px;">
-                <!-- Botão Gerar PDF (NOVO) -->
+                
+                <!-- NOVO: Botão Mostrar +18 -->
+                <button id="btn-toggle-18" onclick="toggleAdulto()" style="background: #1f2937; color: #ef4444; border: 1px solid #ef4444; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+                    <i class="ph ph-eye-slash" style="font-size: 1.2rem;"></i> <span id="texto-btn-18">Mostrar +18</span>
+                </button>
+
+                <!-- Botão Gerar PDF -->
                 <button onclick="gerarPDF()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-file-pdf" style="font-size: 1.2rem;"></i> Baixar PDF
                 </button>
@@ -89,7 +95,6 @@
     <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
         <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
-        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
             
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
@@ -102,24 +107,19 @@
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Novel', this)">Novels</button>
             </div>
 
-            <!-- NOVO ESPAÇO: Minhas Listas -->
+            <!-- Minhas Listas -->
             <h3 style="color: #4d9294; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Minhas Listas</h3>
 
-<!-- ADICIONE ESTE BLOCO AQUI -->
-<div style="display: flex; gap: 5px; margin-bottom: 15px;">
-    <input type="text" id="input-nova-lista-sidebar" placeholder="Criar nova lista..." 
-           style="flex: 1; padding: 8px; border-radius: 6px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-size: 0.8rem;">
-    <button onclick="criarListaVazia()" 
-            style="background: #3b82f6; color: white; border: none; border-radius: 6px; padding: 0 10px; cursor: pointer;">
-        <i class="ph ph-plus"></i>
-    </button>
-</div>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" id="input-nova-lista-sidebar" placeholder="Criar nova lista..." style="flex: 1; padding: 8px; border-radius: 6px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-size: 0.8rem;">
+                <button onclick="criarListaVazia()" style="background: #3b82f6; color: white; border: none; border-radius: 6px; padding: 0 10px; cursor: pointer;">
+                    <i class="ph ph-plus"></i>
+                </button>
+            </div>
 
-<div id="container-listas-personalizadas">
-    <!-- Os botões das listas vão aparecer aqui magicamente pelo JavaScript -->
-</div>
+            <div id="container-listas-personalizadas"></div>
 
-            <h3 style="color: #30cc6c; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
+            <h3 style="color: #30cc6c; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px;">Filtros Avançados</h3>
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 
                 <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -157,7 +157,7 @@
 
     </div>
 
-   <!-- ==========================================
+    <!-- ==========================================
          3. MODAL DA OBRA (Layout em Lista Moderno)
     =========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
@@ -167,18 +167,15 @@
             
             <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
                 
-                <!-- Coluna da Esquerda: Capa e Links (Modificada) -->
+                <!-- Coluna da Esquerda: Capa e Links -->
                 <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
-                    
-                    <!-- Bloco 4: Links de Leitura (Organizados em Grade) -->
                     <div id="container-links-leitura" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;"></div>
                 </div>
                 
                 <!-- Coluna da Direita: Informações Modernizadas -->
                 <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
                     
-                    <!-- Cabeçalho: Título e Botões de Ação -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
                         <h2 id="modal-titulo" style="margin: 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título da Obra</h2>
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
@@ -187,7 +184,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloco 1: Informações Rápidas (Cards) -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
                         <div class="info-card-rapido">
                             <span class="info-card-label">Status</span>
@@ -207,18 +203,14 @@
                         </div>
                     </div>
 
-                    <!-- Bloco 2: Tags (Gêneros) e Nomes Alternativos -->
                     <div>
                         <div id="modal-generos-texto" class="container-tags-genero" style="margin-bottom: 15px;"></div>
-                        
-                        <!-- NOVA ESTRUTURA DOS ALTERNATIVOS -->
                         <div style="margin-bottom: 15px;">
                             <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; display: block; margin-bottom: 6px;">Nomes Alternativos</span>
                             <div id="modal-titulos-alt" class="container-tags-alt"></div>
                         </div>
                     </div>
 
-                    <!-- Bloco 3: Sinopse -->
                     <div class="caixa-sinopse">
                         <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px;"><i class="ph ph-text-align-left"></i> Sinopse</h4>
                         <div id="modal-texto-sinopse" style="color: #aaa; font-size: 0.95rem; line-height: 1.6; max-height: 180px; overflow-y: auto; padding-right: 10px;"></div>
@@ -228,7 +220,8 @@
             </div>
         </div>
     </div>
-   <!-- ==========================================
+
+    <!-- ==========================================
          4. MODAL DE CADASTRO (ESTRUTURA COMPLETA)
     =========================================== -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
@@ -236,14 +229,13 @@
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
-           <!-- BLOCO DE BUSCA API SIMULTÂNEA -->
+            <!-- BLOCO DE BUSCA API SIMULTÂNEA -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
                     <label>Busca Automática Global</label>
                 </div>
                 <div class="busca-api-controles" style="display: flex; gap: 10px;">
-                    <!-- Removemos o <select> daqui! -->
                     <input type="text" id="input-busca-api" placeholder="Digite o título para buscar em todas as bases..." style="flex: 1;">
                     <button type="button" id="btn-buscar-api" class="btn-buscar" onclick="buscarNaAPI()">
                         <i class="ph ph-magnifying-glass"></i> Buscar
@@ -262,10 +254,7 @@
 
                 <div class="grupo-input">
                     <label>Lista Personalizada</label>
-                    <!-- Este input fica escondido, ele apenas guarda o valor para o Firebase -->
                     <input type="hidden" id="input-lista" value="Geral">
-                    
-                    <!-- É aqui que o JavaScript vai "desenhar" as tags clicáveis -->
                     <div id="container-tags-selecao" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
                 </div>
 
@@ -323,6 +312,14 @@
                         <i class="ph ph-plus"></i> Adicionar Link
                     </button>
                 </div>
+
+                <!-- NOVO: Checkbox para Obras +18 -->
+                <div class="grupo-input" style="background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <label style="display: flex; align-items: center; gap: 10px; color: #ef4444; font-weight: bold; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="input-adulto" style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">
+                        Marcar como Conteúdo +18 (Oculto na tela principal)
+                    </label>
+                </div>
                 
                 <div class="grupo-input">
                     <label>Sinopse</label>
@@ -335,9 +332,11 @@
             </form>
         </div>
     </div>
-<!-- Contêiner Invisível das Notificações Toast -->
+
+    <!-- Contêiner Invisível das Notificações Toast -->
     <div id="toast-container"></div>
     <script type="module" src="script.js"></script>
+    
     <!-- Botão Flutuante: Voltar ao Topo -->
     <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; transition: 0.3s;">
         <i class="ph ph-caret-up"></i>
