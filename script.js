@@ -41,11 +41,10 @@ let idAbertoNoModal = "";
 let resultadosAPI = [];
 let fonteAtualAPI = "jikan";
 
-// VARIÁVEIS DE FILTRO
 let filtroTexto = "";
 let filtroTipo = "Todos";
 let filtroListaAtiva = "Todas";
-let mostrarAdulto = false; // NOVO: Controla se as obras +18 estão visíveis ou não
+let mostrarAdulto = false; 
 
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
@@ -77,9 +76,6 @@ function carregarAcervo() {
     });
 }
 
-// ============================================================================
-// CONTROLE DE AUTENTICAÇÃO
-// ============================================================================
 const telaLogin = document.getElementById("tela-login");
 const formLogin = document.getElementById("form-login");
 const loginErro = document.getElementById("login-erro");
@@ -136,7 +132,6 @@ formulario.addEventListener("submit", async (e) => {
     try { listasArray = JSON.parse(document.getElementById("input-lista").value); } 
     catch(err) { listasArray = [document.getElementById("input-lista").value || "Geral"]; }
 
-    // NOVO: Coleta a marcação do checkbox
     const ehAdulto = document.getElementById("input-adulto") ? document.getElementById("input-adulto").checked : false;
 
     const obra = {
@@ -147,12 +142,16 @@ formulario.addEventListener("submit", async (e) => {
         listaPersonalizada: listasArray[0] || "Geral", 
         tipo: document.getElementById("input-tipo").value || "Mangá",
         capitulo: document.getElementById("input-capitulo").value || "0",
+        
+        // NOVO: Salvando o Meu Status
+        meuStatus: document.getElementById("input-meu-status") ? document.getElementById("input-meu-status").value : "Lendo",
+        
         status: document.getElementById("input-status").value || "Em Andamento",
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
         capa: document.getElementById("input-capa").value || "",
         sinopse: document.getElementById("input-sinopse").value || "",
         linksLeitura: linksArray,
-        adulto: ehAdulto // SALVA O STATUS +18 NO BANCO
+        adulto: ehAdulto
     };
 
     const executarSalvamento = async () => {
@@ -314,7 +313,6 @@ window.filtrarPorTipo = (t, botaoClicado) => {
     window.aplicarFiltros();
 };
 
-// NOVO: Função que liga e desliga as obras +18
 window.toggleAdulto = function() {
     mostrarAdulto = !mostrarAdulto;
     const btn = document.getElementById("btn-toggle-18");
@@ -341,7 +339,6 @@ window.toggleAdulto = function() {
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");
 
-    // NOVO: Esconde as obras +18 se a chave estiver desligada
     if (!mostrarAdulto) {
         listaFiltrada = listaFiltrada.filter(o => o.adulto !== true);
     }
@@ -369,6 +366,12 @@ window.aplicarFiltros = () => {
     const statusSelect = document.getElementById("select-status");
     if (statusSelect && statusSelect.value !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
+    }
+
+    // NOVO: Barreira do Meu Status
+    const meuStatusSelect = document.getElementById("select-meu-status");
+    if (meuStatusSelect && meuStatusSelect.value !== "Todos") {
+        listaFiltrada = listaFiltrada.filter(o => (o.meuStatus || "Lendo") === meuStatusSelect.value);
     }
 
     const ordemSelect = document.getElementById("select-ordem");
@@ -401,13 +404,23 @@ function carregarMaisItens() {
 
     proximosItens.forEach(obra => {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
-        
-        // NOVO: Adiciona uma etiqueta vermelha na miniatura se for +18
         let tagAdulto = obra.adulto ? `<div style="position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;"><i class="ph-fill ph-warning"></i> +18</div>` : '';
+
+        // NOVO: Design da Etiqueta Meu Status na Capa
+        let statusPessoal = obra.meuStatus || "Lendo";
+        let corMeuStatus = "#3b82f6"; // Azul para Lendo
+        let iconeMeuStatus = "ph-book-open";
+        
+        if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } // Verde
+        if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } // Laranja
+        if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } // Vermelho
+
+        let tagMeuStatus = `<div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: ${corMeuStatus}; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2; border: 1px solid ${corMeuStatus}; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ${iconeMeuStatus}"></i> ${statusPessoal}</div>`;
 
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
                 ${tagAdulto}
+                ${tagMeuStatus}
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
@@ -424,7 +437,7 @@ function carregarMaisItens() {
                         </div>
 
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
-                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> ${obra.status}</span>
+                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> Lançamento: ${obra.status}</span>
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
                     </div>
                 </div>
@@ -471,6 +484,17 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
+        // NOVO: Preenche a etiqueta Meu Status no Modal
+        const meuStatusContainer = document.getElementById("modal-meu-status-tags");
+        if (meuStatusContainer) {
+            let statusPessoal = obra.meuStatus || "Lendo";
+            let corMeuStatus = "#3b82f6"; 
+            if (statusPessoal === "Finalizado") corMeuStatus = "#10b981"; 
+            if (statusPessoal === "Pausado") corMeuStatus = "#f59e0b"; 
+            if (statusPessoal === "Abandonado") corMeuStatus = "#ef4444"; 
+            meuStatusContainer.innerHTML = `<span style="background: ${corMeuStatus}20; color: ${corMeuStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corMeuStatus}40; display: inline-block;">${statusPessoal}</span>`;
+        }
+
         const statusContainer = document.getElementById("modal-status-tags");
         if (statusContainer) {
             let corStatus = "#3b82f6"; 
@@ -551,6 +575,8 @@ window.prepararAdicao = function() {
     document.getElementById("input-id-firebase").value = "";
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("container-links-inputs").innerHTML = "";
+    // Garante que o status novo comece como "Lendo" no form de adição
+    if (document.getElementById("input-meu-status")) document.getElementById("input-meu-status").value = "Lendo";
     window.adicionarCampoLink();
     modalFormFundo.style.display = "flex";
 }
@@ -566,13 +592,18 @@ window.prepararEdicao = function() {
         document.getElementById("input-generos").value = o.generos || "";
         document.getElementById("input-tipo").value = o.tipo || "Mangá";
         document.getElementById("input-capitulo").value = o.capitulo || 0;
+        
+        // NOVO: Puxa o Meu Status do Banco
+        if (document.getElementById("input-meu-status")) {
+            document.getElementById("input-meu-status").value = o.meuStatus || "Lendo";
+        }
+        
         document.getElementById("input-status").value = o.status || "Em Andamento";
         document.getElementById("input-nota").value = o.nota || 5;
         document.getElementById("input-capa").value = o.capa || "";
         document.getElementById("input-sinopse").value = o.sinopse || "";
         document.getElementById("input-id-firebase").value = o.idFirebase;
         
-        // NOVO: Puxa do banco de dados se a obra era +18 e preenche a caixinha
         if (document.getElementById("input-adulto")) {
             document.getElementById("input-adulto").checked = o.adulto === true;
         }
@@ -669,13 +700,8 @@ window.buscarNaAPI = async function() {
                 });
             });
 
-       // ---------------------------------------------------------
-        // ⚙️ 2. MANGADEX API
-        // ---------------------------------------------------------
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        
-        // Usando o AllOrigins, um proxy muito mais robusto e estável para evitar bloqueios de CORS
-        const proxyMD = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMD)}`;
+        const proxyMD = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlMD)}`;
         
         const mangadexPromise = fetch(proxyMD)
             .then(res => {
@@ -683,9 +709,9 @@ window.buscarNaAPI = async function() {
                 return res.json();
             })
             .then(d => {
+                if (!d.data) return [];
                 return (d.data || []).map(m => {
                     const titles = m.attributes?.title || {};
-                    // Prioriza achar o nome em Inglês ou PT-BR
                     const t = titles.en || titles['pt-br'] || titles['ja-ro'] || Object.values(titles)[0] || "Sem Título";
                     
                     let altArr = [];
@@ -694,7 +720,6 @@ window.buscarNaAPI = async function() {
                     });
                     
                     const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
-                    // Correção: Garante que o nome do arquivo da capa realmente existe antes de montar o link
                     const capa = (art && art.attributes?.fileName) ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes.fileName}` : "";
                     
                     const descriptions = m.attributes?.description || {};
@@ -712,8 +737,7 @@ window.buscarNaAPI = async function() {
                 });
             })
             .catch(err => {
-                // Se der erro, avisa no console, mas retorna uma lista vazia para não travar as outras APIs!
-                console.error("Falha silenciosa no MangaDex:", err);
+                console.warn("Falha silenciosa no MangaDex:", err);
                 return []; 
             });
             
@@ -966,7 +990,7 @@ window.gerarPDF = () => {
                 <tr style="background-color: #f2f2f2;">
                     <th style="padding: 12px; border: 1px solid #ddd; width: 40%;">Título</th>
                     <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Tipo</th>
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Status</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Meu Status</th>
                     <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Capítulo</th>
                     <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Nota</th>
                 </tr>
@@ -979,7 +1003,7 @@ window.gerarPDF = () => {
             <tr>
                 <td style="padding: 10px; border: 1px solid #ddd;"><strong>${obra.titulo}</strong></td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${obra.tipo || '-'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${obra.status || '-'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${obra.meuStatus || 'Lendo'}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${obra.capitulo || '0'}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">⭐ ${obra.nota || '5'}</td>
             </tr>

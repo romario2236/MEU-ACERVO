@@ -4,19 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
-    <!-- Ícone da Aba do Navegador (Favicon) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 
-    <!-- Biblioteca para gerar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-    <!-- ==========================================
-         TELA DE LOGIN (Fechadura do Sistema)
-    =========================================== -->
     <div id="tela-login" style="display: flex;">
         <div class="login-caixa">
             <h2><i class="ph-fill ph-lock-key"></i> Acesso Restrito</h2>
@@ -40,13 +35,9 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         1. CABEÇALHO (Busca, Backup e Adicionar)
-    =========================================== -->
     <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
         <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
             
-            <!-- Barra de Pesquisa com Botão Limpar -->
             <div style="position: relative; width: 100%; max-width: 400px; display: flex; align-items: center;">
                 <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
                 <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none; padding: 5px; align-items: center; justify-content: center;">
@@ -54,33 +45,26 @@
                 </button>
             </div>
             
-            <!-- Botões de Ação -->
             <div style="display: flex; gap: 10px;">
                 
-                <!-- NOVO: Botão Mostrar +18 -->
                 <button id="btn-toggle-18" onclick="toggleAdulto()" style="background: #1f2937; color: #ef4444; border: 1px solid #ef4444; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-eye-slash" style="font-size: 1.2rem;"></i> <span id="texto-btn-18">Mostrar +18</span>
                 </button>
 
-                <!-- Botão Gerar PDF -->
                 <button onclick="gerarPDF()" style="background: #ef4444; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-file-pdf" style="font-size: 1.2rem;"></i> Baixar PDF
                 </button>
 
-                <!-- O input invisível que faz a leitura do arquivo JSON -->
                 <input type="file" id="input-importar" accept=".json" style="display: none;" onchange="importarDados(event)">
                 
-                <!-- Botão de Importar -->
                 <button onclick="document.getElementById('input-importar').click()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-upload-simple" style="font-size: 1.2rem;"></i> Importar
                 </button>
 
-                <!-- Botão de Backup -->
                 <button onclick="exportarDados()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-download-simple" style="font-size: 1.2rem;"></i> Backup
                 </button>
 
-                <!-- Botão Adicionar -->
                 <button onclick="abrirModalForm()" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
                     <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Adicionar
                 </button>
@@ -89,12 +73,8 @@
         </div>
     </header>
 
-    <!-- ==========================================
-         2. LAYOUT PRINCIPAL (Lateral + Grade)
-    =========================================== -->
     <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
-        <!-- LATERAL ESQUERDA (Sidebar de Filtros) -->
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
             
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
@@ -107,23 +87,31 @@
                 <button class="btn-filter sidebar-btn" onclick="filtrarPorTipo('Novel', this)">Novels</button>
             </div>
 
-            <!-- Minhas Listas -->
             <h3 style="color: #4d9294; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Minhas Listas</h3>
-
             <div style="display: flex; gap: 5px; margin-bottom: 15px;">
                 <input type="text" id="input-nova-lista-sidebar" placeholder="Criar nova lista..." style="flex: 1; padding: 8px; border-radius: 6px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-size: 0.8rem;">
                 <button onclick="criarListaVazia()" style="background: #3b82f6; color: white; border: none; border-radius: 6px; padding: 0 10px; cursor: pointer;">
                     <i class="ph ph-plus"></i>
                 </button>
             </div>
-
             <div id="container-listas-personalizadas"></div>
 
             <h3 style="color: #30cc6c; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px;">Filtros Avançados</h3>
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 
                 <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Status da Obra</label>
+                    <label style="color: #94a3b8; font-size: 0.85rem;">Meu Status de Leitura</label>
+                    <select id="select-meu-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                        <option value="Todos">Todos</option>
+                        <option value="Lendo">Lendo</option>
+                        <option value="Pausado">Pausado</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Abandonado">Abandonado</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #94a3b8; font-size: 0.85rem;">Status da Obra (Lançamento)</label>
                     <select id="select-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
                         <option value="Todos">Todos</option>
                         <option value="Em Andamento">Em Andamento</option>
@@ -146,20 +134,15 @@
             </div>
         </aside>
 
-        <!-- LADO DIREITO (Grade de Capas) -->
         <main style="min-width: 0;">
             <div id="contador-total" style="color: #888; margin-bottom: 20px; font-weight: 500;"></div>
             
             <div id="lista-mangas" class="grid-mangas">
-                <!-- As capas serão desenhadas pelo JavaScript aqui -->
-            </div>
+                </div>
         </main>
 
     </div>
 
-    <!-- ==========================================
-         3. MODAL DA OBRA (Layout em Lista Moderno)
-    =========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo" style="background: #1a1a1a; border-radius: 12px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid #333; margin: 20px auto;">
             
@@ -167,13 +150,11 @@
             
             <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
                 
-                <!-- Coluna da Esquerda: Capa e Links -->
                 <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
                     <div id="container-links-leitura" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;"></div>
                 </div>
                 
-                <!-- Coluna da Direita: Informações Modernizadas -->
                 <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
                     
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
@@ -185,8 +166,14 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+                        
                         <div class="info-card-rapido">
-                            <span class="info-card-label">Status</span>
+                            <span class="info-card-label">Meu Status</span>
+                            <div id="modal-meu-status-tags" style="margin-top: 5px;"></div>
+                        </div>
+
+                        <div class="info-card-rapido">
+                            <span class="info-card-label">Status (Lançamento)</span>
                             <div id="modal-status-tags" style="margin-top: 5px;"></div>
                         </div>
                         <div class="info-card-rapido">
@@ -221,15 +208,11 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         4. MODAL DE CADASTRO (ESTRUTURA COMPLETA)
-    =========================================== -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
-            <!-- BLOCO DE BUSCA API SIMULTÂNEA -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
@@ -287,22 +270,33 @@
 
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
-                        <label>Status</label>
+                        <label>Meu Status de Leitura</label>
+                        <select id="input-meu-status">
+                            <option value="Lendo">Lendo</option>
+                            <option value="Pausado">Pausado</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Abandonado">Abandonado</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label>Status (Lançamento)</label>
                         <select id="input-status">
                             <option value="Em Andamento">Em Andamento</option>
                             <option value="Finalizado">Finalizado</option>
                             <option value="Hiato">Hiato</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Nota (1 a 5)</label>
                         <input type="number" id="input-nota" step="0.1" min="1" max="5" required>
                     </div>
-                </div>
-                
-                <div class="grupo-input">
-                    <label>Link da Capa (URL)</label>
-                    <input type="url" id="input-capa" required>
+                    <div class="grupo-input">
+                        <label>Link da Capa (URL)</label>
+                        <input type="url" id="input-capa" required>
+                    </div>
                 </div>
                 
                 <div class="grupo-input">
@@ -313,7 +307,6 @@
                     </button>
                 </div>
 
-                <!-- NOVO: Checkbox para Obras +18 -->
                 <div class="grupo-input" style="background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
                     <label style="display: flex; align-items: center; gap: 10px; color: #ef4444; font-weight: bold; cursor: pointer; margin: 0;">
                         <input type="checkbox" id="input-adulto" style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">
@@ -333,33 +326,22 @@
         </div>
     </div>
 
-    <!-- Contêiner Invisível das Notificações Toast -->
     <div id="toast-container"></div>
     <script type="module" src="script.js"></script>
     
-    <!-- Botão Flutuante: Voltar ao Topo -->
     <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; transition: 0.3s;">
         <i class="ph ph-caret-up"></i>
     </button>
     
-    <!-- ========================================================= -->
-    <!-- MODAL DE AVISO DE DUPLICATA (TELA DE CONFLITO)            -->
-    <!-- ========================================================= -->
     <div id="modal-duplicata-fundo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
         <div style="background: #1e1e1e; padding: 30px; border-radius: 12px; max-width: 380px; width: 90%; text-align: center; border: 1px solid #ef4444; box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2);">
-            
             <div style="color: #ef4444; font-size: 3.5rem; margin-bottom: 10px; line-height: 1;"><i class="ph-fill ph-warning-octagon"></i></div>
             <h3 style="color: #fff; margin: 0 0 15px 0; font-size: 1.5rem;">Aviso de Conflito!</h3>
-            
             <p id="texto-duplicata" style="color: #ccc; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5;">O nome foi encontrado em outra obra.</p>
-            
-            <!-- Caixa da Capa -->
             <div style="margin-bottom: 25px; display: flex; justify-content: center;">
                 <img id="capa-duplicata" src="" alt="Capa" style="width: 140px; height: 200px; object-fit: cover; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 1px solid #333;">
             </div>
-            
             <p style="color: #fff; font-weight: bold; margin-bottom: 20px; font-size: 0.95rem;">Deseja adicionar o seu mangá mesmo assim?</p>
-            
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button id="btn-cancelar-duplicata" style="flex: 1; padding: 12px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;"><i class="ph ph-x"></i> Não, Cancelar</button>
                 <button id="btn-confirmar-duplicata" style="flex: 1; padding: 12px; background: #ef4444; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;"><i class="ph ph-check"></i> Sim, Adicionar</button>
