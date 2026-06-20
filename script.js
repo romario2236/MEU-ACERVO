@@ -402,13 +402,12 @@ function carregarMaisItens() {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         let tagAdulto = obra.adulto ? `<div style="position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;"><i class="ph-fill ph-warning"></i> +18</div>` : '';
 
-        // NOVO: Preparando as cores e ícones para o "Meu Status" (que agora vai no balão flutuante)
         let statusPessoal = obra.meuStatus || "Lendo";
         let corMeuStatus = "#3b82f6"; // Azul
         let iconeMeuStatus = "ph-book-open";
-        if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } // Verde
-        if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } // Laranja
-        if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } // Vermelho
+        if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } 
+        if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } 
+        if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } 
 
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
@@ -479,14 +478,47 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
+        // NOVO LÓGICA: Tags de Meu Status Interativas
         const meuStatusContainer = document.getElementById("modal-meu-status-tags");
         if (meuStatusContainer) {
+            meuStatusContainer.innerHTML = "";
+            const opcoesStatus = [
+                { nome: "Lendo", cor: "#3b82f6" },
+                { nome: "Pausado", cor: "#f59e0b" },
+                { nome: "Finalizado", cor: "#10b981" },
+                { nome: "Abandonado", cor: "#ef4444" }
+            ];
+            
             let statusPessoal = obra.meuStatus || "Lendo";
-            let corMeuStatus = "#3b82f6"; 
-            if (statusPessoal === "Finalizado") corMeuStatus = "#10b981"; 
-            if (statusPessoal === "Pausado") corMeuStatus = "#f59e0b"; 
-            if (statusPessoal === "Abandonado") corMeuStatus = "#ef4444"; 
-            meuStatusContainer.innerHTML = `<span style="background: ${corMeuStatus}20; color: ${corMeuStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corMeuStatus}40; display: inline-block;">${statusPessoal}</span>`;
+
+            opcoesStatus.forEach(opt => {
+                const tag = document.createElement("span");
+                tag.innerText = opt.nome;
+                const isSelecionada = (statusPessoal === opt.nome);
+
+                tag.style.cssText = `
+                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
+                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                    background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
+                    color: ${isSelecionada ? opt.cor : '#888'};
+                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
+                `;
+
+                tag.onclick = async (e) => {
+                    e.stopPropagation(); 
+                    if (statusPessoal === opt.nome) return; // Se já está clicado, ignora
+                    
+                    pausarRedraw = true; // Protege a tela de fundo de piscar
+                    try {
+                        await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
+                        obra.meuStatus = opt.nome; 
+                        window.abrirModal(id); // Recarrega o modal para mostrar a cor nova
+                    } catch(err) {
+                        console.error("Erro ao alterar meu status", err);
+                    }
+                };
+                meuStatusContainer.appendChild(tag);
+            });
         }
 
         const statusContainer = document.getElementById("modal-status-tags");
@@ -497,7 +529,6 @@ window.abrirModal = function(id) {
             statusContainer.innerHTML = `<span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corStatus}40; display: inline-block;">${obra.status || 'N/A'}</span>`;
         }
 
-        // NOVO: As listas agora são tags interativas clicáveis diretamente no modal
         const listasContainer = document.getElementById("modal-listas-tags");
         if (listasContainer) {
             let selecionadas = Array.isArray(obra.listasPersonalizadas) ? [...obra.listasPersonalizadas] : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
@@ -514,13 +545,13 @@ window.abrirModal = function(id) {
                 const isSelecionada = selecionadas.includes(nome);
 
                 tag.style.cssText = `
-                    padding: 4px 10px; border-radius: 20px; border: 1px solid #333;
+                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? '#3b82f6' : '#333'};
                     cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
-                    background: ${isSelecionada ? '#3b82f6' : '#1a1a1a'};
-                    color: ${isSelecionada ? '#fff' : '#aaa'};
+                    background: ${isSelecionada ? '#3b82f620' : '#1a1a1a'};
+                    color: ${isSelecionada ? '#3b82f6' : '#888'};
+                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
                 `;
 
-                // Quando clicar na tag dentro do modal, salva no Firebase na mesma hora
                 tag.onclick = async (e) => {
                     e.stopPropagation(); 
                     
@@ -537,7 +568,7 @@ window.abrirModal = function(id) {
                         if (novasSelecionadas.length === 0) novasSelecionadas = ["Geral"];
                     }
 
-                    pausarRedraw = true; // Impede a tela principal de piscar enquanto você clica
+                    pausarRedraw = true; 
 
                     try {
                         await updateDoc(doc(db, "mangas", id), {
@@ -548,7 +579,7 @@ window.abrirModal = function(id) {
                         obra.listasPersonalizadas = novasSelecionadas;
                         obra.listaPersonalizada = novasSelecionadas[0];
                         
-                        window.abrirModal(id); // Recarrega rapidamente o modal para pintar os botões
+                        window.abrirModal(id); 
                     } catch(err) {
                         console.error("Erro ao alterar lista", err);
                     }
