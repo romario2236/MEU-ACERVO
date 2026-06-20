@@ -409,9 +409,13 @@ function carregarMaisItens() {
         if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } 
         if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } 
 
+        // NOVO: Adicionado IDs dinâmicos para a tag da capa e do hover poderem ser atualizadas em tempo real
+        let tagMeuStatusCapa = `<div id="tag-capa-status-${obra.idFirebase}" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: ${corMeuStatus}; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2; border: 1px solid ${corMeuStatus}; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ${iconeMeuStatus}"></i> ${statusPessoal}</div>`;
+
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
                 ${tagAdulto}
+                ${tagMeuStatusCapa}
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
@@ -429,7 +433,7 @@ function carregarMaisItens() {
 
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
                         
-                        <span><i class="ph-fill ${iconeMeuStatus}" style="color: ${corMeuStatus};"></i> Leitura: ${statusPessoal}</span>
+                        <span id="status-leitura-rapido-${obra.idFirebase}"><i class="ph-fill ${iconeMeuStatus}" style="color: ${corMeuStatus};"></i> Leitura: ${statusPessoal}</span>
                         
                         <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> Lanc: ${obra.status}</span>
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
@@ -478,7 +482,6 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
-        // NOVO LÓGICA: Tags de Meu Status Interativas
         const meuStatusContainer = document.getElementById("modal-meu-status-tags");
         if (meuStatusContainer) {
             meuStatusContainer.innerHTML = "";
@@ -506,13 +509,32 @@ window.abrirModal = function(id) {
 
                 tag.onclick = async (e) => {
                     e.stopPropagation(); 
-                    if (statusPessoal === opt.nome) return; // Se já está clicado, ignora
+                    if (statusPessoal === opt.nome) return; 
                     
-                    pausarRedraw = true; // Protege a tela de fundo de piscar
+                    pausarRedraw = true; 
                     try {
                         await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
                         obra.meuStatus = opt.nome; 
-                        window.abrirModal(id); // Recarrega o modal para mostrar a cor nova
+                        
+                        // NOVO: INJEÇÃO DIRETA DOS NOVOS DADOS NA TELA PRINCIPAL (Para não precisar do F5)
+                        const spanHover = document.getElementById(`status-leitura-rapido-${id}`);
+                        const tagCapa = document.getElementById(`tag-capa-status-${id}`);
+                        
+                        let iconeNovo = "ph-book-open";
+                        if (opt.nome === "Finalizado") iconeNovo = "ph-check-circle";
+                        if (opt.nome === "Pausado") iconeNovo = "ph-pause-circle";
+                        if (opt.nome === "Abandonado") iconeNovo = "ph-x-circle";
+
+                        if (spanHover) {
+                            spanHover.innerHTML = `<i class="ph-fill ${iconeNovo}" style="color: ${opt.cor};"></i> Leitura: ${opt.nome}`;
+                        }
+                        if (tagCapa) {
+                            tagCapa.style.color = opt.cor;
+                            tagCapa.style.borderColor = opt.cor;
+                            tagCapa.innerHTML = `<i class="ph-fill ${iconeNovo}"></i> ${opt.nome}`;
+                        }
+
+                        window.abrirModal(id); 
                     } catch(err) {
                         console.error("Erro ao alterar meu status", err);
                     }
@@ -856,7 +878,8 @@ window.buscarNaAPI = async function() {
               format
             }
           }
-        }`;
+        }
+        `;
 
         const anilistPromise = fetch('https://graphql.anilist.co', {
             method: 'POST',
