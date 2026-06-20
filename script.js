@@ -409,13 +409,9 @@ function carregarMaisItens() {
         if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } 
         if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } 
 
-        // NOVO: Adicionado IDs dinâmicos para a tag da capa e do hover poderem ser atualizadas em tempo real
-        let tagMeuStatusCapa = `<div id="tag-capa-status-${obra.idFirebase}" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: ${corMeuStatus}; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2; border: 1px solid ${corMeuStatus}; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ${iconeMeuStatus}"></i> ${statusPessoal}</div>`;
-
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
                 ${tagAdulto}
-                ${tagMeuStatusCapa}
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
@@ -516,10 +512,8 @@ window.abrirModal = function(id) {
                         await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
                         obra.meuStatus = opt.nome; 
                         
-                        // NOVO: INJEÇÃO DIRETA DOS NOVOS DADOS NA TELA PRINCIPAL (Para não precisar do F5)
+                        // Atualiza o hover imediatamente sem precisar da tag na capa
                         const spanHover = document.getElementById(`status-leitura-rapido-${id}`);
-                        const tagCapa = document.getElementById(`tag-capa-status-${id}`);
-                        
                         let iconeNovo = "ph-book-open";
                         if (opt.nome === "Finalizado") iconeNovo = "ph-check-circle";
                         if (opt.nome === "Pausado") iconeNovo = "ph-pause-circle";
@@ -527,11 +521,6 @@ window.abrirModal = function(id) {
 
                         if (spanHover) {
                             spanHover.innerHTML = `<i class="ph-fill ${iconeNovo}" style="color: ${opt.cor};"></i> Leitura: ${opt.nome}`;
-                        }
-                        if (tagCapa) {
-                            tagCapa.style.color = opt.cor;
-                            tagCapa.style.borderColor = opt.cor;
-                            tagCapa.innerHTML = `<i class="ph-fill ${iconeNovo}"></i> ${opt.nome}`;
                         }
 
                         window.abrirModal(id); 
