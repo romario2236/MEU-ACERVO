@@ -142,16 +142,13 @@ formulario.addEventListener("submit", async (e) => {
         listaPersonalizada: listasArray[0] || "Geral", 
         tipo: document.getElementById("input-tipo").value || "Mangá",
         capitulo: document.getElementById("input-capitulo").value || "0",
-        
-        // NOVO: Salvando o Meu Status
         meuStatus: document.getElementById("input-meu-status") ? document.getElementById("input-meu-status").value : "Lendo",
-        
         status: document.getElementById("input-status").value || "Em Andamento",
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
         capa: document.getElementById("input-capa").value || "",
         sinopse: document.getElementById("input-sinopse").value || "",
         linksLeitura: linksArray,
-        adulto: ehAdulto
+        adulto: ehAdulto 
     };
 
     const executarSalvamento = async () => {
@@ -368,7 +365,6 @@ window.aplicarFiltros = () => {
         listaFiltrada = listaFiltrada.filter(o => o.status === statusSelect.value);
     }
 
-    // NOVO: Barreira do Meu Status
     const meuStatusSelect = document.getElementById("select-meu-status");
     if (meuStatusSelect && meuStatusSelect.value !== "Todos") {
         listaFiltrada = listaFiltrada.filter(o => (o.meuStatus || "Lendo") === meuStatusSelect.value);
@@ -406,21 +402,17 @@ function carregarMaisItens() {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         let tagAdulto = obra.adulto ? `<div style="position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;"><i class="ph-fill ph-warning"></i> +18</div>` : '';
 
-        // NOVO: Design da Etiqueta Meu Status na Capa
+        // NOVO: Preparando as cores e ícones para o "Meu Status" (que agora vai no balão flutuante)
         let statusPessoal = obra.meuStatus || "Lendo";
-        let corMeuStatus = "#3b82f6"; // Azul para Lendo
+        let corMeuStatus = "#3b82f6"; // Azul
         let iconeMeuStatus = "ph-book-open";
-        
         if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } // Verde
         if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } // Laranja
         if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } // Vermelho
 
-        let tagMeuStatus = `<div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: ${corMeuStatus}; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2; border: 1px solid ${corMeuStatus}; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ${iconeMeuStatus}"></i> ${statusPessoal}</div>`;
-
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
                 ${tagAdulto}
-                ${tagMeuStatus}
                 <img src="${obra.capa}" onerror="this.src='https://via.placeholder.com/200x300/1a1a1a/60a5fa?text=Sem+Capa'" loading="lazy" alt="${obra.titulo}" class="capa-bg">
                 <div class="card-flutuante">
                     <h4 class="titulo-flutuante">${obra.titulo}</h4>
@@ -437,7 +429,10 @@ function carregarMaisItens() {
                         </div>
 
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
-                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> Lançamento: ${obra.status}</span>
+                        
+                        <span><i class="ph-fill ${iconeMeuStatus}" style="color: ${corMeuStatus};"></i> Leitura: ${statusPessoal}</span>
+                        
+                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> Lanc: ${obra.status}</span>
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
                     </div>
                 </div>
@@ -484,7 +479,6 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
-        // NOVO: Preenche a etiqueta Meu Status no Modal
         const meuStatusContainer = document.getElementById("modal-meu-status-tags");
         if (meuStatusContainer) {
             let statusPessoal = obra.meuStatus || "Lendo";
@@ -503,12 +497,64 @@ window.abrirModal = function(id) {
             statusContainer.innerHTML = `<span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corStatus}40; display: inline-block;">${obra.status || 'N/A'}</span>`;
         }
 
+        // NOVO: As listas agora são tags interativas clicáveis diretamente no modal
         const listasContainer = document.getElementById("modal-listas-tags");
         if (listasContainer) {
-            const listasArray = Array.isArray(obra.listasPersonalizadas) ? obra.listasPersonalizadas : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
-            listasContainer.innerHTML = listasArray.map(l => 
-                `<span style="background: #3b82f6; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: none; display: inline-block; margin: 2px;">${l}</span>`
-            ).join('');
+            let selecionadas = Array.isArray(obra.listasPersonalizadas) ? [...obra.listasPersonalizadas] : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
+            if (selecionadas.length === 0) selecionadas = ["Geral"];
+
+            const listasUnicas = obterTodasAsListas();
+            if (!listasUnicas.includes("Geral")) listasUnicas.unshift("Geral");
+
+            listasContainer.innerHTML = "";
+
+            listasUnicas.forEach(nome => {
+                const tag = document.createElement("span");
+                tag.innerText = nome;
+                const isSelecionada = selecionadas.includes(nome);
+
+                tag.style.cssText = `
+                    padding: 4px 10px; border-radius: 20px; border: 1px solid #333;
+                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                    background: ${isSelecionada ? '#3b82f6' : '#1a1a1a'};
+                    color: ${isSelecionada ? '#fff' : '#aaa'};
+                `;
+
+                // Quando clicar na tag dentro do modal, salva no Firebase na mesma hora
+                tag.onclick = async (e) => {
+                    e.stopPropagation(); 
+                    
+                    let novasSelecionadas = [...selecionadas];
+                    if (nome === "Geral") {
+                        novasSelecionadas = ["Geral"];
+                    } else {
+                        novasSelecionadas = novasSelecionadas.filter(l => l !== "Geral");
+                        if (novasSelecionadas.includes(nome)) {
+                            novasSelecionadas = novasSelecionadas.filter(l => l !== nome);
+                        } else {
+                            novasSelecionadas.push(nome);
+                        }
+                        if (novasSelecionadas.length === 0) novasSelecionadas = ["Geral"];
+                    }
+
+                    pausarRedraw = true; // Impede a tela principal de piscar enquanto você clica
+
+                    try {
+                        await updateDoc(doc(db, "mangas", id), {
+                            listasPersonalizadas: novasSelecionadas,
+                            listaPersonalizada: novasSelecionadas[0]
+                        });
+                        
+                        obra.listasPersonalizadas = novasSelecionadas;
+                        obra.listaPersonalizada = novasSelecionadas[0];
+                        
+                        window.abrirModal(id); // Recarrega rapidamente o modal para pintar os botões
+                    } catch(err) {
+                        console.error("Erro ao alterar lista", err);
+                    }
+                };
+                listasContainer.appendChild(tag);
+            });
         }
 
         document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
@@ -575,7 +621,6 @@ window.prepararAdicao = function() {
     document.getElementById("input-id-firebase").value = "";
     document.getElementById("resultado-busca-api").style.display = "none";
     document.getElementById("container-links-inputs").innerHTML = "";
-    // Garante que o status novo comece como "Lendo" no form de adição
     if (document.getElementById("input-meu-status")) document.getElementById("input-meu-status").value = "Lendo";
     window.adicionarCampoLink();
     modalFormFundo.style.display = "flex";
@@ -593,7 +638,6 @@ window.prepararEdicao = function() {
         document.getElementById("input-tipo").value = o.tipo || "Mangá";
         document.getElementById("input-capitulo").value = o.capitulo || 0;
         
-        // NOVO: Puxa o Meu Status do Banco
         if (document.getElementById("input-meu-status")) {
             document.getElementById("input-meu-status").value = o.meuStatus || "Lendo";
         }
