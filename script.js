@@ -402,12 +402,19 @@ function carregarMaisItens() {
         let classeTipo = (obra.tipo === 'Manhwa') ? 'tipo-manhwa' : (obra.tipo === 'Mangá' ? 'tipo-manga' : 'tipo-novel');
         let tagAdulto = obra.adulto ? `<div style="position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;"><i class="ph-fill ph-warning"></i> +18</div>` : '';
 
+        // Cores do "Meu Status"
         let statusPessoal = obra.meuStatus || "Lendo";
         let corMeuStatus = "#3b82f6"; // Azul
         let iconeMeuStatus = "ph-book-open";
         if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } 
         if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } 
         if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } 
+
+        // Cores do "Status Lançamento"
+        let statusLancamento = obra.status || "Em Andamento";
+        let corLancamento = "#3b82f6"; // Azul
+        if (statusLancamento === "Finalizado") corLancamento = "#10b981";
+        if (statusLancamento === "Hiato") corLancamento = "#f59e0b";
 
         conteinerMangas.innerHTML += `
             <div class="cartao-poster" onclick="abrirModal('${obra.idFirebase}')" style="position: relative;">
@@ -429,9 +436,12 @@ function carregarMaisItens() {
 
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
                         
+                        <!-- O "Meu Status" no balão flutuante atualizável -->
                         <span id="status-leitura-rapido-${obra.idFirebase}"><i class="ph-fill ${iconeMeuStatus}" style="color: ${corMeuStatus};"></i> Leitura: ${statusPessoal}</span>
                         
-                        <span><i class="ph-fill ph-tag" style="color: #10b981;"></i> Lanc: ${obra.status}</span>
+                        <!-- NOVO: O "Status Lançamento" com ID dinâmico no balão flutuante -->
+                        <span id="status-lancamento-rapido-${obra.idFirebase}"><i class="ph-fill ph-tag" style="color: ${corLancamento};"></i> Lanc: ${statusLancamento}</span>
+                        
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
                     </div>
                 </div>
@@ -478,6 +488,7 @@ window.abrirModal = function(id) {
         document.getElementById("modal-capa").src = obra.capa || "";
         document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
         
+        // --- 1. LÓGICA: Tags de Meu Status Interativas ---
         const meuStatusContainer = document.getElementById("modal-meu-status-tags");
         if (meuStatusContainer) {
             meuStatusContainer.innerHTML = "";
@@ -512,7 +523,6 @@ window.abrirModal = function(id) {
                         await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
                         obra.meuStatus = opt.nome; 
                         
-                        // Atualiza o hover imediatamente sem precisar da tag na capa
                         const spanHover = document.getElementById(`status-leitura-rapido-${id}`);
                         let iconeNovo = "ph-book-open";
                         if (opt.nome === "Finalizado") iconeNovo = "ph-check-circle";
@@ -532,14 +542,56 @@ window.abrirModal = function(id) {
             });
         }
 
+        // --- 2. LÓGICA: Tags de Status Lançamento Interativas (NOVO) ---
         const statusContainer = document.getElementById("modal-status-tags");
         if (statusContainer) {
-            let corStatus = "#3b82f6"; 
-            if (obra.status === "Finalizado") corStatus = "#10b981"; 
-            if (obra.status === "Hiato") corStatus = "#f59e0b"; 
-            statusContainer.innerHTML = `<span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${corStatus}40; display: inline-block;">${obra.status || 'N/A'}</span>`;
+            statusContainer.innerHTML = "";
+            const opcoesLancamento = [
+                { nome: "Em Andamento", cor: "#3b82f6" },
+                { nome: "Finalizado", cor: "#10b981" },
+                { nome: "Hiato", cor: "#f59e0b" }
+            ];
+            
+            let statusObra = obra.status || "Em Andamento";
+
+            opcoesLancamento.forEach(opt => {
+                const tag = document.createElement("span");
+                tag.innerText = opt.nome;
+                const isSelecionada = (statusObra === opt.nome);
+
+                tag.style.cssText = `
+                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
+                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                    background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
+                    color: ${isSelecionada ? opt.cor : '#888'};
+                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
+                `;
+
+                tag.onclick = async (e) => {
+                    e.stopPropagation(); 
+                    if (statusObra === opt.nome) return; // Se já está clicado, ignora
+                    
+                    pausarRedraw = true; // Protege a tela de fundo de piscar
+                    try {
+                        await updateDoc(doc(db, "mangas", id), { status: opt.nome });
+                        obra.status = opt.nome; 
+                        
+                        // Atualiza o hover na tela principal na hora (sem F5)
+                        const spanHoverLanc = document.getElementById(`status-lancamento-rapido-${id}`);
+                        if (spanHoverLanc) {
+                            spanHoverLanc.innerHTML = `<i class="ph-fill ph-tag" style="color: ${opt.cor};"></i> Lanc: ${opt.nome}`;
+                        }
+
+                        window.abrirModal(id); // Recarrega o modal para mudar a cor da tag
+                    } catch(err) {
+                        console.error("Erro ao alterar status de lançamento", err);
+                    }
+                };
+                statusContainer.appendChild(tag);
+            });
         }
 
+        // --- 3. LÓGICA: Tags de Listas Interativas ---
         const listasContainer = document.getElementById("modal-listas-tags");
         if (listasContainer) {
             let selecionadas = Array.isArray(obra.listasPersonalizadas) ? [...obra.listasPersonalizadas] : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
