@@ -807,70 +807,26 @@ window.buscarNaAPI = async function() {
     div.innerHTML = "<p style='padding:15px; color:#aaa; text-align:center;'>Consultando 4 bases de dados...</p>";
     div.style.display = "block";
     
-    // Motor Blindado do MangaDex (Comprovado que funciona!)
-    const mdFetchBlindado = async (url) => {
-        try {
-            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.contents) return JSON.parse(data.contents);
-            }
-        } catch(e) {}
-        try {
-            const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
-            if (res.ok) return await res.json();
-        } catch(e) {}
-        throw new Error("MangaDex totalmente bloqueado.");
-    };
-
-    // NOVO: Motor Blindado do AniList (Evita proxys mortos)
-    const aniFetchBlindado = async (query, variables) => {
-        // Rota 1: Tenta o acesso oficial direto
-        try {
-            const res = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ query, variables })
-            });
-            if (res.ok) return await res.json();
-        } catch(e) {}
-
-        // Rota 2: Tenta via AllOrigins usando modo GET
-        try {
-            const urlGET = `https://graphql.anilist.co?query=${encodeURIComponent(query)}&variables=${encodeURIComponent(JSON.stringify(variables))}`;
-            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlGET)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.contents) return JSON.parse(data.contents);
-            }
-        } catch(e) {}
-
-        // Rota 3: Tenta via CorsProxy
-        try {
-            const res = await fetch('https://corsproxy.io/?https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ query, variables })
-            });
-            if (res.ok) return await res.json();
-        } catch(e) {}
-
-        throw new Error("AniList bloqueado em todas as rotas.");
-    };
-
     try {
         resultadosAPI = []; 
 
-        // 🚀 1. KITSU (Acesso Direto)
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
-            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(res => res.ok ? res.json() : Promise.reject("Kitsu falhou"))
             .then(d => {
                 return (d.data || []).map(m => {
                     const t = m.attributes?.canonicalTitle || "Sem Título";
                     let altArr = [];
-                    if(m.attributes?.titles) Object.values(m.attributes.titles).forEach(val => { if(val && val !== t) altArr.push(val); });
-                    let st = m.attributes?.status === "finished" ? "Finalizado" : (m.attributes?.status !== "current" ? "Hiato" : "Em Andamento");
-                    let tipo = m.attributes?.mangaType === "manhwa" ? "Manhwa" : (m.attributes?.mangaType === "novel" ? "Novel" : "Mangá");
+                    if(m.attributes?.titles) {
+                        Object.values(m.attributes.titles).forEach(val => { if(val && val !== t) altArr.push(val); });
+                    }
+                    let st = "Em Andamento";
+                    if (m.attributes?.status === "finished") st = "Finalizado";
+                    else if (m.attributes?.status !== "current") st = "Hiato";
+
+                    let tipo = "Mangá";
+                    let mangaType = (m.attributes?.mangaType || "").toLowerCase();
+                    if (mangaType === "manhwa") tipo = "Manhwa";
+                    else if (mangaType === "novel") tipo = "Novel";
 
                     return {
                         fonteNome: "Kitsu", ano: m.attributes?.startDate ? m.attributes.startDate.substring(0,4) : "N/A",
@@ -880,22 +836,34 @@ window.buscarNaAPI = async function() {
                         st: st, tipo: tipo
                     };
                 });
-            }).catch(() => []);
+            });
 
-        // 🎯 2. MANGADEX (Rota blindada)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        const mangadexPromise = mdFetchBlindado(urlMD)
+        const proxyMD = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlMD)}`;
+        
+        const mangadexPromise = fetch(proxyMD)
+            .then(res => {
+                if (!res.ok) throw new Error(`MangaDex respondeu com erro: ${res.status}`);
+                return res.json();
+            })
             .then(d => {
-                if (!d || !d.data) return [];
-                return d.data.map(m => {
+                if (!d.data) return [];
+                return (d.data || []).map(m => {
                     const titles = m.attributes?.title || {};
                     const t = titles.en || titles['pt-br'] || titles['ja-ro'] || Object.values(titles)[0] || "Sem Título";
+                    
                     let altArr = [];
-                    (m.attributes?.altTitles || []).forEach(at => { let val = Object.values(at)[0]; if(val) altArr.push(val); });
+                    (m.attributes?.altTitles || []).forEach(at => {
+                        let val = Object.values(at)[0]; if(val) altArr.push(val);
+                    });
+                    
                     const art = (m.relationships || []).find(rel => rel.type === 'cover_art');
                     const capa = (art && art.attributes?.fileName) ? `https://uploads.mangadex.org/covers/${m.id}/${art.attributes.fileName}` : "";
+                    
                     const descriptions = m.attributes?.description || {};
-                    let st = m.attributes?.status === "completed" ? "Finalizado" : ((m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") ? "Hiato" : "Em Andamento");
+                    let st = "Em Andamento";
+                    if(m.attributes?.status === "completed") st = "Finalizado";
+                    else if (m.attributes?.status === "hiatus" || m.attributes?.status === "cancelled") st = "Hiato";
 
                     return {
                         fonteNome: "MangaDex", ano: m.attributes?.year || "N/A",
@@ -905,26 +873,24 @@ window.buscarNaAPI = async function() {
                         cap: m.attributes?.lastChapter || 0, nota: 5, st: st, tipo: "Mangá"
                     };
                 });
-            }).catch(() => []);
-            
-        // 🔮 3. MYANIMELIST / JIKAN (Aguardando o servidor deles voltar)
-        const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
-            .then(res => res.ok ? res.json() : Promise.reject())
-            .catch(() => {
-                return fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)}`)
-                    .then(res => res.json())
-                    .then(json => JSON.parse(json.contents))
-                    .catch(() => ({ data: [] }));
             })
+            .catch(err => {
+                console.warn("Falha silenciosa no MangaDex:", err);
+                return []; 
+            });
+            
+        const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
+            .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
             .then(d => {
-                if (!d || !d.data) return [];
-                return d.data.map(m => {
+                return (d.data || []).map(m => {
                     const t = m.title || "Sem Título";
                     let altArr = [];
                     if(m.title_english && m.title_english !== t) altArr.push(m.title_english);
                     if(m.title_japanese && m.title_japanese !== t) altArr.push(m.title_japanese);
                     if(m.title_synonyms) altArr = altArr.concat(m.title_synonyms);
-                    let st = m.status === "Finished" ? "Finalizado" : ((m.status === "On Hiatus" || m.status === "Discontinued") ? "Hiato" : "Em Andamento");
+                    let st = "Em Andamento";
+                    if(m.status === "Finished") st = "Finalizado";
+                    else if (m.status === "On Hiatus" || m.status === "Discontinued") st = "Hiato";
 
                     return {
                         fonteNome: "MyAnimeList", ano: m.published?.prop?.from?.year || "N/A",
@@ -934,9 +900,8 @@ window.buscarNaAPI = async function() {
                         nota: m.score ? (m.score / 2).toFixed(1) : 5, st: st, tipo: "Mangá"
                     };
                 });
-            }).catch(() => []);
+            });
 
-        // 🧬 4. ANILIST (Novo Motor Blindado)
         const queryAniList = `
         query ($search: String) {
           Page(page: 1, perPage: 5) {
@@ -954,20 +919,32 @@ window.buscarNaAPI = async function() {
               format
             }
           }
-        }`;
+        }
+        `;
 
-        const anilistPromise = aniFetchBlindado(queryAniList, { search: q })
+        const anilistPromise = fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ query: queryAniList, variables: { search: q } })
+        })
+        .then(res => res.ok ? res.json() : Promise.reject("AniList falhou"))
         .then(d => {
-            if(!d || !d.data || !d.data.Page || !d.data.Page.media) return [];
-            return d.data.Page.media.map(m => {
+            return (d.data?.Page?.media || []).map(m => {
                 const t = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
                 let altArr = [];
                 if (m.title?.english && m.title.english !== t) altArr.push(m.title.english);
                 if (m.title?.native && m.title.native !== t) altArr.push(m.title.native);
                 if (m.synonyms) altArr = altArr.concat(m.synonyms);
                 
-                let st = m.status === "FINISHED" ? "Finalizado" : ((m.status === "HIATUS" || m.status === "CANCELLED") ? "Hiato" : "Em Andamento");
-                let tipo = m.format === "NOVEL" ? "Novel" : (m.countryOfOrigin === "KR" ? "Manhwa" : (m.countryOfOrigin === "CN" ? "Manhua" : "Mangá"));
+                let st = "Em Andamento";
+                if(m.status === "FINISHED") st = "Finalizado";
+                else if(m.status === "HIATUS" || m.status === "CANCELLED") st = "Hiato";
+
+                let tipo = "Mangá";
+                if (m.format === "NOVEL") tipo = "Novel";
+                else if (m.countryOfOrigin === "KR") tipo = "Manhwa";
+                else if (m.countryOfOrigin === "CN") tipo = "Manhua";
+
                 let sinopseLimpa = (m.description || "").replace(/<[^>]*>?/gm, '').trim();
 
                 return {
@@ -977,14 +954,12 @@ window.buscarNaAPI = async function() {
                     nota: m.averageScore ? (m.averageScore / 20).toFixed(1) : 5, st: st, tipo: tipo
                 };
             });
-        }).catch(() => []);
+        });
 
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
-            if (resposta.status === "fulfilled" && resposta.value.length > 0) {
-                resultadosAPI = resultadosAPI.concat(resposta.value);
-            }
+            if (resposta.status === "fulfilled") resultadosAPI = resultadosAPI.concat(resposta.value);
         });
 
         div.innerHTML = `
@@ -995,7 +970,7 @@ window.buscarNaAPI = async function() {
         `;
 
         if(resultadosAPI.length === 0) {
-            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado. As APIs externas podem estar instáveis no momento.</p>";
+            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
                 let corFonte = "#3b82f6"; 
@@ -1033,6 +1008,7 @@ window.buscarNaAPI = async function() {
         btn.disabled = false;
     }
 }
+
 
 window.preencherComAPI = function(i, modo = 'tudo') {
     const m = resultadosAPI[i];
