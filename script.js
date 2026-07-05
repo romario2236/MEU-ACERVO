@@ -811,7 +811,7 @@ window.buscarNaAPI = async function() {
         resultadosAPI = []; 
 
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
-            .then(res => res.ok ? res.json() : Promise.reject("Kitsu falhou"))
+            .then(res => res.ok ? res.json() : Promise.reject(`Kitsu Erro: ${res.status}`))
             .then(d => {
                 return (d.data || []).map(m => {
                     const t = m.attributes?.canonicalTitle || "Sem Título";
@@ -836,14 +836,15 @@ window.buscarNaAPI = async function() {
                         st: st, tipo: tipo
                     };
                 });
-            });
+            }).catch(err => { console.warn("Kitsu falhou:", err); return []; });
 
+        // Trocando o proxy do MangaDex para tentar desviar do bloqueio
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        const proxyMD = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlMD)}`;
+        const proxyMD = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`; 
         
         const mangadexPromise = fetch(proxyMD)
             .then(res => {
-                if (!res.ok) throw new Error(`MangaDex respondeu com erro: ${res.status}`);
+                if (!res.ok) throw new Error(`MangaDex Erro: ${res.status}`);
                 return res.json();
             })
             .then(d => {
@@ -873,14 +874,10 @@ window.buscarNaAPI = async function() {
                         cap: m.attributes?.lastChapter || 0, nota: 5, st: st, tipo: "Mangá"
                     };
                 });
-            })
-            .catch(err => {
-                console.warn("Falha silenciosa no MangaDex:", err);
-                return []; 
-            });
+            }).catch(err => { console.warn("MangaDex falhou:", err); return []; });
             
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
-            .then(res => res.ok ? res.json() : Promise.reject("Jikan falhou"))
+            .then(res => res.ok ? res.json() : Promise.reject(`Jikan Erro: ${res.status}`))
             .then(d => {
                 return (d.data || []).map(m => {
                     const t = m.title || "Sem Título";
@@ -900,7 +897,7 @@ window.buscarNaAPI = async function() {
                         nota: m.score ? (m.score / 2).toFixed(1) : 5, st: st, tipo: "Mangá"
                     };
                 });
-            });
+            }).catch(err => { console.warn("MyAnimeList falhou:", err); return []; });
 
         const queryAniList = `
         query ($search: String) {
@@ -927,7 +924,7 @@ window.buscarNaAPI = async function() {
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ query: queryAniList, variables: { search: q } })
         })
-        .then(res => res.ok ? res.json() : Promise.reject("AniList falhou"))
+        .then(res => res.ok ? res.json() : Promise.reject(`AniList Erro: ${res.status}`))
         .then(d => {
             return (d.data?.Page?.media || []).map(m => {
                 const t = m.title?.romaji || m.title?.english || m.title?.native || "Sem Título";
@@ -954,12 +951,16 @@ window.buscarNaAPI = async function() {
                     nota: m.averageScore ? (m.averageScore / 20).toFixed(1) : 5, st: st, tipo: tipo
                 };
             });
-        });
+        }).catch(err => { console.warn("AniList falhou:", err); return []; });
 
+        // Aguarda todas as promessas (mesmo as que falharam)
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
-            if (resposta.status === "fulfilled") resultadosAPI = resultadosAPI.concat(resposta.value);
+            // Como adicionei um .catch que retorna [], todas as respostas agora serão "fulfilled"
+            if (resposta.status === "fulfilled" && resposta.value.length > 0) {
+                resultadosAPI = resultadosAPI.concat(resposta.value);
+            }
         });
 
         div.innerHTML = `
@@ -970,7 +971,7 @@ window.buscarNaAPI = async function() {
         `;
 
         if(resultadosAPI.length === 0) {
-            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado.</p>";
+            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado nas bases online disponíveis.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
                 let corFonte = "#3b82f6"; 
