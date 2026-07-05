@@ -839,9 +839,9 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(err => { console.warn("Kitsu falhou:", err); return []; });
 
-        // 2. MANGADEX (Via AllOrigins)
+        // 2. MANGADEX (Via ThingProxy - Rota alternativa 1)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        const proxyMD = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMD)}`;
+        const proxyMD = `https://thingproxy.freeboard.io/fetch/${urlMD}`;
         
         const mangadexPromise = fetch(proxyMD)
             .then(res => {
@@ -901,12 +901,12 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(err => { console.warn("MyAnimeList falhou:", err); return []; });
 
-        // 4. ANILIST (Tática de Infiltração: GET + AllOrigins)
+        // 4. ANILIST (Via CodeTabs - Rota alternativa 2)
         const queryAniList = `query ($search: String) { Page(page: 1, perPage: 5) { media(search: $search, type: MANGA) { title { romaji english native } synonyms startDate { year } coverImage { extraLarge } description(asHtml: false) genres chapters averageScore status countryOfOrigin format } } }`;
         const variablesAniList = JSON.stringify({ search: q });
         
         const urlAniList = `https://graphql.anilist.co?query=${encodeURIComponent(queryAniList)}&variables=${encodeURIComponent(variablesAniList)}`;
-        const proxyAniList = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlAniList)}`;
+        const proxyAniList = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlAniList)}`;
 
         const anilistPromise = fetch(proxyAniList)
         .then(res => res.ok ? res.json() : Promise.reject(`AniList Erro: ${res.status}`))
@@ -938,7 +938,7 @@ window.buscarNaAPI = async function() {
             });
         }).catch(err => { console.warn("AniList falhou:", err); return []; });
 
-        // Aguarda todas as promessas
+        // Aguarda todas as promessas (as que falharem retornarão [], sem quebrar o resto)
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
