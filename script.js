@@ -807,7 +807,7 @@ window.buscarNaAPI = async function() {
     div.innerHTML = "<p style='padding:15px; color:#aaa; text-align:center;'>Consultando 4 bases de dados...</p>";
     div.style.display = "block";
     
-    // Mantemos o motor blindado especificamente para o MangaDex, que provou funcionar perfeitamente com ele
+    // Motor Blindado do MangaDex (Comprovado que funciona!)
     const mdFetchBlindado = async (url) => {
         try {
             const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
@@ -823,10 +823,45 @@ window.buscarNaAPI = async function() {
         throw new Error("MangaDex totalmente bloqueado.");
     };
 
+    // NOVO: Motor Blindado do AniList (Evita proxys mortos)
+    const aniFetchBlindado = async (query, variables) => {
+        // Rota 1: Tenta o acesso oficial direto
+        try {
+            const res = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ query, variables })
+            });
+            if (res.ok) return await res.json();
+        } catch(e) {}
+
+        // Rota 2: Tenta via AllOrigins usando modo GET
+        try {
+            const urlGET = `https://graphql.anilist.co?query=${encodeURIComponent(query)}&variables=${encodeURIComponent(JSON.stringify(variables))}`;
+            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlGET)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.contents) return JSON.parse(data.contents);
+            }
+        } catch(e) {}
+
+        // Rota 3: Tenta via CorsProxy
+        try {
+            const res = await fetch('https://corsproxy.io/?https://graphql.anilist.co', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ query, variables })
+            });
+            if (res.ok) return await res.json();
+        } catch(e) {}
+
+        throw new Error("AniList bloqueado em todas as rotas.");
+    };
+
     try {
         resultadosAPI = []; 
 
-        // 🚀 1. KITSU (Acesso Direto - Nunca precisa de proxy pois tem CORS aberto)
+        // 🚀 1. KITSU (Acesso Direto)
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject())
             .then(d => {
@@ -847,7 +882,7 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
 
-        // 🎯 2. MANGADEX (Mantido com a rota blindada que deu resultados)
+        // 🎯 2. MANGADEX (Rota blindada)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         const mangadexPromise = mdFetchBlindado(urlMD)
             .then(d => {
@@ -872,11 +907,10 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
             
-        // 🔮 3. MYANIMELIST / JIKAN (Direto com salvaguarda automática)
+        // 🔮 3. MYANIMELIST / JIKAN (Aguardando o servidor deles voltar)
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject())
             .catch(() => {
-                // Se der erro 504 ou queda, tenta o proxy AllOrigins como plano B rápido
                 return fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)}`)
                     .then(res => res.json())
                     .then(json => JSON.parse(json.contents))
@@ -902,7 +936,7 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
 
-        // 🧬 4. ANILIST (Ocultação de Origem via ThingProxy para quebrar o bloqueio do Netlify)
+        // 🧬 4. ANILIST (Novo Motor Blindado)
         const queryAniList = `
         query ($search: String) {
           Page(page: 1, perPage: 5) {
@@ -922,13 +956,7 @@ window.buscarNaAPI = async function() {
           }
         }`;
 
-        // Usamos o ThingProxy que remove o cabeçalho 'Origin' do Netlify que o AniList estava a bloquear
-        const anilistPromise = fetch('https://thingproxy.freeboard.io/fetch/https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ query: queryAniList, variables: { search: q } })
-        })
-        .then(res => res.ok ? res.json() : Promise.reject())
+        const anilistPromise = aniFetchBlindado(queryAniList, { search: q })
         .then(d => {
             if(!d || !d.data || !d.data.Page || !d.data.Page.media) return [];
             return d.data.Page.media.map(m => {
@@ -951,7 +979,6 @@ window.buscarNaAPI = async function() {
             });
         }).catch(() => []);
 
-        // Executa todas em paralelo de forma isolada
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
@@ -1006,6 +1033,7 @@ window.buscarNaAPI = async function() {
         btn.disabled = false;
     }
 }
+
 window.preencherComAPI = function(i, modo = 'tudo') {
     const m = resultadosAPI[i];
     if(!m) return;
