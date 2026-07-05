@@ -810,6 +810,7 @@ window.buscarNaAPI = async function() {
     try {
         resultadosAPI = []; 
 
+        // 1. KITSU (Acesso Direto - Mais estável)
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject(`Kitsu Erro: ${res.status}`))
             .then(d => {
@@ -838,9 +839,9 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(err => { console.warn("Kitsu falhou:", err); return []; });
 
-        // Trocando o proxy do MangaDex para tentar desviar do bloqueio
+        // 2. MANGADEX (Via AllOrigins)
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
-        const proxyMD = `https://corsproxy.io/?${encodeURIComponent(urlMD)}`; 
+        const proxyMD = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlMD)}`;
         
         const mangadexPromise = fetch(proxyMD)
             .then(res => {
@@ -876,6 +877,7 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(err => { console.warn("MangaDex falhou:", err); return []; });
             
+        // 3. JIKAN / MYANIMELIST (Acesso Direto)
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject(`Jikan Erro: ${res.status}`))
             .then(d => {
@@ -899,31 +901,14 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(err => { console.warn("MyAnimeList falhou:", err); return []; });
 
-        const queryAniList = `
-        query ($search: String) {
-          Page(page: 1, perPage: 5) {
-            media(search: $search, type: MANGA) {
-              title { romaji english native }
-              synonyms
-              startDate { year }
-              coverImage { extraLarge }
-              description(asHtml: false)
-              genres
-              chapters
-              averageScore
-              status
-              countryOfOrigin
-              format
-            }
-          }
-        }
-        `;
+        // 4. ANILIST (Tática de Infiltração: GET + AllOrigins)
+        const queryAniList = `query ($search: String) { Page(page: 1, perPage: 5) { media(search: $search, type: MANGA) { title { romaji english native } synonyms startDate { year } coverImage { extraLarge } description(asHtml: false) genres chapters averageScore status countryOfOrigin format } } }`;
+        const variablesAniList = JSON.stringify({ search: q });
+        
+        const urlAniList = `https://graphql.anilist.co?query=${encodeURIComponent(queryAniList)}&variables=${encodeURIComponent(variablesAniList)}`;
+        const proxyAniList = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlAniList)}`;
 
-        const anilistPromise = fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ query: queryAniList, variables: { search: q } })
-        })
+        const anilistPromise = fetch(proxyAniList)
         .then(res => res.ok ? res.json() : Promise.reject(`AniList Erro: ${res.status}`))
         .then(d => {
             return (d.data?.Page?.media || []).map(m => {
@@ -953,11 +938,10 @@ window.buscarNaAPI = async function() {
             });
         }).catch(err => { console.warn("AniList falhou:", err); return []; });
 
-        // Aguarda todas as promessas (mesmo as que falharam)
+        // Aguarda todas as promessas
         const respostas = await Promise.allSettled([kitsuPromise, mangadexPromise, jikanPromise, anilistPromise]);
         
         respostas.forEach(resposta => {
-            // Como adicionei um .catch que retorna [], todas as respostas agora serão "fulfilled"
             if (resposta.status === "fulfilled" && resposta.value.length > 0) {
                 resultadosAPI = resultadosAPI.concat(resposta.value);
             }
@@ -971,7 +955,7 @@ window.buscarNaAPI = async function() {
         `;
 
         if(resultadosAPI.length === 0) {
-            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado nas bases online disponíveis.</p>";
+            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado nas bases online disponíveis no momento.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
                 let corFonte = "#3b82f6"; 
