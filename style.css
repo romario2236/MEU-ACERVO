@@ -298,21 +298,21 @@ body {
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background: rgba(20, 20, 24, 0.95); /* Fundo quase preto com leve transparência para ver a borda da imagem */
-    padding: 15px;
+    background: rgba(15, 15, 20, 0.94); /* Fundo escuro bem legível */
+    padding: 12px;
     border-radius: 8px; 
-    border: 1px solid #444;
+    border: 2px solid #3b82f6; /* A borda azul já fica direto no cartão */
     
-    /* Configurações para cobrir toda a área certinha */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between; /* Distribui o título no topo e infos embaixo sem espremer */
     box-sizing: border-box;
+    overflow: hidden; /* IMPEDE que qualquer texto vaze para fora da capa */
 
     opacity: 0; 
     visibility: hidden; 
     pointer-events: none; 
-    transition: all 0.3s ease; 
+    transition: all 0.25s ease; 
     z-index: 100;
 }
 .cartao-poster:hover .card-flutuante {
@@ -322,8 +322,28 @@ body {
     pointer-events: auto;
 }
 
-.titulo-flutuante { margin: 0 0 10px 0; font-size: 1.1rem; color: #fff; line-height: 1.3; }
-.info-flutuante { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #ccc; font-weight: bold; }
+.titulo-flutuante { 
+    margin: 0; 
+    font-size: 0.95rem; 
+    color: #fff; 
+    line-height: 1.25; 
+    
+    /* MÁGICA: Limita o título a 3 linhas e coloca "..." se passar disso */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-flutuante { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    font-size: 0.9rem; /* Fonte levemente menor para caber tudo com folga */
+    color: #ccc; 
+    font-weight: 600; 
+}
 
 .tipo-manga { border-left: 3px solid #0984e3; background: rgba(0,0,0,0.3); }
 .tipo-manhwa { border-left: 3px solid #e84393; background: rgba(0,0,0,0.3); }
