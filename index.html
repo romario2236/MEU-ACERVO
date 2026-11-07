@@ -4,14 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Acervo</title>
+    
+    <!-- Ícone da Aba -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    
+    <!-- Bibliotecas Externas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="style.css">
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Folha de Estilos -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- ========================================== -->
+    <!-- 1. TELA DE LOGIN                           -->
+    <!-- ========================================== -->
     <div id="tela-login" style="display: flex;">
         <div class="login-caixa">
             <h2><i class="ph-fill ph-lock-key"></i> Acesso Restrito</h2>
@@ -35,18 +43,29 @@
         </div>
     </div>
 
+
+ <!-- ========================================== -->
+    <!-- 2. CABEÇALHO SUPERIOR                      -->
+    <!-- ========================================== -->
     <header style="padding: 20px 0; border-bottom: 1px solid #222; margin-bottom: 30px;">
-        <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+        <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
             
-            <div style="position: relative; width: 100%; max-width: 400px; display: flex; align-items: center;">
-                <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome alternativo..." style="width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit;">
-                <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none; padding: 5px; align-items: center; justify-content: center;">
-                    <i class="ph ph-x-circle" style="font-size: 1.2rem;"></i>
-                </button>
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                
+            <!-- MENU DE CORES (TEMAS) -->
+                <div style="position: relative; display: flex;">
+                    <button onclick="toggleThemeMenu()" style="background: #1a1a1a; color: var(--primary); border: 1px solid #333; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" title="Mudar Cor do App">
+                        <i class="ph-fill ph-palette" style="font-size: 1.2rem;"></i>
+                    </button>
+                    <div id="theme-picker-menu" style="display: none; position: absolute; top: 115%; right: 0; background: #1a1a1a; padding: 12px; border-radius: 8px; border: 1px solid #333; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1000; gap: 10px;">
+                        <button onclick="mudarCorTema('#3b82f6', '#2563eb')" style="width: 25px; height: 25px; border-radius: 50%; border: none; background: #3b82f6; cursor: pointer;"></button>
+                        <button onclick="mudarCorTema('#8b5cf6', '#7c3aed')" style="width: 25px; height: 25px; border-radius: 50%; border: none; background: #8b5cf6; cursor: pointer;"></button>
+                        <button onclick="mudarCorTema('#10b981', '#059669')" style="width: 25px; height: 25px; border-radius: 50%; border: none; background: #10b981; cursor: pointer;"></button>
+                        <button onclick="mudarCorTema('#f43f5e', '#e11d48')" style="width: 25px; height: 25px; border-radius: 50%; border: none; background: #f43f5e; cursor: pointer;"></button>
+                        <button onclick="mudarCorTema('#f59e0b', '#d97706')" style="width: 25px; height: 25px; border-radius: 50%; border: none; background: #f59e0b; cursor: pointer;"></button>
+                    </div>
+                </div>
+
+            <!-- Botões de Ação do Topo -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button id="btn-toggle-18" onclick="toggleAdulto()" style="background: #1f2937; color: #ef4444; border: 1px solid #ef4444; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-eye-slash" style="font-size: 1.2rem;"></i> <span id="texto-btn-18">Mostrar +18</span>
                 </button>
@@ -56,7 +75,6 @@
                 </button>
 
                 <input type="file" id="input-importar" accept=".json" style="display: none;" onchange="importarDados(event)">
-                
                 <button onclick="document.getElementById('input-importar').click()" style="background: #2a2a2a; color: #ddd; padding: 10px 15px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
                     <i class="ph ph-upload-simple" style="font-size: 1.2rem;"></i> Importar
                 </button>
@@ -73,10 +91,38 @@
         </div>
     </header>
 
+
+    <!-- ========================================== -->
+    <!-- 3. ESTRUTURA PRINCIPAL (CORPO DO APP)      -->
+    <!-- ========================================== -->
     <div style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; padding: 0 20px; align-items: start;">
         
+        <!-- BARRA LATERAL (Filtros) -->
         <aside style="background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; position: sticky; top: 20px;">
-            
+
+            <!-- NOVA BARRA DE PESQUISA NA LATERAL -->
+            <div style="position: relative; width: 100%; display: flex; align-items: center; margin-bottom: 25px;">
+                <input type="text" id="barra-pesquisa" placeholder="Buscar título ou nome..." style="width: 100%; padding: 12px 35px 12px 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit; font-size: 0.9rem;">
+                <button id="btn-limpar-busca" onclick="limparBusca()" style="position: absolute; right: 10px; background: transparent; border: none; color: #888; cursor: pointer; display: none; padding: 5px; align-items: center; justify-content: center;">
+                    <i class="ph ph-x-circle" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
+
+            <!-- PAINEL DE ESTATÍSTICAS -->
+            <div style="background: #1a1a1e; padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; border-top: 3px solid var(--primary);">
+                <h3 style="color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;"><i class="ph-fill ph-chart-polar" style="color: var(--primary); font-size: 1rem;"></i> Minha Jornada</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="text-align: center; background: #111; padding: 12px 5px; border-radius: 8px; border: 1px solid #222;">
+                        <div id="stat-capitulos" style="font-size: 1.3rem; font-weight: 800; color: #fff; line-height: 1;">0</div>
+                        <div style="font-size: 0.65rem; color: #888; text-transform: uppercase; margin-top: 4px; font-weight: bold;">Caps Lidos</div>
+                    </div>
+                    <div style="text-align: center; background: #111; padding: 12px 5px; border-radius: 8px; border: 1px solid #222;">
+                        <div id="stat-finalizados" style="font-size: 1.3rem; font-weight: 800; color: #10b981; line-height: 1;">0</div>
+                        <div style="font-size: 0.65rem; color: #888; text-transform: uppercase; margin-top: 4px; font-weight: bold;">Obras Fim</div>
+                    </div>
+                </div>
+            </div>
+                
             <h3 style="color: #64748b; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Categorias</h3>
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px;" id="botoes-categoria">
                 <button class="btn-filter sidebar-btn active" onclick="filtrarPorTipo('Todos', this)">Todos</button>
@@ -96,14 +142,23 @@
             </div>
             <div id="container-listas-personalizadas"></div>
 
-            <h3 style="color: #30cc6c; font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px;">Filtros Avançados</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 12px;">
+                <h3 style="color: #30cc6c; font-size: 0.8rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Filtros Avançados</h3>
+                <!-- NOVO: Botão de limpar filtros -->
+                <button onclick="resetarFiltrosAvancados()" style="background: transparent; border: none; color: #888; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#888'">
+                    <i class="ph ph-eraser"></i> Limpar
+                </button>
+            </div>
+
             <div style="display: flex; flex-direction: column; gap: 15px;">
                 
                 <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Meu Status de Leitura</label>
-                    <select id="select-meu-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                    <!-- NOVO: Ícone na Label -->
+                    <label style="color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><i class="ph ph-book-open"></i> Meu Status de Leitura</label>
+                    <select id="select-meu-status" onchange="destacarFiltro(this); aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
                         <option value="Todos">Todos</option>
                         <option value="Lendo">Lendo</option>
+                        <option value="Relendo">Relendo</option>
                         <option value="Pausado">Pausado</option>
                         <option value="Finalizado">Finalizado</option>
                         <option value="Abandonado">Abandonado</option>
@@ -111,8 +166,9 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Status da Obra (Lançamento)</label>
-                    <select id="select-status" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                    <!-- NOVO: Ícone na Label -->
+                    <label style="color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><i class="ph ph-calendar-blank"></i> Status (Lançamento)</label>
+                    <select id="select-status" onchange="destacarFiltro(this); aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
                         <option value="Todos">Todos</option>
                         <option value="Em Andamento">Em Andamento</option>
                         <option value="Finalizado">Finalizado</option>
@@ -121,8 +177,9 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #94a3b8; font-size: 0.85rem;">Ordenar por</label>
-                    <select id="select-ordem" onchange="aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
+                    <!-- NOVO: Ícone na Label -->
+                    <label style="color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><i class="ph ph-sort-ascending"></i> Ordenar por</label>
+                    <select id="select-ordem" onchange="destacarFiltro(this, 'az'); aplicarFiltros()" style="background: #0f0f11; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-family: inherit;">
                         <option value="az">A - Z</option>
                         <option value="za">Z - A</option>
                         <option value="nota-alta">Maior Nota</option>
@@ -134,15 +191,18 @@
             </div>
         </aside>
 
+        <!-- ÁREA PRINCIPAL (Grid de Mangás) -->
         <main style="min-width: 0;">
             <div id="contador-total" style="color: #888; margin-bottom: 20px; font-weight: 500;"></div>
-            
-            <div id="lista-mangas" class="grid-mangas">
-                </div>
+            <div id="lista-mangas" class="grid-mangas"></div>
         </main>
 
     </div>
 
+
+    <!-- ========================================== -->
+    <!-- 4. MODAL: DETALHES DA OBRA                 -->
+    <!-- ========================================== -->
     <div id="modal-fundo" class="modal-fundo" onclick="fecharModalPeloFundo(event)">
         <div class="modal-conteudo" style="background: #1a1a1a; border-radius: 12px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid #333; margin: 20px auto;">
             
@@ -150,13 +210,16 @@
             
             <div class="modal-corpo" style="display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
                 
+                <!-- Coluna Esquerda: Capa e Links -->
                 <div style="flex: 0 0 auto; width: 100%; max-width: 250px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
                     <img id="modal-capa" src="" alt="Capa da Obra" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); object-fit: cover;">
                     <div id="container-links-leitura" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;"></div>
                 </div>
                 
+                <!-- Coluna Direita: Informações Gerais -->
                 <div class="modal-info" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
                     
+                    <!-- Título e Botões de Edição -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
                         <h2 id="modal-titulo" style="margin: 0; font-size: 2.2rem; color: #fff; line-height: 1.2;">Título da Obra</h2>
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
@@ -165,6 +228,7 @@
                         </div>
                     </div>
 
+                    <!-- Cartões Interativos Rápidos -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
                         
                         <div class="info-card-rapido">
@@ -176,20 +240,31 @@
                             <span class="info-card-label">Status (Lançamento)</span>
                             <div id="modal-status-tags" style="margin-top: 5px;"></div>
                         </div>
+                        
                         <div class="info-card-rapido">
                             <span class="info-card-label">Lista</span>
                             <div id="modal-listas-tags" style="margin-top: 5px;"></div>
                         </div>
+                        
                         <div class="info-card-rapido">
                             <span class="info-card-label">Progresso</span>
+                            
                             <div class="contador-moderno" style="margin-top: 5px; width: fit-content;">
                                 <button class="btn-cont" onclick="alterarCapitulo(-1)"><i class="ph ph-minus"></i></button>
                                 <input type="number" id="modal-capitulo-editavel" onchange="atualizarCapituloDigitado()">
                                 <button class="btn-cont" onclick="alterarCapitulo(1)"><i class="ph ph-plus"></i></button>
                             </div>
+                            
+                            <!-- Nova Caixa de Relendo no Modal -->
+                            <div id="container-releitura" style="display: none; margin-top: 10px; font-size: 0.75rem; color: #888; align-items: center; gap: 5px; border-top: 1px solid #333; padding-top: 8px;">
+                                <i class="ph ph-clock-counter-clockwise"></i> Lido antes: 
+                                <input type="number" id="modal-cap-anterior-editavel" onchange="atualizarCapituloAnterior()" title="Último capítulo lido na primeira vez" style="background: transparent; color: #8b5cf6; border: none; border-bottom: 1px dashed #555; width: 45px; font-size: 0.85rem; text-align: center; font-weight: bold;">
+                            </div>
                         </div>
+
                     </div>
 
+                    <!-- Gêneros e Nomes Alternativos -->
                     <div>
                         <div id="modal-generos-texto" class="container-tags-genero" style="margin-bottom: 15px;"></div>
                         <div style="margin-bottom: 15px;">
@@ -198,21 +273,35 @@
                         </div>
                     </div>
 
+                    <!-- Sinopse -->
                     <div class="caixa-sinopse">
                         <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px;"><i class="ph ph-text-align-left"></i> Sinopse</h4>
                         <div id="modal-texto-sinopse" style="color: #aaa; font-size: 0.95rem; line-height: 1.6; max-height: 180px; overflow-y: auto; padding-right: 10px;"></div>
                     </div>
 
+                    <!-- NOVO: DIÁRIO DE LEITURA -->
+                    <div style="background: #1a1a1e; padding: 15px; border-radius: 8px; border-left: 3px solid #f59e0b; margin-top: 5px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                            <span><i class="ph ph-notebook"></i> Diário de Leitura</span>
+                            <span style="font-size: 0.65rem; color: #666; font-style: italic;">Salva ao clicar fora</span>
+                        </h4>
+                        <textarea id="modal-diario-editavel" onchange="atualizarDiario()" placeholder="Escreva aqui onde parou, o que achou da obra..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 6px; color: #bbb; padding: 10px; font-size: 0.9rem; line-height: 1.5; resize: vertical; min-height: 80px; font-family: inherit; box-sizing: border-box;"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+
+    <!-- ========================================== -->
+    <!-- 5. MODAL: FORMULÁRIO DE ADIÇÃO / EDIÇÃO    -->
+    <!-- ========================================== -->
     <div id="modal-form-fundo" class="modal-fundo" onclick="fecharModalFormPeloFundo(event)">
         <div class="modal-conteudo modal-form-conteudo">
             <button class="botao-fechar" onclick="fecharModalForm()"><i class="ph ph-x"></i></button>
             <h2 id="titulo-form">Nova Obra</h2>
             
+            <!-- Motor de Busca de APIs -->
             <div class="busca-api-container">
                 <div class="busca-api-header">
                     <i class="ph ph-magic-wand"></i>
@@ -227,6 +316,7 @@
                 <div id="resultado-busca-api" class="resultado-busca-api"></div>
             </div>
 
+            <!-- Formulário -->
             <form id="form-nova-obra">
                 <input type="hidden" id="input-id-firebase" value="">
 
@@ -251,6 +341,7 @@
                     <input type="text" id="input-generos" required placeholder="Ex: Ação, Fantasia">
                 </div>
                 
+                <!-- Linha Dupla: Tipo e Capítulo -->
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Tipo</label>
@@ -268,11 +359,13 @@
                     </div>
                 </div>
 
+                <!-- Linha Dupla: Meu Status e Status de Lançamento -->
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Meu Status de Leitura</label>
-                        <select id="input-meu-status">
+                        <select id="input-meu-status" onchange="document.getElementById('caixa-cap-anterior').style.display = this.value === 'Relendo' ? 'flex' : 'none'">
                             <option value="Lendo">Lendo</option>
+                            <option value="Relendo">Relendo</option>
                             <option value="Pausado">Pausado</option>
                             <option value="Finalizado">Finalizado</option>
                             <option value="Abandonado">Abandonado</option>
@@ -288,6 +381,13 @@
                     </div>
                 </div>
 
+                <!-- Campo Especial do Relendo (Aparece condicionalmente) -->
+                <div class="grupo-input" id="caixa-cap-anterior" style="display: none; flex-direction: column; background: rgba(139, 92, 246, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.2); margin-top: -5px; margin-bottom: 18px;">
+                    <label style="color: #8b5cf6; margin-bottom: 8px;"><i class="ph ph-arrows-clockwise"></i> Último capítulo alcançado anteriormente</label>
+                    <input type="number" id="input-cap-anterior" placeholder="Ex: 150">
+                </div>
+
+                <!-- Linha Dupla: Nota e Capa -->
                 <div class="linha-inputs-grid">
                     <div class="grupo-input">
                         <label>Nota (1 a 5)</label>
@@ -318,6 +418,11 @@
                     <label>Sinopse</label>
                     <textarea id="input-sinopse" rows="4" required></textarea>
                 </div>
+
+                <div class="grupo-input">
+                    <label>Diário / Anotações Privadas</label>
+                    <textarea id="input-diario" rows="3" placeholder="Anotações privadas..."></textarea>
+                </div>
                 
                 <button type="submit" class="btn-salvar">
                     <i class="ph ph-cloud-arrow-up"></i> Salvar na Nuvem
@@ -326,13 +431,20 @@
         </div>
     </div>
 
-    <div id="toast-container"></div>
-    <script type="module" src="script.js"></script>
+
+    <!-- ========================================== -->
+    <!-- 6. ALERTAS, COMPONENTES FLUTUANTES E SCRIPT -->
+    <!-- ========================================== -->
     
+    <!-- Container dos Balões Flutuantes (Toasts) -->
+    <div id="toast-container"></div>
+    
+    <!-- Botão de Voltar ao Topo -->
     <button id="btn-topo" onclick="voltarAoTopo()" style="position: fixed; bottom: 30px; right: 30px; background: #3b82f6; color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; transition: 0.3s;">
         <i class="ph ph-caret-up"></i>
     </button>
     
+    <!-- Modal de Verificação de Duplicatas -->
     <div id="modal-duplicata-fundo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
         <div style="background: #1e1e1e; padding: 30px; border-radius: 12px; max-width: 380px; width: 90%; text-align: center; border: 1px solid #ef4444; box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2);">
             <div style="color: #ef4444; font-size: 3.5rem; margin-bottom: 10px; line-height: 1;"><i class="ph-fill ph-warning-octagon"></i></div>
@@ -348,5 +460,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Script Principal -->
+    <script type="module" src="script.js"></script>
+    
 </body>
 </html>

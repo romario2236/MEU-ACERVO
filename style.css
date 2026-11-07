@@ -1,6 +1,6 @@
-/* ==========================================
-   1. VARIÁVEIS E BASE
-   ========================================== */
+/* ==========================================================================
+   1. VARIÁVEIS GERAIS E RESET
+   ========================================================================== */
 :root {
     --bg-color: #0f0f0f;
     --card-bg: #1a1a1a;
@@ -13,7 +13,12 @@
     --radius: 12px;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
 body { 
     background-color: var(--bg-color); 
     color: var(--text-main); 
@@ -21,559 +26,23 @@ body {
     overflow-x: hidden;
 }
 
+/* Scrollbar Personalizada */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-color); }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #666; }
 
-/* ==========================================
-   2. CABEÇALHO E FILTROS
-   ========================================== */
-.main-header { background: var(--glass-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); padding: 20px 0; position: sticky; top: 0; z-index: 100; }
-.header-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-.logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; }
-.logo span { color: var(--primary); }
-
-.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
-.search-wrapper { position: relative; flex: 1; min-width: 250px; }
-.search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 1.2rem;}
-#barra-pesquisa { width: 100%; padding: 14px 14px 14px 44px; background: #252525; border: 1px solid transparent; border-radius: var(--radius); color: white; transition: 0.2s;}
-#barra-pesquisa:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); }
-
-.filter-nav { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-.btn-filter { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; font-weight: 500; transition: 0.2s;}
-.btn-filter.active { background: white; color: black; border-color: white; }
-
-.filtros-avancados { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-.filtros-avancados select { background: #1a1a1a; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-family: inherit; font-weight: 500; transition: 0.2s;}
-.filtros-avancados select:focus { outline: none; border-color: var(--primary); background: #222; }
-
-/* ==========================================
-   3. BOTÕES GERAIS
-   ========================================== */
-.action-group { display: flex; align-items: center; gap: 10px; }
-.btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: var(--radius); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.95rem;}
-.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-
-.btn-icon { background: #252525; color: var(--text-dim); border: 1px solid var(--border-color); width: 44px; height: 44px; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; }
-.btn-icon:hover { color: white; background: #333; }
-
-/* ==========================================
-   4. GRID DE OBRAS E CARTÕES ESTILO NETFLIX
-   ========================================== */
-/* Mantendo o topo que você já tinha */
-main { width: 100%; margin: 0; padding: 0; }
-.stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
-.grid-mangas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-
-/* ==========================================
-   CARTÃO BASE E CAPA
-   ========================================== */
-.cartao-poster { 
-    background: transparent; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    position: relative; 
-    aspect-ratio: 2 / 3; 
-    /* MUITO IMPORTANTE: overflow: visible para o card não ser cortado! */
-    overflow: visible; 
-}
-
-.capa-bg { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-    border-radius: 8px; 
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    position: relative;
-    z-index: 1;
-}
-
-/* ==========================================
-   O CARD FLUTUANTE (Ao Lado)
-   ========================================== */
-.card-flutuante {
-    position: absolute;
-    top: 10px;
-    left: 90%; /* Fica um pouco escondido atrás da capa */
-    width: 220px;
-    background: #1e1e24; /* Fundo escuro elegante */
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    box-shadow: 10px 10px 30px rgba(0,0,0,0.9);
-    
-    /* Configurações de invisibilidade iniciais */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none; /* Ignora o mouse para não piscar */
-    transition: all 0.3s ease; 
-    z-index: 100;
-}
-
-.titulo-flutuante { margin: 0 0 10px 0; font-size: 1.1rem; color: #fff; line-height: 1.3; }
-.info-flutuante { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #ccc; font-weight: bold; }
-
-/* As cores dinâmicas das tags que vêm do JavaScript */
-.tipo-manga { border-left: 3px solid #0984e3; background: rgba(0,0,0,0.3); }
-.tipo-manhwa { border-left: 3px solid #e84393; background: rgba(0,0,0,0.3); }
-.tipo-novel { border-left: 3px solid #6c5ce7; background: rgba(0,0,0,0.3); }
-
-/* ==========================================
-   A MÁGICA DO HOVER (Quando passa o mouse)
-   ========================================== */
-.cartao-poster {
-    z-index: 1; /* Define uma base */
-}
-
-.cartao-poster:hover {
-    z-index: 999; /* Garante que o card passe por cima de todas as outras capas do site */
-}
-
-.cartao-poster:hover .capa-bg {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 3px #3b82f6;
-}
-
-.cartao-poster:hover .card-flutuante {
-    opacity: 1;
-    visibility: visible;
-    left: 95%; /* 95% faz ele sobrepor a capa de leve. Acaba o buraco fantasma! */
-    pointer-events: auto;
-}
-/* ==========================================
-   5. MODAL: DETALHES DA OBRA
-   ========================================== */
-.modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 200; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
-.modal-conteudo { background: var(--card-bg); padding: 35px; border-radius: 20px; width: 100%; max-width: 800px; position: relative; border: 1px solid #2a2a2a; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); margin: auto;}
-.botao-fechar { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: #666; font-size: 1.5rem; cursor: pointer; transition: 0.2s; padding: 5px; display: flex;}
-.botao-fechar:hover { color: white; transform: scale(1.1); }
-
-.modal-corpo { display: flex; gap: 35px; flex-wrap: wrap; }
-#modal-capa { width: 100%; max-width: 260px; height: auto; max-height: 400px; border-radius: 12px; object-fit: cover; box-shadow: 0 15px 35px rgba(0,0,0,0.4); align-self: flex-start;}
-.modal-info { flex: 1; min-width: 280px; }
-.modal-info h2 { font-size: 2.2rem; margin-bottom: 12px; line-height: 1.1; letter-spacing: -0.5px; color: #fff;}
-
-.meta-badges { display: flex; gap: 10px; margin-bottom: 15px; align-items: center;}
-.badge { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
-.badge-tipo { background: #333; color: #fff; }
-.badge-status { background: rgba(0, 132, 255, 0.1); color: var(--primary); border: 1px solid var(--primary); }
-.badge-nota { background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: 1px solid #f1c40f; display: flex; align-items: center; gap: 4px;}
-
-.titulos-alt { font-size: 0.9rem; color: #888; margin-bottom: 15px; }
-.modal-generos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
-.modal-generos .tag-genero { background: transparent; border: 1px solid #444; color: #aaa; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
-
-.controle-leitura { display: flex; align-items: center; justify-content: space-between; background: #222; border: 1px solid #333; padding: 12px 20px; border-radius: 12px; margin-bottom: 25px;}
-.leitura-label { display: flex; align-items: center; gap: 8px; color: #aaa; font-size: 0.95rem; }
-.contador { display: flex; align-items: center; background: #151515; border-radius: 8px; padding: 4px; border: 1px solid #2a2a2a;}
-.btn-contador { background: transparent; color: #fff; border: none; width: 32px; height: 32px; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;}
-.btn-contador:hover { background: #333; }
-#modal-capitulo-editavel { width: 50px; background: transparent; color: #fff; border: none; text-align: center; font-size: 1.1rem; font-weight: bold; padding: 0;}
-#modal-capitulo-editavel:focus { outline: none; }
-
-.modal-sinopse h3 { font-size: 1rem; color: #fff; margin-bottom: 10px; font-weight: 600;}
-#modal-texto-sinopse { font-size: 0.95rem; line-height: 1.6; color: #bbb; max-height: 180px; overflow-y: auto; padding-right: 15px;}
-#modal-texto-sinopse::-webkit-scrollbar { width: 5px; }
-#modal-texto-sinopse::-webkit-scrollbar-track { background: transparent; }
-#modal-texto-sinopse::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
-
-.acoes-modal { margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: space-between; align-items: center;}
-.container-links { display: flex; gap: 10px; flex-wrap: wrap;}
-.btn-ler-obra { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
-.btn-ler-obra:hover { background: var(--primary-hover); transform: translateY(-2px);}
-
-.acoes-secundarias { display: flex; gap: 10px; }
-#btn-editar-obra { background: #2a2a2a; color: #ddd; border: 1px solid #444; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
-#btn-editar-obra:hover { background: #333; border-color: #666;}
-#btn-excluir-obra { background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
-#btn-excluir-obra:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
-
-/* ==========================================
-   6. MODAL: FORMULÁRIO E INTEGRAÇÃO API
-   ========================================== */
-.modal-form-conteudo { max-width: 600px; padding: 40px; }
-#titulo-form { font-size: 1.6rem; font-weight: 700; margin-bottom: 25px; color: white; letter-spacing: -0.5px;}
-
-.busca-api-container { background: #1a2233; border: 1px solid #2d3748; padding: 18px; border-radius: 14px; margin-bottom: 25px; }
-.busca-api-header { display: flex; gap: 8px; color: #60a5fa; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
-
-.busca-api-controles { display: flex; gap: 8px; flex-wrap: wrap; }
-.select-api { flex: 1 1 120px; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 0.95rem; cursor: pointer; }
-.select-api:focus { outline: none; border-color: #60a5fa; }
-.busca-api-controles input { flex: 2 1 150px; padding: 12px 16px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 0.95rem; }
-.busca-api-controles input:focus { outline: none; border-color: #60a5fa; }
-.btn-buscar { flex: 1 1 100px; background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
-.btn-buscar:hover { background: #2563eb; }
-
-.resultado-busca-api { display: none; max-height: 250px; overflow-y: auto; margin-top: 15px; background: #0f172a; border-radius: 8px; border: 1px solid #2d3748; }
-.item-api { display: flex; gap: 12px; padding: 10px; border-bottom: 1px solid #2d3748; cursor: pointer; transition: 0.2s; }
-.item-api:hover { background: #1e293b; }
-.item-api img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
-.item-api h4 { font-size: 0.9rem; margin-bottom: 2px; }
-.item-api p { font-size: 0.7rem; color: #60a5fa; }
-
-.grupo-input { display: flex; flex-direction: column; margin-bottom: 18px; }
-.grupo-input label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
-.grupo-input input, .grupo-input select, .grupo-input textarea { background: #222; border: 1px solid #333; color: white; padding: 12px 16px; border-radius: 10px; font-family: inherit; font-size: 0.95rem; }
-.grupo-input input:focus, .grupo-input textarea:focus, .grupo-input select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); background: #282828; }
-.grupo-input textarea { resize: vertical; min-height: 100px;}
-.linha-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
-.select-wrapper { position: relative; }
-.select-wrapper select { width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer; }
-.select-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
-
-/* Links Dinâmicos no Form */
-.link-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-.link-row input { margin-bottom: 0 !important; }
-.link-name-input { flex: 1; max-width: 140px; }
-.link-url-input { flex: 2; }
-.btn-remover-link { background: #ef4444; color: white; border: none; width: 46px; height: 46px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; flex-shrink: 0; }
-.btn-remover-link:hover { background: #dc2626; transform: scale(1.05); }
-
-.btn-add-link { background: transparent; border: 2px dashed #444; color: #aaa; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
-.btn-add-link:hover { background: #2a2a2a; border-color: #666; color: white; }
-
-.btn-salvar { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;}
-.btn-salvar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 132, 255, 0.3); }
-
-/* ==========================================
-   7. RESPONSIVIDADE (CELULARES)
-   ========================================== */
-@media (max-width: 600px) {
-    .modal-corpo { flex-direction: column; align-items: center; text-align: center; }
-    .toolbar { flex-direction: column; }
-    .action-group { width: 100%; justify-content: center; }
-    .linha-inputs-grid { grid-template-columns: 1fr; gap: 0; }
-    #modal-capa { width: 200px; }
-    .modal-form-conteudo { padding: 25px 20px; }
-    .acoes-modal { justify-content: center; }
-    
-    .link-row { flex-wrap: wrap; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333;}
-    .link-name-input, .link-url-input { flex: 100%; max-width: 100%; }
-    .btn-remover-link { width: 100%; height: 40px; margin-top: 5px; }
-}
-
-/* =========================================
-   NOVO LAYOUT (SIDEBAR LATERAL)
-========================================= */
-.layout-principal {
-    display: grid; /* O Grid cria colunas rígidas, impossível de sobrepor */
-    grid-template-columns: 260px 1fr; /* 260px pra lateral, e o resto (1fr) pras capas */
-    gap: 30px;
-    max-width: 1400px;
-    margin: 30px auto;
-    padding: 0 20px;
-    align-items: start; 
-}
-
-.sidebar-filtros {
-    /* Removemos qualquer resquício de position absolute/fixed anterior */
-    position: sticky;
-    top: 20px; 
-    background: #151515;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #333;
-    z-index: 10;
-}
-
-.conteudo-principal {
-    width: 100%;
-    min-width: 0;
-    position: relative; /* Garante que as capas fiquem presas dentro desta área */
-}
-
-/* Deixa uma coluna só se abrir no celular */
-@media (max-width: 768px) {
-    .layout-principal {
-        grid-template-columns: 1fr; /* No celular as colunas somem e fica um embaixo do outro */
-    }
-    .sidebar-filtros {
-        position: relative; 
-        top: 0;
-    }
-}
-/* =========================================
-   GRADE DE MANGÁS (Arrumando as colunas)
-========================================= */
-.grid-mangas {
-    display: grid !important;
-    /* Essa linha mágica cria colunas automáticas dependendo do tamanho da tela: */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
-    gap: 25px !important;
-    width: 100% !important;
-    align-items: start;
-}
-/* Cores dos botões da barra lateral */
-.sidebar-btn {
-    text-align: left !important;
-    padding: 10px 15px !important;
-    border-radius: 8px !important;
-    border: none !important;
-    cursor: pointer !important;
-    font-weight: 500 !important;
-    background: #1e1e1e !important; 
-    color: #aaa !important; 
-    transition: 0.2s !important;
-}
-
-/* A cor de quando o botão é clicado */
-.sidebar-btn.active {
-    background: #2563eb !important; 
-    color: white !important;
-}
-
-/* =========================================
-   ESTILIZAÇÃO DAS LISTAS PERSONALIZADAS (TAGS)
-========================================= */
-#container-listas-personalizadas {
-    display: flex;
-    flex-direction: row; /* Coloca os itens lado a lado */
-    flex-wrap: wrap; /* Permite quebrar a linha quando não couber mais */
-    gap: 8px;
-    margin-bottom: 30px;
-    border-left: 2px solid #222;
-    padding-left: 12px;
-    margin-left: 5px;
-}
-
-/* Estilo da Tag ajustado para "abraçar" o texto */
-.sidebar-tag {
-    background: #2472ca;
-    color: #ffffff;
-    border: 1px solid #333;
-    /* Padding ajustado: topo/baixo=6px, esquerda=14px, direita=6px para compensar o X */
-    padding: 6px 6px 6px 14px; 
-    border-radius: 20px;
-    font-size: 0.80rem;
-    cursor: pointer;
-    transition: 0.2s;
-    font-weight: 500;
-    display: inline-flex; 
-    align-items: center;
-    width: fit-content; /* A MÁGICA: Impede que a tag estique, travando no tamanho exato do texto */
-    gap: 8px; /* Espaço exato entre a palavra e o botão vermelho */
-}
-
-.sidebar-tag:hover {
-    border-color: #666;
-    color: #fff;
-}
-
-.sidebar-tag.active {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-}
-
-/* O pequeno X vermelho com tamanho exato para ser um círculo perfeito */
-.btn-excluir-lista {
-    color: #f70000;
-    background: rgba(239, 68, 68, 0.1);
-    border-radius: 50%;
-    width: 22px; /* Trava a largura */
-    height: 22px; /* Trava a altura (largura = altura faz um círculo perfeito) */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-    opacity: 0.7; /* Um pouco mais visível que antes */
-}
-
-.btn-excluir-lista:hover {
-    background: #ef4444;
-    color: white;
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-/* =========================================
-   NOVO LAYOUT DE LISTA (MODAL DE DETALHES)
-========================================= */
-.info-tabela {
-    display: flex;
-    flex-direction: column;
-}
-
-.info-linha {
-    display: flex;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #2a2a2a;
-}
-
-.info-linha-col {
-    display: flex;
-    flex-direction: column;
-    padding: 15px 0;
-    border-bottom: 1px solid #2a2a2a;
-}
-
-.info-linha:last-child, .info-linha-col:last-child {
-    border-bottom: none; /* Tira a linha do último item */
-}
-
-.info-label {
-    width: 140px; /* Largura fixa para alinhar tudo perfeito */
-    color: #888;
-    font-weight: bold;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.info-valor {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    flex: 1;
-    align-items: center;
-}
-
-/* Formato das Tags de Status e Lista */
-.tag-moderna {
-    background: #252525;
-    color: #666;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: 1px solid transparent;
-}
-
-/* Status Ativo (Fundo vazio, borda branca) */
-.tag-moderna.active-status {
-    background: transparent;
-    color: #fff;
-    border-color: #fff;
-}
-
-/* Lista Ativa (Fundo Azul) */
-.tag-moderna.active-lista {
-    background: #3b82f6;
-    color: #fff;
-}
-
-/* Botões de Aumentar/Diminuir Capítulo */
-.contador-moderno {
-    display: flex;
-    align-items: center;
-}
-
-.btn-cont {
-    background: #333;
-    color: #fff;
-    border: none;
-    width: 32px;
-    height: 30px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-}
-
-.btn-cont:hover { background: #444; }
-
-#modal-capitulo-editavel {
-    width: 50px;
-    background: transparent;
-    color: #fff;
-    border: none;
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: bold;
-}
-#modal-capitulo-editavel:focus { outline: none; }
-
-/* =========================================
-   SISTEMA DE NOTIFICAÇÕES (TOAST)
-========================================= */
-#toast-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none; /* Deixa você clicar nas coisas através da área invisível */
-}
-
-.toast {
-    background: #252525;
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 10px;
-    border-left: 5px solid #3b82f6;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    font-size: 0.95rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transform: translateX(120%);
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Animação elástica */
-    pointer-events: auto;
-}
-
-.toast.show {
-    transform: translateX(0);
-    opacity: 1;
-}
-
-.toast.success { border-left-color: #10b981; }
-.toast.error { border-left-color: #ef4444; }
-
-/* =========================================
-   BOTÕES DE ATUALIZAÇÃO RÁPIDA (CARD)
-========================================= */
-.btn-mini-cap {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    transition: 0.2s;
-}
-
-.btn-mini-cap:hover { background: #3b82f6; transform: scale(1.1); }
-
-/* IMPORTANTE: Permite que você clique dentro do card flutuante */
-.cartao-poster:hover .card-flutuante {
-    opacity: 1;
-    visibility: visible;
-    left: 105%;
-    pointer-events: auto; 
-}
-
-/* ==========================================
-   CORREÇÃO DO VAZAMENTO DE Z-INDEX
-========================================== */
-.modal-fundo {
-    z-index: 2000 !important; /* Blinda o modal contra os hovers dos mangás no fundo */
-}
-/* =========================================
-   TELA DE LOGIN
-========================================= */
+/* ==========================================================================
+   2. TELA DE LOGIN (Acesso Restrito)
+   ========================================================================== */
 #tela-login {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #0a0a0a; /* Fundo mais escuro para focar no login */
-    z-index: 10000; /* Prioridade máxima, acima de TUDO no site */
+    background: #0a0a0a;
+    z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -597,197 +66,456 @@ main { width: 100%; margin: 0; padding: 0; }
     gap: 10px;
 }
 
-.btn-sair {
-    background: transparent;
-    border: 1px solid #555;
-    color: #ddd;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+/* ==========================================================================
+   3. CABEÇALHO E NAVEGAÇÃO
+   ========================================================================== */
+.main-header { 
+    background: var(--glass-bg); 
+    backdrop-filter: blur(12px); 
+    border-bottom: 1px solid var(--border-color); 
+    padding: 20px 0; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+}
+
+.header-container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 0 20px; 
+}
+
+.logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; }
+.logo span { color: var(--primary); }
+
+.toolbar { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 15px; 
+    flex-wrap: wrap; 
+    margin-bottom: 20px; 
+}
+
+.search-wrapper { position: relative; flex: 1; min-width: 250px; }
+.search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 1.2rem;}
+
+#barra-pesquisa { 
+    width: 100%; 
+    padding: 14px 14px 14px 44px; 
+    background: #252525; 
+    border: 1px solid transparent; 
+    border-radius: var(--radius); 
+    color: white; 
     transition: 0.2s;
 }
-.btn-sair:hover {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
+#barra-pesquisa:focus { 
+    outline: none; 
+    border-color: var(--primary); 
+    box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); 
 }
 
-/* =========================================================
-   NOVO ESTILO DO MODAL DE DETALHES
-========================================================= */
+/* ==========================================================================
+   4. LAYOUT PRINCIPAL E BARRA LATERAL (SIDEBAR)
+   ========================================================================== */
+.layout-principal {
+    display: grid; 
+    grid-template-columns: 260px 1fr; 
+    gap: 30px;
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 20px;
+    align-items: start; 
+}
 
-/* Cards rápidos (Status, Lista, Progresso) */
-.info-card-rapido {
-    background: #222;
-    padding: 12px;
-    border-radius: 8px;
+.conteudo-principal {
+    width: 100%;
+    min-width: 0;
+    position: relative; 
+}
+
+.sidebar-filtros {
+    position: sticky;
+    top: 20px; 
+    background: #151515;
+    padding: 20px;
+    border-radius: 12px;
     border: 1px solid #333;
-    display: flex;
-    flex-direction: column;
+    z-index: 10;
 }
 
-.info-card-label {
-    font-size: 0.75rem;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
+/* Botões da Sidebar */
+.sidebar-btn {
+    text-align: left !important;
+    padding: 10px 15px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    background: #1e1e1e !important; 
+    color: #aaa !important; 
+    transition: 0.2s !important;
+}
+.sidebar-btn.active { background: #2563eb !important; color: white !important; }
+
+/* Tags de Listas Personalizadas */
+#container-listas-personalizadas {
+    display: flex;
+    flex-direction: row; 
+    flex-wrap: wrap; 
+    gap: 8px;
+    margin-bottom: 30px;
+    border-left: 2px solid #222;
+    padding-left: 12px;
+    margin-left: 5px;
 }
 
-/* Novo visual do contador para não cortar números grandes */
-.contador-moderno {
-    display: flex;
+.sidebar-tag {
+    background: #2472ca;
+    color: #ffffff;
+    border: 1px solid #333;
+    padding: 6px 6px 6px 14px; 
+    border-radius: 20px;
+    font-size: 0.80rem;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+    display: inline-flex; 
     align-items: center;
-    background: #111;
-    border-radius: 6px;
-    border: 1px solid #444;
-    overflow: hidden;
-}
-
-.contador-moderno input {
-    background: transparent;
-    color: #fff;
-    border: none;
-    text-align: center;
-    width: 60px; /* Mais espaço para o número! */
-    font-size: 1rem;
-    font-weight: bold;
-    padding: 5px 0;
-}
-
-.contador-moderno input:focus {
-    outline: none;
-}
-
-/* Tags de Gêneros */
-.container-tags-genero {
-    display: flex;
-    flex-wrap: wrap;
+    width: fit-content; 
     gap: 8px;
 }
+.sidebar-tag:hover { border-color: #666; color: #fff; }
+.sidebar-tag.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-.tag-genero {
-    background: #2a2a2a;
-    color: #cbd5e1;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    border: 1px solid #444;
+.btn-excluir-lista {
+    color: #f70000;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 50%;
+    width: 22px; 
+    height: 22px; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    opacity: 0.7; 
 }
+.btn-excluir-lista:hover { background: #ef4444; color: white; opacity: 1; transform: scale(1.1); }
 
-/* Caixa da Sinopse */
-.caixa-sinopse {
-    background: #1a1a1e;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 3px solid #3b82f6; /* Detalhe azul elegante na lateral */
+/* Filtros Avançados */
+.filtros-avancados { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+.filtros-avancados select { 
+    background: #1a1a1a; 
+    color: var(--text-main); 
+    border: 1px solid var(--border-color); 
+    padding: 8px 14px; 
+    border-radius: 8px; 
+    font-size: 0.85rem; 
+    cursor: pointer; 
+    font-family: inherit; 
+    font-weight: 500; 
+    transition: 0.2s;
 }
+.filtros-avancados select:focus { outline: none; border-color: var(--primary); background: #222; }
 
-/* Scrollbar personalizada para a sinopse */
-.caixa-sinopse #modal-texto-sinopse::-webkit-scrollbar {
-    width: 6px;
+/* ==========================================================================
+   5. BOTOÕES COMUNS
+   ========================================================================== */
+.action-group { display: flex; align-items: center; gap: 10px; }
+.btn-primary { 
+    background: var(--primary); 
+    color: white; border: none; 
+    padding: 12px 20px; 
+    border-radius: var(--radius); 
+    font-weight: 600; cursor: pointer; 
+    display: flex; align-items: center; gap: 8px; 
+    transition: 0.2s; font-size: 0.95rem;
 }
-.caixa-sinopse #modal-texto-sinopse::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 4px;
-}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-/* Botões do Topo (Editar/Excluir apenas com ícones) */
+.btn-icon { 
+    background: #252525; color: var(--text-dim); border: 1px solid var(--border-color); 
+    width: 44px; height: 44px; border-radius: var(--radius); 
+    cursor: pointer; display: flex; align-items: center; justify-content: center; 
+    font-size: 1.2rem; transition: 0.2s; 
+}
+.btn-icon:hover { color: white; background: #333; }
+
+.btn-sair {
+    background: transparent; border: 1px solid #555; color: #ddd;
+    padding: 8px 15px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: 0.2s;
+}
+.btn-sair:hover { background: #ef4444; border-color: #ef4444; color: white; }
+
 .btn-icone-outline, .btn-icone-red {
-    background: transparent;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
+    background: transparent; border-radius: 8px; width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+}
+.btn-icone-outline { border: 1px solid #555; color: #ddd; }
+.btn-icone-outline:hover { background: #333; border-color: #fff; color: #fff; }
+.btn-icone-red { border: 1px solid #ef4444; color: #ef4444; }
+.btn-icone-red:hover { background: #ef4444; color: #fff; }
+
+/* ==========================================================================
+   6. GRID DE MANGÁS E CARTÕES FLUTUANTES (Estilo Netflix)
+   ========================================================================== */
+.stats-bar { text-align: right; margin-bottom: 20px; color: var(--text-dim); font-size: 0.85rem; }
+
+.grid-mangas {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    gap: 25px !important;
+    width: 100% !important;
+    align-items: start;
+}
+
+.cartao-poster { 
+    background: transparent; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    position: relative; 
+    aspect-ratio: 2 / 3; 
+    overflow: visible; 
+    z-index: 1;
+}
+.cartao-poster:hover { z-index: 999; }
+
+.capa-bg { 
+    width: 100%; height: 100%; object-fit: cover; 
+    border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    position: relative; z-index: 1;
+}
+.cartao-poster:hover .capa-bg {
+    box-shadow: 0 0 0 3px #3b82f6;
+}
+
+.card-flutuante {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(20, 20, 24, 0.95); /* Fundo quase preto com leve transparência para ver a borda da imagem */
+    padding: 15px;
+    border-radius: 8px; 
+    border: 1px solid #444;
+    
+    /* Configurações para cobrir toda a área certinha */
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-icone-outline {
-    border: 1px solid #555;
-    color: #ddd;
-}
-.btn-icone-outline:hover {
-    background: #333;
-    border-color: #fff;
-    color: #fff;
-}
-
-.btn-icone-red {
-    border: 1px solid #ef4444;
-    color: #ef4444;
-}
-.btn-icone-red:hover {
-    background: #ef4444;
-    color: #fff;
-}
-/* Remove as setas nativas do input de número no Chrome, Safari, Edge e Opera */
-.contador-moderno input[type="number"]::-webkit-inner-spin-button,
-.contador-moderno input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* Remove as setas nativas no Firefox */
-.contador-moderno input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-/* =========================================================
-   ESTILO DOS NOMES ALTERNATIVOS (TAGS DISCRETAS)
-========================================================= */
-.container-tags-alt {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.tag-alt {
-    background: transparent;
-    color: #94a3b8; /* Cor cinza-azulado suave */
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    border: 1px solid #334155; /* Borda bem discreta */
-    transition: 0.2s;
-}
-
-/* Um leve brilho ao passar o mouse por cima */
-.tag-alt:hover {
-    border-color: #64748b;
-    color: #cbd5e1;
-}
-/* =========================================================
-   ESTILO DOS BOTÕES DE LEITURA (EMBAIXO DA CAPA)
-========================================================= */
-.btn-ler-obra {
-    background: #3b82f6;
-    color: #fff;
-    text-decoration: none;
-    padding: 8px 10px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: 0.2s;
-    width: 100%; /* Faz o botão esticar para preencher a grade */
     box-sizing: border-box;
-    text-align: center;
-    border: 1px solid transparent;
+
+    opacity: 0; 
+    visibility: hidden; 
+    pointer-events: none; 
+    transition: all 0.3s ease; 
+    z-index: 100;
+}
+.cartao-poster:hover .card-flutuante {
+    opacity: 1; 
+    visibility: visible; 
+    /* Removemos a linha do 'left: 105%' para que não vá para o lado */
+    pointer-events: auto;
 }
 
-/* Efeito moderno ao passar o mouse */
-.btn-ler-obra:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+.titulo-flutuante { margin: 0 0 10px 0; font-size: 1.1rem; color: #fff; line-height: 1.3; }
+.info-flutuante { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #ccc; font-weight: bold; }
+
+.tipo-manga { border-left: 3px solid #0984e3; background: rgba(0,0,0,0.3); }
+.tipo-manhwa { border-left: 3px solid #e84393; background: rgba(0,0,0,0.3); }
+.tipo-novel { border-left: 3px solid #6c5ce7; background: rgba(0,0,0,0.3); }
+
+.btn-mini-cap {
+    background: rgba(255, 255, 255, 0.1); border: none; color: white;
+    width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: bold; transition: 0.2s;
+}
+.btn-mini-cap:hover { background: #3b82f6; transform: scale(1.1); }
+
+/* ==========================================================================
+   7. MODAIS (Fundo e Corpo)
+   ========================================================================== */
+.modal-fundo { 
+    display: none; position: fixed; inset: 0; 
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); 
+    z-index: 2000 !important; /* Blindagem garantida sobre os cards */
+    justify-content: center; align-items: center; 
+    padding: 20px; overflow-y: auto; 
+}
+.modal-conteudo { 
+    background: var(--card-bg); padding: 35px; border-radius: 20px; 
+    width: 100%; max-width: 800px; position: relative; border: 1px solid #2a2a2a; 
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); margin: auto;
+}
+.botao-fechar { 
+    position: absolute; top: 20px; right: 20px; background: transparent; 
+    border: none; color: #666; font-size: 1.5rem; cursor: pointer; 
+    transition: 0.2s; padding: 5px; display: flex;
+}
+.botao-fechar:hover { color: white; transform: scale(1.1); }
+.modal-corpo { display: flex; gap: 35px; flex-wrap: wrap; }
+
+/* ==========================================================================
+   8. MODAL DE DETALHES (Visão da Obra)
+   ========================================================================== */
+#modal-capa { 
+    width: 100%; max-width: 260px; height: auto; max-height: 400px; 
+    border-radius: 12px; object-fit: cover; box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+    align-self: flex-start;
+}
+.modal-info { flex: 1; min-width: 280px; }
+.modal-info h2 { font-size: 2.2rem; margin-bottom: 12px; line-height: 1.1; letter-spacing: -0.5px; color: #fff;}
+
+.info-card-rapido {
+    background: #222; padding: 12px; border-radius: 8px; border: 1px solid #333;
+    display: flex; flex-direction: column;
+}
+.info-card-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
+
+/* Tags (Gêneros e Títulos Alternativos) */
+.container-tags-genero { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-genero { 
+    background: #2a2a2a; color: #cbd5e1; padding: 4px 10px; 
+    border-radius: 20px; font-size: 0.8rem; border: 1px solid #444; 
+}
+.container-tags-alt { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-alt { 
+    background: transparent; color: #94a3b8; padding: 4px 8px; 
+    border-radius: 4px; font-size: 0.75rem; border: 1px solid #334155; transition: 0.2s; 
+}
+.tag-alt:hover { border-color: #64748b; color: #cbd5e1; }
+
+/* Contadores e Sinopse */
+.contador-moderno {
+    display: flex; align-items: center; background: #111;
+    border-radius: 6px; border: 1px solid #444; overflow: hidden;
+}
+.btn-cont {
+    background: #333; color: #fff; border: none; width: 32px; height: 30px;
+    border-radius: 6px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: 0.2s;
+}
+.btn-cont:hover { background: #444; }
+.contador-moderno input {
+    background: transparent; color: #fff; border: none; text-align: center;
+    width: 60px; font-size: 1rem; font-weight: bold; padding: 5px 0;
+}
+.contador-moderno input:focus { outline: none; }
+/* Remove setas do input number */
+.contador-moderno input[type="number"]::-webkit-inner-spin-button,
+.contador-moderno input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.contador-moderno input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+.caixa-sinopse {
+    background: #1a1a1e; padding: 15px; border-radius: 8px;
+    border-left: 3px solid #3b82f6; 
+}
+#modal-texto-sinopse { font-size: 0.95rem; line-height: 1.6; color: #bbb; max-height: 180px; overflow-y: auto; padding-right: 15px;}
+#modal-texto-sinopse::-webkit-scrollbar { width: 6px; }
+#modal-texto-sinopse::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+/* Botões de Ler Obra */
+.btn-ler-obra {
+    background: #3b82f6; color: #fff; text-decoration: none; padding: 8px 10px;
+    border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex;
+    align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
+    width: 100%; box-sizing: border-box; text-align: center; border: 1px solid transparent;
+}
+.btn-ler-obra:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); }
+
+/* ==========================================================================
+   9. MODAL DE FORMULÁRIO E INTEGRAÇÃO DE API
+   ========================================================================== */
+.modal-form-conteudo { max-width: 600px; padding: 40px; }
+#titulo-form { font-size: 1.6rem; font-weight: 700; margin-bottom: 25px; color: white; letter-spacing: -0.5px;}
+
+.busca-api-container { background: #1a2233; border: 1px solid #2d3748; padding: 18px; border-radius: 14px; margin-bottom: 25px; }
+.busca-api-header { display: flex; gap: 8px; color: #60a5fa; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
+.busca-api-controles { display: flex; gap: 8px; flex-wrap: wrap; }
+.busca-api-controles input { flex: 2 1 150px; padding: 12px 16px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 0.95rem; }
+.busca-api-controles input:focus { outline: none; border-color: #60a5fa; }
+.btn-buscar { flex: 1 1 100px; background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
+.btn-buscar:hover { background: #2563eb; }
+
+.resultado-busca-api { display: none; max-height: 250px; overflow-y: auto; margin-top: 15px; background: #0f172a; border-radius: 8px; border: 1px solid #2d3748; }
+.item-api { display: flex; gap: 12px; padding: 10px; border-bottom: 1px solid #2d3748; cursor: pointer; transition: 0.2s; }
+.item-api:hover { background: #1e293b; }
+.item-api img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
+.item-api h4 { font-size: 0.9rem; margin-bottom: 2px; }
+.item-api p { font-size: 0.7rem; color: #60a5fa; }
+
+/* Campos do Formulário */
+.grupo-input { display: flex; flex-direction: column; margin-bottom: 18px; }
+.grupo-input label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
+.grupo-input input, .grupo-input select, .grupo-input textarea { 
+    background: #222; border: 1px solid #333; color: white; padding: 12px 16px; 
+    border-radius: 10px; font-family: inherit; font-size: 0.95rem; 
+}
+.grupo-input input:focus, .grupo-input textarea:focus, .grupo-input select:focus { 
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.15); background: #282828; 
+}
+.grupo-input textarea { resize: vertical; min-height: 100px;}
+.linha-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+/* Links Dinâmicos */
+.link-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+.link-row input { margin-bottom: 0 !important; }
+.link-name-input { flex: 1; max-width: 140px; }
+.link-url-input { flex: 2; }
+.btn-remover-link { background: #ef4444; color: white; border: none; width: 46px; height: 46px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; flex-shrink: 0; }
+.btn-remover-link:hover { background: #dc2626; transform: scale(1.05); }
+
+.btn-add-link { background: transparent; border: 2px dashed #444; color: #aaa; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
+.btn-add-link:hover { background: #2a2a2a; border-color: #666; color: white; }
+
+.btn-salvar { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;}
+.btn-salvar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 132, 255, 0.3); }
+
+/* ==========================================================================
+   10. SISTEMA DE NOTIFICAÇÕES (TOAST)
+   ========================================================================== */
+#toast-container {
+    position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+}
+.toast {
+    background: #252525; color: #fff; padding: 15px 20px; border-radius: 10px;
+    border-left: 5px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 12px;
+    transform: translateX(120%); opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    pointer-events: auto;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.success { border-left-color: #10b981; }
+.toast.error { border-left-color: #ef4444; }
+
+/* ==========================================================================
+   11. RESPONSIVIDADE E DISPOSITIVOS MÓVEIS
+   ========================================================================== */
+@media (max-width: 768px) {
+    .layout-principal {
+        grid-template-columns: 1fr; /* Colapsa a barra lateral */
+    }
+    .sidebar-filtros {
+        position: relative; 
+        top: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-corpo { flex-direction: column; align-items: center; text-align: center; }
+    .toolbar { flex-direction: column; }
+    .action-group { width: 100%; justify-content: center; }
+    .linha-inputs-grid { grid-template-columns: 1fr; gap: 0; }
+    #modal-capa { width: 200px; }
+    .modal-form-conteudo { padding: 25px 20px; }
+    
+    .link-row { flex-wrap: wrap; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333;}
+    .link-name-input, .link-url-input { flex: 100%; max-width: 100%; }
+    .btn-remover-link { width: 100%; height: 40px; margin-top: 5px; }
 }

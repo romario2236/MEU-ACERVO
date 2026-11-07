@@ -1,21 +1,15 @@
 // ============================================================================
-// 1. IMPORTAÇÕES E CONFIGURAÇÕES DO FIREBASE
+// 1. FIREBASE & CONFIGURAÇÕES
 // ============================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    getDocs, 
-    onSnapshot,
-    updateDoc,  
-    doc,        
-    deleteDoc,  
-    initializeFirestore, 
-    persistentLocalCache, 
-    persistentMultipleTabManager 
+    getFirestore, collection, addDoc, getDocs, onSnapshot, 
+    updateDoc, doc, deleteDoc, initializeFirestore, 
+    persistentLocalCache, persistentMultipleTabManager 
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { 
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAH-7clKFuTdisyN4fNxGd1JTicX3ZWJnw",
@@ -29,9 +23,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+    localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
 });
 const auth = getAuth(app);
+
 
 // ============================================================================
 // 2. VARIÁVEIS DE ESTADO E REFERÊNCIAS DO DOM
@@ -45,6 +40,12 @@ let filtroTexto = "";
 let filtroTipo = "Todos";
 let filtroListaAtiva = "Todas";
 let mostrarAdulto = false; 
+let pausarRedraw = false; 
+
+let itensPorPagina = 24; 
+let itensCarregados = 0;
+let listaAtualFiltrada = [];
+let carregandoScroll = false;
 
 const conteinerMangas = document.getElementById("lista-mangas");
 const barraPesquisa = document.getElementById("barra-pesquisa");
@@ -52,30 +53,10 @@ const modalFundo = document.getElementById("modal-fundo");
 const modalFormFundo = document.getElementById("modal-form-fundo");
 const formulario = document.getElementById("form-nova-obra");
 
+
 // ============================================================================
-// 3. COMUNICAÇÃO COM O BANCO DE DADOS (CRUD)
+// 3. AUTENTICAÇÃO E LOGIN
 // ============================================================================
-let pausarRedraw = false; 
-
-function carregarAcervo() {
-    onSnapshot(collection(db, "mangas"), (snapshot) => {
-        acervo = [];
-        snapshot.forEach(doc => {
-            let obra = doc.data();
-            obra.idFirebase = doc.id;
-            acervo.push(obra);
-        });
-        
-        if (pausarRedraw) {
-            pausarRedraw = false;
-            return; 
-        }
-
-        aplicarFiltros(); 
-        if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
-    });
-}
-
 const telaLogin = document.getElementById("tela-login");
 const formLogin = document.getElementById("form-login");
 const loginErro = document.getElementById("login-erro");
@@ -115,12 +96,36 @@ if(formLogin) {
 
 window.fazerLogout = () => { signOut(auth); };
 
+
+// ============================================================================
+// 4. COMUNICAÇÃO COM O BANCO DE DADOS (CRUD)
+// ============================================================================
+function carregarAcervo() {
+    onSnapshot(collection(db, "mangas"), (snapshot) => {
+        acervo = [];
+        snapshot.forEach(doc => {
+            let obra = doc.data();
+            obra.idFirebase = doc.id;
+            acervo.push(obra);
+        });
+        
+        if (pausarRedraw) {
+            pausarRedraw = false;
+            return; 
+        }
+
+        aplicarFiltros(); 
+        if (idAbertoNoModal && modalFundo.style.display === "flex") window.abrirModal(idAbertoNoModal);
+    });
+}
+
 formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = document.getElementById("input-id-firebase").value;
     const btn = formulario.querySelector('.btn-salvar');
     btn.innerHTML = '<i class="ph ph-spinner-gap"></i> Salvando...';
     
+    // Processamento de links e listas
     const linksArray = [];
     document.querySelectorAll('.link-row').forEach(row => {
         const nome = row.querySelector('.link-name-input').value.trim();
@@ -129,24 +134,30 @@ formulario.addEventListener("submit", async (e) => {
     });
 
     let listasArray = ["Geral"];
-    try { listasArray = JSON.parse(document.getElementById("input-lista").value); } 
-    catch(err) { listasArray = [document.getElementById("input-lista").value || "Geral"]; }
+    try { 
+        listasArray = JSON.parse(document.getElementById("input-lista").value); 
+    } catch(err) { 
+        listasArray = [document.getElementById("input-lista").value || "Geral"]; 
+    }
 
     const ehAdulto = document.getElementById("input-adulto") ? document.getElementById("input-adulto").checked : false;
 
+    // Objeto da obra consolidado
     const obra = {
         titulo: document.getElementById("input-titulo").value.trim() || "",
         titulosAlternativos: document.getElementById("input-titulos-alt").value || "",
         generos: document.getElementById("input-generos").value || "",
-        listasPersonalizadas: listasArray, 
-        listaPersonalizada: listasArray[0] || "Geral", 
         tipo: document.getElementById("input-tipo").value || "Mangá",
-        capitulo: document.getElementById("input-capitulo").value || "0",
-        meuStatus: document.getElementById("input-meu-status") ? document.getElementById("input-meu-status").value : "Lendo",
-        status: document.getElementById("input-status").value || "Em Andamento",
         nota: parseFloat(document.getElementById("input-nota").value) || 5,
         capa: document.getElementById("input-capa").value || "",
         sinopse: document.getElementById("input-sinopse").value || "",
+        diario: document.getElementById("input-diario") ? document.getElementById("input-diario").value : "",
+        status: document.getElementById("input-status").value || "Em Andamento",
+        capitulo: document.getElementById("input-capitulo").value || "0",
+        meuStatus: document.getElementById("input-meu-status") ? document.getElementById("input-meu-status").value : "Lendo",
+        capituloAnterior: document.getElementById("input-cap-anterior") ? (document.getElementById("input-cap-anterior").value || "0") : "0", 
+        listasPersonalizadas: listasArray, 
+        listaPersonalizada: listasArray[0] || "Geral", 
         linksLeitura: linksArray,
         adulto: ehAdulto 
     };
@@ -173,6 +184,7 @@ formulario.addEventListener("submit", async (e) => {
         }
     };
 
+    // Sistema de verificação de duplicatas
     let nomesDigitados = [obra.titulo.toLowerCase().trim()];
     if (obra.titulosAlternativos) {
         const altsDigitados = obra.titulosAlternativos.split(',').map(n => n.toLowerCase().trim()).filter(Boolean);
@@ -229,14 +241,10 @@ formulario.addEventListener("submit", async (e) => {
     executarSalvamento();
 });
 
-// ============================================================================
-// 4. INTERFACE, BUSCA AVANÇADA E FILTROS
-// ============================================================================
-let itensPorPagina = 24; 
-let itensCarregados = 0;
-let listaAtualFiltrada = [];
-let carregandoScroll = false;
 
+// ============================================================================
+// 5. INTERFACE, FILTROS E PAGINAÇÃO
+// ============================================================================
 function obterTodasAsListas() {
     let todas = [];
     acervo.forEach(o => {
@@ -336,10 +344,8 @@ window.toggleAdulto = function() {
 window.aplicarFiltros = () => {
     let listaFiltrada = acervo.filter(o => o.titulo !== "_LIST_MARKER_");
 
-    if (!mostrarAdulto) {
-        listaFiltrada = listaFiltrada.filter(o => o.adulto !== true);
-    }
-
+    if (!mostrarAdulto) listaFiltrada = listaFiltrada.filter(o => o.adulto !== true);
+    
     atualizarBotoesListas();
 
     if (filtroTexto) {
@@ -385,7 +391,6 @@ window.aplicarFiltros = () => {
 
     listaAtualFiltrada = listaFiltrada;
     itensCarregados = 0;
-    const conteinerMangas = document.getElementById("lista-mangas");
     if(conteinerMangas) conteinerMangas.innerHTML = ""; 
     
     const contador = document.getElementById("contador-total");
@@ -404,15 +409,16 @@ function carregarMaisItens() {
 
         // Cores do "Meu Status"
         let statusPessoal = obra.meuStatus || "Lendo";
-        let corMeuStatus = "#3b82f6"; // Azul
+        let corMeuStatus = "#3b82f6"; 
         let iconeMeuStatus = "ph-book-open";
         if (statusPessoal === "Finalizado") { corMeuStatus = "#10b981"; iconeMeuStatus = "ph-check-circle"; } 
         if (statusPessoal === "Pausado") { corMeuStatus = "#f59e0b"; iconeMeuStatus = "ph-pause-circle"; } 
         if (statusPessoal === "Abandonado") { corMeuStatus = "#ef4444"; iconeMeuStatus = "ph-x-circle"; } 
-
+        if (statusPessoal === "Relendo") { corMeuStatus = "#8b5cf6"; iconeMeuStatus = "ph-arrows-clockwise"; } 
+        
         // Cores do "Status Lançamento"
         let statusLancamento = obra.status || "Em Andamento";
-        let corLancamento = "#3b82f6"; // Azul
+        let corLancamento = "#3b82f6"; 
         if (statusLancamento === "Finalizado") corLancamento = "#10b981";
         if (statusLancamento === "Hiato") corLancamento = "#f59e0b";
 
@@ -436,10 +442,7 @@ function carregarMaisItens() {
 
                         <span><i class="ph-fill ph-star" style="color: #f59e0b;"></i> Nota: ${(obra.nota || 5).toFixed(1)}</span>
                         
-                        <!-- O "Meu Status" no balão flutuante atualizável -->
                         <span id="status-leitura-rapido-${obra.idFirebase}"><i class="ph-fill ${iconeMeuStatus}" style="color: ${corMeuStatus};"></i> Leitura: ${statusPessoal}</span>
-                        
-                        <!-- NOVO: O "Status Lançamento" com ID dinâmico no balão flutuante -->
                         <span id="status-lancamento-rapido-${obra.idFirebase}"><i class="ph-fill ph-tag" style="color: ${corLancamento};"></i> Lanc: ${statusLancamento}</span>
                         
                         <span class="${classeTipo}" style="margin-top: 5px; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-align: center;">${obra.tipo}</span>
@@ -451,23 +454,317 @@ function carregarMaisItens() {
     itensCarregados += proximosItens.length;
 }
 
-window.addEventListener('scroll', () => {
-    if (carregandoScroll) return; 
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
-        carregandoScroll = true;
-        carregarMaisItens();
-        setTimeout(() => { carregandoScroll = false; }, 100);
+
+// ============================================================================
+// 6. MODAIS, EDIÇÃO E FORMULÁRIOS
+// ============================================================================
+window.abrirModalForm = () => {
+    renderizarTagsSelecao(["Geral"]);
+    const modalForm = document.getElementById('modal-form-fundo');
+    const form = document.getElementById('form-nova-obra');
+    
+    if (form) form.reset(); 
+    document.getElementById('input-id-firebase').value = ""; 
+    document.getElementById('titulo-form').innerText = "Nova Obra"; 
+    
+    const containerLinks = document.getElementById("container-links-inputs");
+    if (containerLinks) {
+        containerLinks.innerHTML = ""; 
+        window.adicionarCampoLink();   
     }
-});
+    
+    const divResultadosApi = document.getElementById("resultado-busca-api");
+    if (divResultadosApi) divResultadosApi.style.display = "none";
+    
+    // Mostra/Esconde a caixa do Relendo ao resetar
+    if (document.getElementById("input-cap-anterior")) {
+        document.getElementById("caixa-cap-anterior").style.display = "none";
+    }
 
-barraPesquisa.addEventListener("input", (e) => {
-    filtroTexto = e.target.value.toLowerCase();
-    aplicarFiltros();
-});
+    if (modalForm) modalForm.style.display = 'flex'; 
+};
 
-// ============================================================================
-// 5. MODAIS, EDIÇÃO E LINKS DINÂMICOS
-// ============================================================================
+window.abrirModal = function(id) {
+    const obra = acervo.find(i => i.idFirebase === id);
+    if (!obra) return;
+
+    idAbertoNoModal = id;
+    document.getElementById("modal-capa").src = obra.capa || "";
+    document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
+    
+    // --- LÓGICA: Tags de Meu Status Interativas ---
+    const meuStatusContainer = document.getElementById("modal-meu-status-tags");
+    if (meuStatusContainer) {
+        meuStatusContainer.innerHTML = "";
+        const opcoesStatus = [
+            { nome: "Lendo", cor: "#3b82f6" },
+            { nome: "Relendo", cor: "#8b5cf6" }, 
+            { nome: "Pausado", cor: "#f59e0b" },
+            { nome: "Finalizado", cor: "#10b981" },
+            { nome: "Abandonado", cor: "#ef4444" }
+        ];
+        
+        let statusPessoal = obra.meuStatus || "Lendo";
+
+        opcoesStatus.forEach(opt => {
+            const tag = document.createElement("span");
+            tag.innerText = opt.nome;
+            const isSelecionada = (statusPessoal === opt.nome);
+
+            tag.style.cssText = `
+                padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
+                cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
+                color: ${isSelecionada ? opt.cor : '#888'};
+                font-weight: ${isSelecionada ? 'bold' : 'normal'};
+            `;
+
+            tag.onclick = async (e) => {
+                e.stopPropagation(); 
+                if (statusPessoal === opt.nome) return; 
+                
+                pausarRedraw = true; 
+                try {
+                    await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
+                    obra.meuStatus = opt.nome; 
+                    
+                    const spanHover = document.getElementById(`status-leitura-rapido-${id}`);
+                    let iconeNovo = "ph-book-open";
+                    if (opt.nome === "Finalizado") iconeNovo = "ph-check-circle";
+                    if (opt.nome === "Relendo") iconeNovo = "ph-arrows-clockwise";
+                    if (opt.nome === "Pausado") iconeNovo = "ph-pause-circle";
+                    if (opt.nome === "Abandonado") iconeNovo = "ph-x-circle";
+
+                    if (spanHover) {
+                        spanHover.innerHTML = `<i class="ph-fill ${iconeNovo}" style="color: ${opt.cor};"></i> Leitura: ${opt.nome}`;
+                    }
+                    window.abrirModal(id); 
+                } catch(err) { console.error("Erro ao alterar meu status", err); }
+            };
+            meuStatusContainer.appendChild(tag);
+        });
+    }
+
+    // --- LÓGICA: Tags de Status Lançamento Interativas ---
+    const statusContainer = document.getElementById("modal-status-tags");
+    if (statusContainer) {
+        statusContainer.innerHTML = "";
+        const opcoesLancamento = [
+            { nome: "Em Andamento", cor: "#3b82f6" },
+            { nome: "Finalizado", cor: "#10b981" },
+            { nome: "Hiato", cor: "#f59e0b" }
+        ];
+        
+        let statusObra = obra.status || "Em Andamento";
+
+        opcoesLancamento.forEach(opt => {
+            const tag = document.createElement("span");
+            tag.innerText = opt.nome;
+            const isSelecionada = (statusObra === opt.nome);
+
+            tag.style.cssText = `
+                padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
+                cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
+                color: ${isSelecionada ? opt.cor : '#888'};
+                font-weight: ${isSelecionada ? 'bold' : 'normal'};
+            `;
+
+            tag.onclick = async (e) => {
+                e.stopPropagation(); 
+                if (statusObra === opt.nome) return; 
+                
+                pausarRedraw = true;
+                try {
+                    await updateDoc(doc(db, "mangas", id), { status: opt.nome });
+                    obra.status = opt.nome; 
+                    
+                    const spanHoverLanc = document.getElementById(`status-lancamento-rapido-${id}`);
+                    if (spanHoverLanc) {
+                        spanHoverLanc.innerHTML = `<i class="ph-fill ph-tag" style="color: ${opt.cor};"></i> Lanc: ${opt.nome}`;
+                    }
+                    window.abrirModal(id);
+                } catch(err) { console.error("Erro ao alterar status de lançamento", err); }
+            };
+            statusContainer.appendChild(tag);
+        });
+    }
+
+    // --- LÓGICA: Tags de Listas Interativas ---
+    const listasContainer = document.getElementById("modal-listas-tags");
+    if (listasContainer) {
+        let selecionadas = Array.isArray(obra.listasPersonalizadas) ? [...obra.listasPersonalizadas] : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
+        if (selecionadas.length === 0) selecionadas = ["Geral"];
+
+        const listasUnicas = obterTodasAsListas();
+        if (!listasUnicas.includes("Geral")) listasUnicas.unshift("Geral");
+
+        listasContainer.innerHTML = "";
+
+        listasUnicas.forEach(nome => {
+            const tag = document.createElement("span");
+            tag.innerText = nome;
+            const isSelecionada = selecionadas.includes(nome);
+
+            tag.style.cssText = `
+                padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? '#3b82f6' : '#333'};
+                cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
+                background: ${isSelecionada ? '#3b82f620' : '#1a1a1a'};
+                color: ${isSelecionada ? '#3b82f6' : '#888'};
+                font-weight: ${isSelecionada ? 'bold' : 'normal'};
+            `;
+
+            tag.onclick = async (e) => {
+                e.stopPropagation(); 
+                
+                let novasSelecionadas = [...selecionadas];
+                if (nome === "Geral") {
+                    novasSelecionadas = ["Geral"];
+                } else {
+                    novasSelecionadas = novasSelecionadas.filter(l => l !== "Geral");
+                    if (novasSelecionadas.includes(nome)) {
+                        novasSelecionadas = novasSelecionadas.filter(l => l !== nome);
+                    } else {
+                        novasSelecionadas.push(nome);
+                    }
+                    if (novasSelecionadas.length === 0) novasSelecionadas = ["Geral"];
+                }
+
+                pausarRedraw = true; 
+                try {
+                    await updateDoc(doc(db, "mangas", id), {
+                        listasPersonalizadas: novasSelecionadas,
+                        listaPersonalizada: novasSelecionadas[0]
+                    });
+                    obra.listasPersonalizadas = novasSelecionadas;
+                    obra.listaPersonalizada = novasSelecionadas[0];
+                    window.abrirModal(id); 
+                } catch(err) { console.error("Erro ao alterar lista", err); }
+            };
+            listasContainer.appendChild(tag);
+        });
+    }
+
+    // --- Tratamento dos Textos, Capítulos e Releitura ---
+    document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
+    
+    const inputAnterior = document.getElementById("modal-cap-anterior-editavel");
+    const containerReleitura = document.getElementById("container-releitura");
+    if (inputAnterior && containerReleitura) {
+        inputAnterior.value = obra.capituloAnterior || "0";
+        containerReleitura.style.display = (obra.meuStatus === "Relendo") ? "flex" : "none";
+    }
+
+    const generosContainer = document.getElementById("modal-generos-texto");
+    if (generosContainer) {
+        generosContainer.innerHTML = "";
+        if (obra.generos) {
+            const listaGeneros = obra.generos.split(',').map(g => g.trim()).filter(g => g);
+            listaGeneros.forEach(gen => { generosContainer.innerHTML += `<span class="tag-genero">${gen}</span>`; });
+        } else {
+            generosContainer.innerHTML = `<span style="color: #666; font-size: 0.85rem;">Nenhum gênero cadastrado</span>`;
+        }
+    }
+    
+    const altContainer = document.getElementById("modal-titulos-alt");
+    if (altContainer) {
+        altContainer.innerHTML = "";
+        if (obra.titulosAlternativos) {
+            const listaAlt = obra.titulosAlternativos.split(',').map(t => t.trim()).filter(t => t);
+            listaAlt.forEach(alt => { altContainer.innerHTML += `<span class="tag-alt">${alt}</span>`; });
+        } else {
+            altContainer.innerHTML = `<span style="color: #555; font-size: 0.8rem; font-style: italic;">Nenhum nome alternativo</span>`;
+        }
+    }
+    
+    document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
+    if(document.getElementById("modal-diario-editavel")) document.getElementById("modal-diario-editavel").value = obra.diario || "";
+
+    const containerLinks = document.getElementById("container-links-leitura");
+    containerLinks.innerHTML = "";
+    if (obra.linksLeitura && Array.isArray(obra.linksLeitura)) {
+        obra.linksLeitura.forEach(linha => {
+            if (typeof linha === 'string') {
+                let url = linha.trim(), nomeBotao = "Ler";
+                if (linha.includes('|')) {
+                    const partes = linha.split('|');
+                    nomeBotao = partes[0].trim(); url = partes[1].trim();
+                } else {
+                    try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
+                }
+                if(url && !url.startsWith('http')) url = 'https://' + url;
+                containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
+            }
+        });
+    }
+    
+    modalFundo.style.display = "flex";
+}
+
+window.prepararEdicao = function() {
+    const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
+    if (!o) return;
+    
+    const listasDoManga = o.listasPersonalizadas || (o.listaPersonalizada ? [o.listaPersonalizada] : ["Geral"]);
+    renderizarTagsSelecao(listasDoManga);
+    
+    document.getElementById("input-titulo").value = o.titulo || "";
+    document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
+    document.getElementById("input-generos").value = o.generos || "";
+    document.getElementById("input-tipo").value = o.tipo || "Mangá";
+    document.getElementById("input-capitulo").value = o.capitulo || 0;
+    document.getElementById("input-id-firebase").value = o.idFirebase;
+    
+    if (document.getElementById("input-meu-status")) {
+        document.getElementById("input-meu-status").value = o.meuStatus || "Lendo";
+    }
+    if (document.getElementById("input-cap-anterior")) {
+        document.getElementById("input-cap-anterior").value = o.capituloAnterior || "0";
+        document.getElementById("caixa-cap-anterior").style.display = (o.meuStatus === "Relendo") ? "flex" : "none";
+    }
+    
+    document.getElementById("input-status").value = o.status || "Em Andamento";
+    document.getElementById("input-nota").value = o.nota || 5;
+    document.getElementById("input-capa").value = o.capa || "";
+    document.getElementById("input-sinopse").value = o.sinopse || "";
+    if(document.getElementById("input-diario")) document.getElementById("input-diario").value = o.diario || "";
+    
+    if (document.getElementById("input-adulto")) {
+        document.getElementById("input-adulto").checked = o.adulto === true;
+    }
+    
+    const containerLinks = document.getElementById("container-links-inputs");
+    containerLinks.innerHTML = "";
+    if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
+        o.linksLeitura.forEach(linha => {
+            if (typeof linha === 'string') {
+                let nome = "", url = linha;
+                if (linha.includes('|')) {
+                    const partes = linha.split('|');
+                    nome = partes[0].trim(); url = partes[1].trim();
+                }
+                window.adicionarCampoLink(nome, url);
+            }
+        });
+    } else { 
+        window.adicionarCampoLink(); 
+    }
+    
+    fecharModal(); 
+    document.getElementById('titulo-form').innerText = "Editar Obra"; 
+    modalFormFundo.style.display = "flex"; 
+}
+
+window.prepararAdicao = function() {
+    formulario.reset();
+    document.getElementById("input-id-firebase").value = "";
+    document.getElementById("resultado-busca-api").style.display = "none";
+    document.getElementById("container-links-inputs").innerHTML = "";
+    if (document.getElementById("input-meu-status")) document.getElementById("input-meu-status").value = "Lendo";
+    window.adicionarCampoLink();
+    modalFormFundo.style.display = "flex";
+}
+
 window.adicionarCampoLink = function(nome = "", url = "") {
     const container = document.getElementById("container-links-inputs");
     if(!container) return; 
@@ -479,221 +776,6 @@ window.adicionarCampoLink = function(nome = "", url = "") {
         <button type="button" class="btn-remover-link" onclick="this.parentElement.remove()" title="Remover link"><i class="ph ph-x"></i></button>
     `;
     container.appendChild(div);
-}
-
-window.abrirModal = function(id) {
-    const obra = acervo.find(i => i.idFirebase === id);
-    if (obra) {
-        idAbertoNoModal = id;
-        document.getElementById("modal-capa").src = obra.capa || "";
-        document.getElementById("modal-titulo").innerText = obra.titulo || "Sem Título";
-        
-        // --- 1. LÓGICA: Tags de Meu Status Interativas ---
-        const meuStatusContainer = document.getElementById("modal-meu-status-tags");
-        if (meuStatusContainer) {
-            meuStatusContainer.innerHTML = "";
-            const opcoesStatus = [
-                { nome: "Lendo", cor: "#3b82f6" },
-                { nome: "Pausado", cor: "#f59e0b" },
-                { nome: "Finalizado", cor: "#10b981" },
-                { nome: "Abandonado", cor: "#ef4444" }
-            ];
-            
-            let statusPessoal = obra.meuStatus || "Lendo";
-
-            opcoesStatus.forEach(opt => {
-                const tag = document.createElement("span");
-                tag.innerText = opt.nome;
-                const isSelecionada = (statusPessoal === opt.nome);
-
-                tag.style.cssText = `
-                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
-                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
-                    background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
-                    color: ${isSelecionada ? opt.cor : '#888'};
-                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
-                `;
-
-                tag.onclick = async (e) => {
-                    e.stopPropagation(); 
-                    if (statusPessoal === opt.nome) return; 
-                    
-                    pausarRedraw = true; 
-                    try {
-                        await updateDoc(doc(db, "mangas", id), { meuStatus: opt.nome });
-                        obra.meuStatus = opt.nome; 
-                        
-                        const spanHover = document.getElementById(`status-leitura-rapido-${id}`);
-                        let iconeNovo = "ph-book-open";
-                        if (opt.nome === "Finalizado") iconeNovo = "ph-check-circle";
-                        if (opt.nome === "Pausado") iconeNovo = "ph-pause-circle";
-                        if (opt.nome === "Abandonado") iconeNovo = "ph-x-circle";
-
-                        if (spanHover) {
-                            spanHover.innerHTML = `<i class="ph-fill ${iconeNovo}" style="color: ${opt.cor};"></i> Leitura: ${opt.nome}`;
-                        }
-
-                        window.abrirModal(id); 
-                    } catch(err) {
-                        console.error("Erro ao alterar meu status", err);
-                    }
-                };
-                meuStatusContainer.appendChild(tag);
-            });
-        }
-
-        // --- 2. LÓGICA: Tags de Status Lançamento Interativas (NOVO) ---
-        const statusContainer = document.getElementById("modal-status-tags");
-        if (statusContainer) {
-            statusContainer.innerHTML = "";
-            const opcoesLancamento = [
-                { nome: "Em Andamento", cor: "#3b82f6" },
-                { nome: "Finalizado", cor: "#10b981" },
-                { nome: "Hiato", cor: "#f59e0b" }
-            ];
-            
-            let statusObra = obra.status || "Em Andamento";
-
-            opcoesLancamento.forEach(opt => {
-                const tag = document.createElement("span");
-                tag.innerText = opt.nome;
-                const isSelecionada = (statusObra === opt.nome);
-
-                tag.style.cssText = `
-                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? opt.cor + '80' : '#333'};
-                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
-                    background: ${isSelecionada ? opt.cor + '20' : '#1a1a1a'};
-                    color: ${isSelecionada ? opt.cor : '#888'};
-                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
-                `;
-
-                tag.onclick = async (e) => {
-                    e.stopPropagation(); 
-                    if (statusObra === opt.nome) return; // Se já está clicado, ignora
-                    
-                    pausarRedraw = true; // Protege a tela de fundo de piscar
-                    try {
-                        await updateDoc(doc(db, "mangas", id), { status: opt.nome });
-                        obra.status = opt.nome; 
-                        
-                        // Atualiza o hover na tela principal na hora (sem F5)
-                        const spanHoverLanc = document.getElementById(`status-lancamento-rapido-${id}`);
-                        if (spanHoverLanc) {
-                            spanHoverLanc.innerHTML = `<i class="ph-fill ph-tag" style="color: ${opt.cor};"></i> Lanc: ${opt.nome}`;
-                        }
-
-                        window.abrirModal(id); // Recarrega o modal para mudar a cor da tag
-                    } catch(err) {
-                        console.error("Erro ao alterar status de lançamento", err);
-                    }
-                };
-                statusContainer.appendChild(tag);
-            });
-        }
-
-        // --- 3. LÓGICA: Tags de Listas Interativas ---
-        const listasContainer = document.getElementById("modal-listas-tags");
-        if (listasContainer) {
-            let selecionadas = Array.isArray(obra.listasPersonalizadas) ? [...obra.listasPersonalizadas] : (obra.listaPersonalizada ? [obra.listaPersonalizada] : ["Geral"]);
-            if (selecionadas.length === 0) selecionadas = ["Geral"];
-
-            const listasUnicas = obterTodasAsListas();
-            if (!listasUnicas.includes("Geral")) listasUnicas.unshift("Geral");
-
-            listasContainer.innerHTML = "";
-
-            listasUnicas.forEach(nome => {
-                const tag = document.createElement("span");
-                tag.innerText = nome;
-                const isSelecionada = selecionadas.includes(nome);
-
-                tag.style.cssText = `
-                    padding: 4px 10px; border-radius: 20px; border: 1px solid ${isSelecionada ? '#3b82f6' : '#333'};
-                    cursor: pointer; font-size: 0.75rem; transition: 0.2s; display: inline-block; margin: 2px;
-                    background: ${isSelecionada ? '#3b82f620' : '#1a1a1a'};
-                    color: ${isSelecionada ? '#3b82f6' : '#888'};
-                    font-weight: ${isSelecionada ? 'bold' : 'normal'};
-                `;
-
-                tag.onclick = async (e) => {
-                    e.stopPropagation(); 
-                    
-                    let novasSelecionadas = [...selecionadas];
-                    if (nome === "Geral") {
-                        novasSelecionadas = ["Geral"];
-                    } else {
-                        novasSelecionadas = novasSelecionadas.filter(l => l !== "Geral");
-                        if (novasSelecionadas.includes(nome)) {
-                            novasSelecionadas = novasSelecionadas.filter(l => l !== nome);
-                        } else {
-                            novasSelecionadas.push(nome);
-                        }
-                        if (novasSelecionadas.length === 0) novasSelecionadas = ["Geral"];
-                    }
-
-                    pausarRedraw = true; 
-
-                    try {
-                        await updateDoc(doc(db, "mangas", id), {
-                            listasPersonalizadas: novasSelecionadas,
-                            listaPersonalizada: novasSelecionadas[0]
-                        });
-                        
-                        obra.listasPersonalizadas = novasSelecionadas;
-                        obra.listaPersonalizada = novasSelecionadas[0];
-                        
-                        window.abrirModal(id); 
-                    } catch(err) {
-                        console.error("Erro ao alterar lista", err);
-                    }
-                };
-                listasContainer.appendChild(tag);
-            });
-        }
-
-        document.getElementById("modal-capitulo-editavel").value = obra.capitulo || "0";
-        const generosContainer = document.getElementById("modal-generos-texto");
-        if (generosContainer) {
-            generosContainer.innerHTML = "";
-            if (obra.generos) {
-                const listaGeneros = obra.generos.split(',').map(g => g.trim()).filter(g => g);
-                listaGeneros.forEach(gen => { generosContainer.innerHTML += `<span class="tag-genero">${gen}</span>`; });
-            } else {
-                generosContainer.innerHTML = `<span style="color: #666; font-size: 0.85rem;">Nenhum gênero cadastrado</span>`;
-            }
-        }
-        
-        const altContainer = document.getElementById("modal-titulos-alt");
-        if (altContainer) {
-            altContainer.innerHTML = "";
-            if (obra.titulosAlternativos) {
-                const listaAlt = obra.titulosAlternativos.split(',').map(t => t.trim()).filter(t => t);
-                listaAlt.forEach(alt => { altContainer.innerHTML += `<span class="tag-alt">${alt}</span>`; });
-            } else {
-                altContainer.innerHTML = `<span style="color: #555; font-size: 0.8rem; font-style: italic;">Nenhum nome alternativo</span>`;
-            }
-        }
-        document.getElementById("modal-texto-sinopse").innerText = obra.sinopse || "Nenhuma sinopse disponível.";
-
-        const containerLinks = document.getElementById("container-links-leitura");
-        containerLinks.innerHTML = "";
-        if (obra.linksLeitura && Array.isArray(obra.linksLeitura)) {
-            obra.linksLeitura.forEach(linha => {
-                if (typeof linha === 'string') {
-                    let url = linha.trim(), nomeBotao = "Ler";
-                    if (linha.includes('|')) {
-                        const partes = linha.split('|');
-                        nomeBotao = partes[0].trim(); url = partes[1].trim();
-                    } else {
-                        try { nomeBotao = new URL(url).hostname.replace('www.', ''); } catch(e) {}
-                    }
-                    if(url && !url.startsWith('http')) url = 'https://' + url;
-                    containerLinks.innerHTML += `<a class="btn-ler-obra" href="${url}" target="_blank"><i class="ph ph-book-open"></i> ${nomeBotao}</a>`;
-                }
-            });
-        }
-        modalFundo.style.display = "flex";
-    }
 }
 
 window.alterarCapitulo = async function(val) {
@@ -710,63 +792,12 @@ window.atualizarCapituloDigitado = async function() {
     await updateDoc(doc(db, "mangas", idAbertoNoModal), { capitulo: novo.toString() });
 }
 
-window.prepararAdicao = function() {
-    formulario.reset();
-    document.getElementById("input-id-firebase").value = "";
-    document.getElementById("resultado-busca-api").style.display = "none";
-    document.getElementById("container-links-inputs").innerHTML = "";
-    if (document.getElementById("input-meu-status")) document.getElementById("input-meu-status").value = "Lendo";
-    window.adicionarCampoLink();
-    modalFormFundo.style.display = "flex";
-}
-
-window.prepararEdicao = function() {
-    const o = acervo.find(i => i.idFirebase === idAbertoNoModal);
-    if (o) {
-        const listasDoManga = o.listasPersonalizadas || (o.listaPersonalizada ? [o.listaPersonalizada] : ["Geral"]);
-        renderizarTagsSelecao(listasDoManga);
-        
-        document.getElementById("input-titulo").value = o.titulo || "";
-        document.getElementById("input-titulos-alt").value = o.titulosAlternativos || "";
-        document.getElementById("input-generos").value = o.generos || "";
-        document.getElementById("input-tipo").value = o.tipo || "Mangá";
-        document.getElementById("input-capitulo").value = o.capitulo || 0;
-        
-        if (document.getElementById("input-meu-status")) {
-            document.getElementById("input-meu-status").value = o.meuStatus || "Lendo";
-        }
-        
-        document.getElementById("input-status").value = o.status || "Em Andamento";
-        document.getElementById("input-nota").value = o.nota || 5;
-        document.getElementById("input-capa").value = o.capa || "";
-        document.getElementById("input-sinopse").value = o.sinopse || "";
-        document.getElementById("input-id-firebase").value = o.idFirebase;
-        
-        if (document.getElementById("input-adulto")) {
-            document.getElementById("input-adulto").checked = o.adulto === true;
-        }
-        
-        const containerLinks = document.getElementById("container-links-inputs");
-        containerLinks.innerHTML = "";
-        if (o.linksLeitura && Array.isArray(o.linksLeitura) && o.linksLeitura.length > 0) {
-            o.linksLeitura.forEach(linha => {
-                if (typeof linha === 'string') {
-                    let nome = "", url = linha;
-                    if (linha.includes('|')) {
-                        const partes = linha.split('|');
-                        nome = partes[0].trim(); url = partes[1].trim();
-                    }
-                    window.adicionarCampoLink(nome, url);
-                }
-            });
-        } else { 
-            window.adicionarCampoLink(); 
-        }
-        
-        fecharModal(); 
-        document.getElementById('titulo-form').innerText = "Editar Obra"; 
-        modalFormFundo.style.display = "flex"; 
-    }
+window.atualizarCapituloAnterior = async function() {
+    let input = document.getElementById("modal-cap-anterior-editavel");
+    let novo = parseInt(input.value) || 0;
+    if(novo < 0) novo = 0;
+    await updateDoc(doc(db, "mangas", idAbertoNoModal), { capituloAnterior: novo.toString() });
+    window.mostrarToast("Capítulo anterior salvo!", "success");
 }
 
 window.excluirObra = async function() {
@@ -776,6 +807,7 @@ window.excluirObra = async function() {
     }
 }
 
+// Fechamento de Modais
 window.fecharModal = () => { modalFundo.style.display = "none"; idAbertoNoModal = ""; };
 window.fecharModalForm = () => { 
     modalFormFundo.style.display = "none"; 
@@ -792,8 +824,9 @@ window.fecharModalForm = () => {
 window.fecharModalPeloFundo = (e) => { if (e.target === modalFundo) window.fecharModal(); };
 window.fecharModalFormPeloFundo = (e) => { if (e.target === modalFormFundo) window.fecharModalForm(); };
 
+
 // ============================================================================
-// 6. INTEGRAÇÃO COM MÚLTIPLAS APIs (BUSCA SIMULTÂNEA E MODULAR)
+// 7. INTEGRAÇÃO COM APIs (BUSCA EXTERNA)
 // ============================================================================
 window.buscarNaAPI = async function() {
     const q = document.getElementById("input-busca-api").value.trim();
@@ -807,7 +840,6 @@ window.buscarNaAPI = async function() {
     div.innerHTML = "<p style='padding:15px; color:#aaa; text-align:center;'>Consultando 4 bases de dados...</p>";
     div.style.display = "block";
     
-    // Motor Blindado do MangaDex (Comprovado que funciona!)
     const mdFetchBlindado = async (url) => {
         try {
             const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
@@ -820,12 +852,10 @@ window.buscarNaAPI = async function() {
             const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
             if (res.ok) return await res.json();
         } catch(e) {}
-        throw new Error("MangaDex totalmente bloqueado.");
+        throw new Error("MangaDex bloqueado.");
     };
 
-    // NOVO: Motor Blindado do AniList (Evita proxys mortos)
     const aniFetchBlindado = async (query, variables) => {
-        // Rota 1: Tenta o acesso oficial direto
         try {
             const res = await fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -834,8 +864,6 @@ window.buscarNaAPI = async function() {
             });
             if (res.ok) return await res.json();
         } catch(e) {}
-
-        // Rota 2: Tenta via AllOrigins usando modo GET
         try {
             const urlGET = `https://graphql.anilist.co?query=${encodeURIComponent(query)}&variables=${encodeURIComponent(JSON.stringify(variables))}`;
             const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlGET)}`);
@@ -844,8 +872,6 @@ window.buscarNaAPI = async function() {
                 if (data.contents) return JSON.parse(data.contents);
             }
         } catch(e) {}
-
-        // Rota 3: Tenta via CorsProxy
         try {
             const res = await fetch('https://corsproxy.io/?https://graphql.anilist.co', {
                 method: 'POST',
@@ -854,14 +880,13 @@ window.buscarNaAPI = async function() {
             });
             if (res.ok) return await res.json();
         } catch(e) {}
-
-        throw new Error("AniList bloqueado em todas as rotas.");
+        throw new Error("AniList bloqueado.");
     };
 
     try {
         resultadosAPI = []; 
 
-        // 🚀 1. KITSU (Acesso Direto)
+        // 1. KITSU
         const kitsuPromise = fetch(`https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(q)}&page[limit]=5`)
             .then(res => res.ok ? res.json() : Promise.reject())
             .then(d => {
@@ -882,7 +907,7 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
 
-        // 🎯 2. MANGADEX (Rota blindada)
+        // 2. MANGADEX
         const urlMD = `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=5&includes[]=cover_art`;
         const mangadexPromise = mdFetchBlindado(urlMD)
             .then(d => {
@@ -907,7 +932,7 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
             
-        // 🔮 3. MYANIMELIST / JIKAN (Aguardando o servidor deles voltar)
+        // 3. JIKAN (MyAnimeList)
         const jikanPromise = fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=5`)
             .then(res => res.ok ? res.json() : Promise.reject())
             .catch(() => {
@@ -936,22 +961,16 @@ window.buscarNaAPI = async function() {
                 });
             }).catch(() => []);
 
-        // 🧬 4. ANILIST (Novo Motor Blindado)
+        // 4. ANILIST
         const queryAniList = `
         query ($search: String) {
           Page(page: 1, perPage: 5) {
             media(search: $search, type: MANGA) {
               title { romaji english native }
-              synonyms
-              startDate { year }
+              synonyms startDate { year }
               coverImage { extraLarge }
               description(asHtml: false)
-              genres
-              chapters
-              averageScore
-              status
-              countryOfOrigin
-              format
+              genres chapters averageScore status countryOfOrigin format
             }
           }
         }`;
@@ -995,7 +1014,7 @@ window.buscarNaAPI = async function() {
         `;
 
         if(resultadosAPI.length === 0) {
-            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado. As APIs externas podem estar instáveis no momento.</p>";
+            div.innerHTML += "<p style='padding:15px;color:#94a3b8;'>Nenhum resultado encontrado. As APIs externas podem estar instáveis.</p>";
         } else {
             resultadosAPI.forEach((obra, i) => {
                 let corFonte = "#3b82f6"; 
@@ -1024,7 +1043,6 @@ window.buscarNaAPI = async function() {
                     </div>`;
             });
         }
-        
     } catch(err) {
         console.error("Erro fatal no motor de busca:", err);
         div.innerHTML = `<p style='padding:15px; color:#ef4444;'>Erro na conexão com as APIs.</p>`;
@@ -1033,7 +1051,6 @@ window.buscarNaAPI = async function() {
         btn.disabled = false;
     }
 }
-
 
 window.preencherComAPI = function(i, modo = 'tudo') {
     const m = resultadosAPI[i];
@@ -1054,19 +1071,18 @@ window.preencherComAPI = function(i, modo = 'tudo') {
         document.getElementById("input-capa").value = m.capa || "";
     }
     
-    if (modo === 'capa') {
-        window.mostrarToast('Capa inserida com sucesso!', 'success');
-    } else if (modo === 'info') {
-        window.mostrarToast('Textos inseridos com sucesso!', 'success');
-    } else {
+    if (modo === 'capa') window.mostrarToast('Capa inserida com sucesso!', 'success');
+    else if (modo === 'info') window.mostrarToast('Textos inseridos com sucesso!', 'success');
+    else {
         window.mostrarToast('Obra preenchida completamente!', 'success');
         document.getElementById("resultado-busca-api").style.display = "none";
         document.getElementById("input-busca-api").value = "";
     }
 }
 
+
 // ============================================================================
-// 7. BACKUP JSON, PDF E EXTRAS
+// 8. EXTRAS, BACKUP, PDF E LISTAS
 // ============================================================================
 window.exportarDados = () => {
     const blob = new Blob([JSON.stringify(acervo.map(({idFirebase, ...r}) => r), null, 2)], {type: "application/json"});
@@ -1086,105 +1102,100 @@ window.importarDados = (e) => {
     reader.readAsText(e.target.files[0]);
 };
 
-window.abrirModalForm = () => {
-    renderizarTagsSelecao(["Geral"]);
-    const modalForm = document.getElementById('modal-form-fundo');
-    const form = document.getElementById('form-nova-obra');
-    
-    if (form) form.reset(); 
-    document.getElementById('input-id-firebase').value = ""; 
-    document.getElementById('titulo-form').innerText = "Nova Obra"; 
-    
-    const containerLinks = document.getElementById("container-links-inputs");
-    if (containerLinks) {
-        containerLinks.innerHTML = ""; 
-        window.adicionarCampoLink();   
-    }
-    
-    const divResultadosApi = document.getElementById("resultado-busca-api");
-    if (divResultadosApi) divResultadosApi.style.display = "none";
-    
-    if (modalForm) modalForm.style.display = 'flex'; 
-};
-
-window.limparBusca = () => {
-    const inputBusca = document.getElementById('barra-pesquisa');
-    if (inputBusca) {
-        inputBusca.value = ''; 
-        document.getElementById('btn-limpar-busca').style.display = 'none'; 
-        inputBusca.dispatchEvent(new Event('input')); 
-    }
-};
-
-const inputBuscaEvent = document.getElementById('barra-pesquisa');
-if (inputBuscaEvent) {
-    inputBuscaEvent.addEventListener('input', (e) => {
-        const btnLimpar = document.getElementById('btn-limpar-busca');
-        if (e.target.value.length > 0) btnLimpar.style.display = 'flex';
-        else btnLimpar.style.display = 'none';
-    });
-}
-
-window.voltarAoTopo = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
-
-window.addEventListener('scroll', () => {
-    const btnTopo = document.getElementById('btn-topo');
-    if (btnTopo) {
-        if (window.scrollY > 300) btnTopo.style.display = 'flex';
-        else btnTopo.style.display = 'none';
-    }
-});
-
 window.gerarPDF = () => {
     if (!acervo || acervo.length === 0) {
-        alert("Seu acervo está vazio! Adicione algumas obras antes de gerar o PDF.");
+        window.mostrarToast("O seu acervo está vazio! Adicione obras primeiro.", "error");
         return;
     }
-    alert("Preparando o seu PDF... Isso pode levar alguns segundos.");
+    
+    // Substitui o alerta feio pelo Toast moderno
+    window.mostrarToast("A preparar o seu PDF... Aguarde um momento.", "info");
+
     const elemento = document.createElement('div');
-    elemento.style.padding = '20px';
-    elemento.style.fontFamily = 'Arial, sans-serif';
-    elemento.style.color = '#000'; 
-    elemento.style.background = '#fff'; 
+    elemento.style.padding = '20px 30px';
+    elemento.style.fontFamily = "'Inter', Arial, sans-serif";
+    elemento.style.background = '#ffffff'; 
+
     const dataHoje = new Date().toLocaleDateString('pt-BR');
+    
+    // 1. Cabeçalho Moderno e Limpo
     let html = `
-        <h1 style="text-align: center; color: #111; margin-bottom: 5px;">Meu Acervo de Obras</h1>
-        <p style="text-align: center; color: #555; margin-bottom: 30px;">Gerado em: ${dataHoje} | Total de Obras: ${acervo.length}</p>
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-            <thead>
-                <tr style="background-color: #f2f2f2;">
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 40%;">Título</th>
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Tipo</th>
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Meu Status</th>
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Capítulo</th>
-                    <th style="padding: 12px; border: 1px solid #ddd; width: 15%;">Nota</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 style="color: #111827; font-size: 26px; margin: 0 0 5px 0; font-weight: 800;">Meu Acervo</h1>
+                <p style="color: #6b7280; font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Relatório de Leitura</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="color: #111827; font-size: 14px; margin: 0 0 4px 0;"><strong>Total:</strong> ${acervo.length} obras</p>
+                <p style="color: #6b7280; font-size: 12px; margin: 0;">Data: ${dataHoje}</p>
+            </div>
+        </div>
     `;
-    const acervoOrdenado = [...acervo].sort((a, b) => a.titulo.localeCompare(b.titulo));
-    acervoOrdenado.forEach(obra => {
-        html += `
-            <tr>
-                <td style="padding: 10px; border: 1px solid #ddd;"><strong>${obra.titulo}</strong></td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${obra.tipo || '-'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${obra.meuStatus || 'Lendo'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${obra.capitulo || '0'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">⭐ ${obra.nota || '5'}</td>
-            </tr>
-        `;
+
+    // 2. Agrupar as obras pelo "Meu Status" (Lendo, Relendo, etc)
+    const statusOrdem = ["Lendo", "Relendo", "Pausado", "Finalizado", "Abandonado"];
+    
+    statusOrdem.forEach(status => {
+        // Filtra as obras deste status e organiza de A a Z
+        const obrasDoStatus = acervo.filter(o => (o.meuStatus || "Lendo") === status).sort((a, b) => a.titulo.localeCompare(b.titulo));
+        
+        if (obrasDoStatus.length > 0) {
+            // Define a cor de cada secção para combinar com o seu layout
+            let corStatus = "#3b82f6"; // Lendo (Azul)
+            if(status === "Finalizado") corStatus = "#10b981"; // Verde
+            if(status === "Pausado") corStatus = "#f59e0b"; // Laranja
+            if(status === "Abandonado") corStatus = "#ef4444"; // Vermelho
+            if(status === "Relendo") corStatus = "#8b5cf6"; // Roxo
+
+            html += `
+                <h2 style="font-size: 16px; color: ${corStatus}; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; page-break-after: avoid;">
+                    ${status} (${obrasDoStatus.length})
+                </h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background-color: #f3f4f6; color: #374151; text-align: left;">
+                            <th style="padding: 10px; border-bottom: 1px solid #d1d5db; width: 45%;">Título</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #d1d5db; width: 15%;">Tipo</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #d1d5db; width: 20%;">Status (Lanç.)</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #d1d5db; width: 10%; text-align: center;">Capítulo</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #d1d5db; width: 10%; text-align: center;">Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            obrasDoStatus.forEach(obra => {
+                // A tag "page-break-inside: avoid" impede que uma linha fique cortada a meio entre páginas do PDF
+                html += `
+                    <tr style="page-break-inside: avoid;">
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; color: #111827;"><strong>${obra.titulo}</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; color: #4b5563;">${obra.tipo || '-'}</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; color: #4b5563;">${obra.status || 'Em Andamento'}</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; color: #111827;">${obra.capitulo || '0'}</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #f59e0b; font-weight: bold;">★ ${obra.nota || '5'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+        }
     });
-    html += `</tbody></table>`;
+
     elemento.innerHTML = html;
+
     const opcoes = {
-        margin:       10,
+        margin:       [10, 10, 15, 10], // Margens [Topo, Direita, Baixo, Esquerda]
         filename:     `Meu_Acervo_${dataHoje.replace(/\//g, '-')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 }, 
+        html2canvas:  { scale: 2, useCORS: true }, 
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
+
     html2pdf().set(opcoes).from(elemento).save().then(() => {
-        console.log("PDF gerado com sucesso!");
+        window.mostrarToast("PDF transferido com sucesso!", "success");
+    }).catch(err => {
+        console.error(err);
+        window.mostrarToast("Erro ao gerar o PDF.", "error");
     });
 };
 
@@ -1200,9 +1211,7 @@ window.criarListaVazia = async function() {
             tipo: "Sistema"
         });
         input.value = ""; 
-    } catch (err) {
-        console.error("Erro ao criar lista:", err);
-    }
+    } catch (err) { console.error("Erro ao criar lista:", err); }
 };
 
 window.renderizarTagsSelecao = function(valoresAtuais) {
@@ -1220,7 +1229,6 @@ window.renderizarTagsSelecao = function(valoresAtuais) {
     listasUnicas.forEach(nome => {
         const tag = document.createElement("span");
         tag.innerText = nome;
-        
         const isSelecionada = selecionadas.includes(nome);
 
         tag.style.cssText = `
@@ -1235,26 +1243,23 @@ window.renderizarTagsSelecao = function(valoresAtuais) {
                 selecionadas = ["Geral"];
             } else {
                 selecionadas = selecionadas.filter(l => l !== "Geral"); 
-                if (selecionadas.includes(nome)) {
-                    selecionadas = selecionadas.filter(l => l !== nome); 
-                } else {
-                    selecionadas.push(nome); 
-                }
+                if (selecionadas.includes(nome)) selecionadas = selecionadas.filter(l => l !== nome); 
+                else selecionadas.push(nome); 
+                
                 if (selecionadas.length === 0) selecionadas = ["Geral"]; 
             }
             
             document.getElementById("input-lista").value = JSON.stringify(selecionadas);
             renderizarTagsSelecao(selecionadas); 
         };
-
         container.appendChild(tag);
     });
-
     document.getElementById("input-lista").value = JSON.stringify(selecionadas);
 };
 
+
 // ============================================================================
-// 8. NOTIFICAÇÕES TOAST E ATUALIZAÇÃO RÁPIDA
+// 9. NOTIFICAÇÕES E EVENTOS DE TELA
 // ============================================================================
 window.mostrarToast = function(mensagem, tipo = 'success') {
     const container = document.getElementById('toast-container');
@@ -1271,7 +1276,6 @@ window.mostrarToast = function(mensagem, tipo = 'success') {
     container.appendChild(toast);
 
     setTimeout(() => toast.classList.add('show'), 10);
-
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 400); 
@@ -1288,17 +1292,151 @@ window.alterarCapituloRapido = async function(id, val, event) {
     if (novo < 0) novo = 0;
     
     const spanCapitulo = document.getElementById(`cap-rapido-${id}`);
-    if (spanCapitulo) {
-        spanCapitulo.innerHTML = `<i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${novo}`;
-    }
+    if (spanCapitulo) spanCapitulo.innerHTML = `<i class="ph-fill ph-bookmark-simple" style="color: #3b82f6;"></i> Cap: ${novo}`;
     
     pausarRedraw = true;
-    
     try {
         await updateDoc(doc(db, "mangas", id), { capitulo: novo.toString() });
         window.mostrarToast(`Capítulo atualizado para ${novo}!`, 'success');
     } catch(err) {
         window.mostrarToast('Erro ao atualizar capítulo!', 'error');
         console.error(err);
+    }
+};
+
+window.limparBusca = () => {
+    const inputBusca = document.getElementById('barra-pesquisa');
+    if (inputBusca) {
+        inputBusca.value = ''; 
+        document.getElementById('btn-limpar-busca').style.display = 'none'; 
+        inputBusca.dispatchEvent(new Event('input')); 
+    }
+};
+
+const inputBuscaEvent = document.getElementById('barra-pesquisa');
+if (inputBuscaEvent) {
+    inputBuscaEvent.addEventListener('input', (e) => {
+        const btnLimpar = document.getElementById('btn-limpar-busca');
+        if (e.target.value.length > 0) btnLimpar.style.display = 'flex';
+        else btnLimpar.style.display = 'none';
+        
+        filtroTexto = e.target.value.toLowerCase();
+        aplicarFiltros();
+    });
+}
+
+window.voltarAoTopo = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+window.addEventListener('scroll', () => {
+    // Botão Voltar ao Topo
+    const btnTopo = document.getElementById('btn-topo');
+    if (btnTopo) {
+        if (window.scrollY > 300) btnTopo.style.display = 'flex';
+        else btnTopo.style.display = 'none';
+    }
+
+    // Scroll Infinito (Paginação)
+    if (carregandoScroll) return; 
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
+        carregandoScroll = true;
+        carregarMaisItens();
+        setTimeout(() => { carregandoScroll = false; }, 100);
+    }
+});
+// ============================================================================
+// UX DOS FILTROS AVANÇADOS
+// ============================================================================
+window.destacarFiltro = function(selectElement, valorPadrao = "Todos") {
+    if (selectElement.value !== valorPadrao) {
+        selectElement.style.borderColor = "#3b82f6"; // Borda azul quando ativo
+        selectElement.style.background = "rgba(59, 130, 246, 0.05)";
+    } else {
+        selectElement.style.borderColor = "#333"; // Volta ao normal
+        selectElement.style.background = "#0f0f11";
+    }
+};
+
+window.resetarFiltrosAvancados = function() {
+    const s1 = document.getElementById("select-meu-status");
+    const s2 = document.getElementById("select-status");
+    const s3 = document.getElementById("select-ordem");
+    
+    if(s1) { s1.value = "Todos"; window.destacarFiltro(s1); }
+    if(s2) { s2.value = "Todos"; window.destacarFiltro(s2); }
+    if(s3) { s3.value = "az"; window.destacarFiltro(s3, "az"); }
+    
+    window.aplicarFiltros();
+};
+// ============================================================================
+// 10. MEGA PACOTE PREMIUM (Atalhos, Temas, Estatísticas e Diário)
+// ============================================================================
+
+// 1. Teclas de Atalho Nativas
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (document.getElementById('modal-form-fundo')?.style.display === 'flex') window.fecharModalForm();
+        else if (document.getElementById('modal-fundo')?.style.display === 'flex') window.fecharModal();
+        else if (document.getElementById('modal-duplicata-fundo')?.style.display === 'flex') document.getElementById('modal-duplicata-fundo').style.display = 'none';
+    }
+    if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('barra-pesquisa')?.focus();
+    }
+});
+
+// 2. Personalização de Temas (Cores)
+window.toggleThemeMenu = () => {
+    const menu = document.getElementById('theme-picker-menu');
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+};
+
+window.mudarCorTema = (corBase, corHover) => {
+    document.documentElement.style.setProperty('--primary', corBase);
+    document.documentElement.style.setProperty('--primary-hover', corHover);
+    localStorage.setItem('tema-cor-base', corBase);
+    localStorage.setItem('tema-cor-hover', corHover);
+    document.getElementById('theme-picker-menu').style.display = 'none';
+};
+
+// Carregar o tema salvo quando o programa abre
+if(localStorage.getItem('tema-cor-base')) {
+    document.documentElement.style.setProperty('--primary', localStorage.getItem('tema-cor-base'));
+    document.documentElement.style.setProperty('--primary-hover', localStorage.getItem('tema-cor-hover'));
+}
+
+// 3. Sistema de Estatísticas (Atualizado sozinho)
+window.atualizarEstatisticas = () => {
+    let totalCaps = 0; 
+    let totalFins = 0; 
+    acervo.forEach(obra => {
+        if (obra.titulo !== "_LIST_MARKER_") {
+            totalCaps += parseInt(obra.capitulo) || 0;
+            if (obra.meuStatus === "Finalizado") totalFins++;
+        }
+    });
+    if(document.getElementById('stat-capitulos')) document.getElementById('stat-capitulos').innerText = totalCaps;
+    if(document.getElementById('stat-finalizados')) document.getElementById('stat-finalizados').innerText = totalFins;
+};
+
+// Faz as estatísticas recalcularem sempre que a tela atualizar
+const renderOriginal = window.aplicarFiltros;
+window.aplicarFiltros = () => {
+    if(renderOriginal) renderOriginal();
+    window.atualizarEstatisticas();
+};
+
+// 4. Salvar o Diário Automaticamente ao digitar no modal
+window.atualizarDiario = async function() {
+    const texto = document.getElementById("modal-diario-editavel").value;
+    try {
+        await updateDoc(doc(db, "mangas", idAbertoNoModal), { diario: texto });
+        
+        // Atualiza a variável local para não sumir ao recarregar o modal
+        const obraAtual = acervo.find(i => i.idFirebase === idAbertoNoModal);
+        if (obraAtual) obraAtual.diario = texto;
+        
+        window.mostrarToast("Diário guardado em segurança!", "success");
+    } catch(err) {
+        window.mostrarToast("Erro ao guardar anotação.", "error");
     }
 };
